@@ -20,10 +20,10 @@ edition = "2024"
 license = "Apache-2.0"
 
 [workspace.dependencies]
-# 内部依赖
+# Internal dependencies
 strict-num-extended-macros = { path = "macros" }
 
-# 外部依赖
+# External dependencies
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
