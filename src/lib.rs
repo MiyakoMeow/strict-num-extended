@@ -1,3 +1,5 @@
+#![allow(clippy::manual_range_contains)]
+
 //! # 受约束的浮点数类型
 //!
 //! 这个模块提供了受约束的浮点数类型，所有类型默认保证 finite（排除 NaN 和无穷大）：

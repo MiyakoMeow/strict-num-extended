@@ -216,7 +216,9 @@ fn parse_constraint_types(input: ParseStream) -> syn::Result<Vec<TypeDef>> {
         // 根据约束数量决定是 Single 还是 Combined
         if constraints.len() == 1 {
             // 单约束类型
-            let constraint_name = &constraints[0];
+            let constraint_name = constraints
+                .first()
+                .expect("constraints should have at least one element");
             types.push(TypeDef::Single {
                 type_name,
                 float_types,
@@ -273,19 +275,12 @@ pub fn generate_constrained_types(input: TokenStream) -> TokenStream {
     let config = parse_macro_input!(input as TypeConfig);
 
     // 收集所有需要生成的代码
-    let mut all_code = Vec::new();
-
-    // 1. 生成 Constraint trait
-    all_code.push(generate_constraint_trait());
-
-    // 2. 生成约束标记类型
-    all_code.push(generate_constraint_markers(&config));
-
-    // 3. 生成 Constrained 结构体
-    all_code.push(generate_constrained_struct());
-
-    // 4. 生成比较和格式化 trait
-    all_code.push(generate_comparison_traits());
+    let mut all_code = vec![
+        generate_constraint_trait(),
+        generate_constraint_markers(&config),
+        generate_constrained_struct(),
+        generate_comparison_traits(),
+    ];
 
     // 5. 生成算术运算
     if config
@@ -672,37 +667,26 @@ fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
     // Option 类型别名
     if config.features.generate_option_types {
         for type_def in &config.constraint_types {
-            match type_def {
-                TypeDef::Single {
-                    type_name,
-                    float_types,
-                    ..
-                } => {
-                    for float_type in float_types {
-                        let type_alias = format_ident!("{}{}", type_name, to_uppercase(float_type));
-                        let opt_alias = format_ident!("Opt{}", type_alias);
-
-                        option_aliases.push(quote! {
-                            #[doc = concat!("`", stringify!(#type_alias), "` 的 Option 版本")]
-                            pub type #opt_alias = Option<#type_alias>;
-                        });
-                    }
+            // 提取类型名称和浮点类型（Single 和 Combined 有相同的字段结构）
+            let type_name = match type_def {
+                TypeDef::Single { type_name, .. } | TypeDef::Combined { type_name, .. } => {
+                    type_name
                 }
-                TypeDef::Combined {
-                    type_name,
-                    float_types,
-                    ..
-                } => {
-                    for float_type in float_types {
-                        let type_alias = format_ident!("{}{}", type_name, to_uppercase(float_type));
-                        let opt_alias = format_ident!("Opt{}", type_alias);
-
-                        option_aliases.push(quote! {
-                            #[doc = concat!("`", stringify!(#type_alias), "` 的 Option 版本")]
-                            pub type #opt_alias = Option<#type_alias>;
-                        });
-                    }
+            };
+            let float_types = match type_def {
+                TypeDef::Single { float_types, .. } | TypeDef::Combined { float_types, .. } => {
+                    float_types
                 }
+            };
+
+            for float_type in float_types {
+                let type_alias = format_ident!("{}{}", type_name, to_uppercase(float_type));
+                let opt_alias = format_ident!("Opt{}", type_alias);
+
+                option_aliases.push(quote! {
+                    #[doc = concat!("`", stringify!(#type_alias), "` 的 Option 版本")]
+                    pub type #opt_alias = Option<#type_alias>;
+                });
             }
         }
     }
@@ -716,7 +700,7 @@ fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
     }
 }
 
-/// 生成 new_const 方法
+/// 生成 `new_const` 方法
 fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
@@ -748,7 +732,7 @@ fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                             ///
                             /// # Panics
                             ///
-                            /// 如果值不满足约束条件，在编译期或运行时会 panic。
+                            /// 如果值不满足约束条件，在编译期或运行时会 [`panic`]。
                             #[inline]
                             #[must_use]
                             pub const fn new_const(value: #float_type) -> Self {
@@ -798,7 +782,7 @@ fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                             ///
                             /// # Panics
                             ///
-                            /// 如果值不满足约束条件，在编译期或运行时会 panic。
+                            /// 如果值不满足约束条件，在编译期或运行时会 [`panic`]。
                             #[inline]
                             #[must_use]
                             pub const fn new_const(value: #float_type) -> Self {
