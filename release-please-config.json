@@ -1,0 +1,6 @@
+{
+  ".": {
+    "package-name": "strict-num-extended",
+    "bump-minor-pre-major": true
+  }
+}
