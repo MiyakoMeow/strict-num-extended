@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "strict-num-extended"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "strict-num-extended-macros",
 ]
