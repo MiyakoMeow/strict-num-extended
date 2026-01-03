@@ -1,30 +1,32 @@
 #![allow(clippy::manual_range_contains)]
 
-//! # 受约束的浮点数类型
+//! # Constrained Floating-Point Types
 //!
-//! 这个模块提供了受约束的浮点数类型，所有类型默认保证 finite（排除 NaN 和无穷大）：
-//! - `FinF32` 和 `FinF64`：有限值浮点数（排除 NaN 和无穷大）
-//! - `PositiveF32` 和 `PositiveF64`：非负值浮点数（>= 0，有限值）
-//! - `NonZeroF32` 和 `NonZeroF64`：非零值浮点数（!= 0，排除 0.0, -0.0, NaN, 无穷大）
-//! - `NonZeroPositiveF32` 和 `NonZeroPositiveF64`：非零正值浮点数（> 0，有限值）
-//! - `NegativeF32` 和 `NegativeF64`：非正值浮点数（<= 0，有限值）
-//! - `NonZeroNegativeF32` 和 `NonZeroNegativeF64`：非零负值浮点数（< 0，有限值）
-//! - `NormalizedF32` 和 `NormalizedF64`：标准化浮点数（0.0 <= value <= 1.0，有限值）
+//! This module provides constrained floating-point types. All types guarantee finite values
+//! (excluding NaN and infinity) by default:
+//! - `FinF32` and `FinF64`: Finite floating-point numbers (excludes NaN and infinity)
+//! - `PositiveF32` and `PositiveF64`: Non-negative floating-point numbers (>= 0, finite)
+//! - `NonZeroF32` and `NonZeroF64`: Non-zero floating-point numbers (!= 0, excludes 0.0, -0.0, NaN, infinity)
+//! - `NonZeroPositiveF32` and `NonZeroPositiveF64`: Non-zero positive floating-point numbers (> 0, finite)
+//! - `NegativeF32` and `NegativeF64`: Non-positive floating-point numbers (<= 0, finite)
+//! - `NonZeroNegativeF32` and `NonZeroNegativeF64`: Non-zero negative floating-point numbers (< 0, finite)
+//! - `NormalizedF32` and `NormalizedF64`: Normalized floating-point numbers (0.0 <= value <= 1.0, finite)
 //!
-//! ## 可组合约束
+//! ## Composable Constraints
 //!
-//! 所有约束都可以自由组合。例如，`NonZeroPositiveF32` 是 `Positive` 和 `NonZero` 的组合：
+//! All constraints can be freely combined. For example, `NonZeroPositiveF32` combines
+//! `Positive` and `NonZero` constraints:
 //!
 //! ```
 //! use strict_num_extended::*;
 //!
-//! // 使用预定义的组合类型
+//! // Use predefined combined types
 //! let nonzero_pos: NonZeroPositiveF32 = NonZeroPositiveF32::new(10.0).unwrap();
 //! ```
 //!
-//! 此外，还提供了对应的 `Option` 版本，用于处理可能失败的运算。
+//! Additionally, `Option` versions are provided for handling potentially failing operations.
 //!
-//! # 示例
+//! # Examples
 //!
 //! ```
 //! use strict_num_extended::{
@@ -48,7 +50,7 @@
 //! assert_eq!(normalized.get(), 0.75);
 //! ```
 //!
-//! # Option 版本
+//! # Option Types
 //!
 //! ```
 //! use strict_num_extended::{FinF32, OptFinF32, OptPositiveF32};
@@ -59,7 +61,7 @@
 //! assert!(b.is_none());
 //! ```
 //!
-//! # 编译期常量
+//! # Compile-Time Constants
 //!
 //! ```
 //! use strict_num_extended::FinF32;
@@ -68,48 +70,49 @@
 //! assert_eq!(ONE.get(), 1.0);
 //! ```
 //!
-//! **注意**：`new_const` 方法现在支持编译期验证，会在编译期 panic 如果值不满足约束条件。
+//! **Note**: The `new_const` method now supports compile-time validation and will panic at
+//! compile time if the value does not satisfy the constraint conditions.
 
-// 使用 proc_macro 生成所有代码
+// Generate all code using proc_macro
 strict_num_extended_macros::generate_constrained_types!({
-    // 原子约束类型
+    // Atomic constraint types
     constraints: [
         Finite {
-            doc: "有限的浮点值（排除 NaN 和无穷大）",
+            doc: "Finite floating-point value (excludes NaN and infinity)",
             validate: "!value.is_nan() && !value.is_infinite()"
         },
         Positive {
-            doc: "非负的浮点值（>= 0，有限值）",
+            doc: "Non-negative floating-point value (>= 0, finite)",
             validate: "!value.is_nan() && !value.is_infinite() && !value.is_sign_negative()"
         },
         Negative {
-            doc: "非正的浮点值（<= 0，有限值）",
+            doc: "Non-positive floating-point value (<= 0, finite)",
             validate: "!(value.is_nan() || value.is_infinite() || (value.is_sign_positive() && value != 0.0))"
         },
         NonZero {
-            doc: "非零的浮点值（!= 0.0 && != -0.0）",
+            doc: "Non-zero floating-point value (!= 0.0 && != -0.0)",
             validate: "!value.is_nan() && !value.is_infinite() && value != 0.0 && value != -0.0"
         },
         Normalized {
-            doc: "标准化的浮点值（0.0 <= value <= 1.0，有限值）",
+            doc: "Normalized floating-point value (0.0 <= value <= 1.0, finite)",
             validate: "!value.is_nan() && !value.is_infinite() && value >= 0.0 && value <= 1.0"
         }
     ],
 
-    // 类型定义（统一使用方括号）
+    // Type definitions (uniformly use square brackets)
     constraint_types: [
-        // 单约束类型
+        // Single constraint types
         (Fin, [f32, f64], [Finite]),
         (Positive, [f32, f64], [Positive]),
         (Negative, [f32, f64], [Negative]),
         (NonZero, [f32, f64], [NonZero]),
         (Normalized, [f32, f64], [Normalized]),
-        // 组合约束类型
+        // Combined constraint types
         (NonZeroPositive, [f32, f64], [Positive, NonZero]),
         (NonZeroNegative, [f32, f64], [Negative, NonZero]),
     ],
 
-    // 特性配置
+    // Feature configuration
     features: {
         impl_traits: [
             PartialEq, Eq, PartialOrd, Ord,
