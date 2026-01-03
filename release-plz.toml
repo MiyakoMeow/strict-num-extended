@@ -1,0 +1,139 @@
+[workspace]
+# 禁用发布到 crates.io
+publish = false
+
+# 自动更新 CHANGELOG.md
+changelog_update = true
+
+# 自动运行 cargo update
+dependencies_update = true
+
+# 创建 GitHub release
+git_release_enable = true
+
+# 创建 git tag
+git_tag_enable = true
+
+# 仅在合并 release PR 时发布
+release_always = false
+
+# Release PR 分支前缀
+pr_branch_prefix = "release-plz-"
+
+# Release PR 标签
+pr_labels = ["release"]
+
+# Release PR 标题
+pr_name = "chore: release v{{ version }}"
+
+# Release PR 内容
+pr_body = """
+## 🤖 新版本发布
+
+本 PR 由 [release-plz](https://github.com/release-plz/release-plz) 自动生成。
+
+{% for release in releases %}
+### `{{ release.package }}`
+- 版本: {{ release.previous_version }} -> {{ release.next_version }}
+{%- if release.semver_check == "incompatible" %} ⚠️ **API 破坏性变更**
+{%- elif release.semver_check == "compatible" %} ✓ **API 兼容变更**
+{%- endif %}
+
+{% if release.breaking_changes %}
+**破坏性变更:**
+```
+{{ release.breaking_changes }}
+```
+{% endif %}
+
+{% if release.changelog %}
+**变更日志:**
+{{ release.changelog }}
+{% endif %}
+{% endfor %}
+
+---
+
+### 合并说明
+1. 检查版本号和变更日志是否正确
+2. 合并此 PR 将自动创建 GitHub release 和 git 标签
+3. 不会发布到 crates.io
+
+---
+
+此 PR 由 [release-plz](https://github.com/release-plz/release-plz) 生成。
+"""
+
+# GitHub release 内容
+git_release_body = """
+{{ changelog }}
+
+{% if remote.contributors %}
+### 贡献者
+{% for contributor in remote.contributors %}
+* @{{ contributor.username }}
+{% endfor %}
+{% endif %}
+
+---
+
+📦 **注意**: 此版本未发布到 crates.io，仅作为 GitHub release 提供。
+"""
+
+# 主包配置
+[[package]]
+name = "strict-num-extended"
+changelog_path = "./CHANGELOG.md"
+changelog_include = ["strict-num-extended-macros"]
+
+# 宏包配置
+[[package]]
+name = "strict-num-extended-macros"
+changelog_path = "./CHANGELOG.md"
+
+# Changelog 配置
+[changelog]
+protect_breaking_commits = true
+
+header = """
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+"""
+
+body = """
+## [{{ version }}]{%- if release_link -%}({{ release_link }}){% endif %} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+{%- if commit.scope -%}
+- **({{commit.scope}})** {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message }}
+{%- else -%}
+- {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message }}
+{%- endif %}
+{%- if commit.links %} ({% for link in commit.links %}{{ link.text }}{% endfor -%}){% endif %}
+{% endfor %}
+{% endfor %}
+"""
+
+commit_parsers = [
+    { message = "^feat", group = "新增" },
+    { message = "^fix", group = "修复" },
+    { message = "^perf", group = "性能优化" },
+    { message = "^refactor", group = "重构" },
+    { message = "^docs", group = "文档" },
+    { message = "^style", group = "样式" },
+    { message = "^test", group = "测试" },
+    { message = "^chore\\(release\\)", skip = true },
+    { message = "^chore", group = "其他" },
+    { message = "^.*", group = "其他" },
+]
+
+commit_preprocessors = [
+    { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/MiyakoMeow/strict-num-extended/pull/${1}))" },
+]
