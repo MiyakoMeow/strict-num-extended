@@ -62,8 +62,9 @@ impl TypeDef {
     /// Get the list of floating-point types (applies to both Single and Combined)
     pub fn float_types(&self) -> &[Ident] {
         match self {
-            TypeDef::Single { float_types, .. } => float_types,
-            TypeDef::Combined { float_types, .. } => float_types,
+            TypeDef::Single { float_types, .. } | TypeDef::Combined { float_types, .. } => {
+                float_types
+            }
         }
     }
 }
