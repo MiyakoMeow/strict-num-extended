@@ -1,28 +1,15 @@
 {
   "release-type": "rust",
   "bootstrap-sha": "c895e98d6b99c1dd30eccb5c7ad6526add5a81fb",
+  "plugins": ["cargo-workspace"],
   "packages": {
-    ".": {
+    "main": {
       "package-name": "strict-num-extended",
-      "bump-minor-pre-major": true,
-      "extra-files": [
-        {
-          "type": "toml",
-          "path": "main/Cargo.toml",
-          "jsonpath": "$.package.version"
-        }
-      ]
+      "bump-minor-pre-major": true
     },
     "macros": {
       "package-name": "strict-num-extended-macros",
-      "bump-minor-pre-major": true,
-      "extra-files": [
-        {
-          "type": "toml",
-          "path": "macros/Cargo.toml",
-          "jsonpath": "$.package.version"
-        }
-      ]
+      "bump-minor-pre-major": true
     }
   }
 }
