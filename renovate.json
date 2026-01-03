@@ -1,0 +1,6 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "automerge": false,
+  "commitMessagePrefix": "chore(deps): ",
+  "extends": ["config:recommended"]
+}
