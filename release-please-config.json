@@ -4,19 +4,35 @@
   "packages": {
     ".": {
       "package-name": "strict-num-extended",
-      "bump-minor-pre-major": true
+      "bump-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "main/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$.workspace.package.version"
+        }
+      ]
     },
     "macros": {
       "package-name": "strict-num-extended-macros",
-      "bump-minor-pre-major": true
+      "bump-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "macros/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$.workspace.package.version"
+        }
+      ]
     }
-  },
-  "plugins": ["cargo-workspace"],
-  "extra-files": [
-    {
-      "type": "toml",
-      "path": "Cargo.toml",
-      "jsonpath": "$.workspace.package.version"
-    }
-  ]
+  }
 }
