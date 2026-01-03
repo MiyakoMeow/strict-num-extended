@@ -1,6 +1,6 @@
 [workspace]
-# 禁用发布到 crates.io
-publish = false
+# 启用发布到 crates.io（使用 Trusted Publishing）
+publish = true
 
 # 自动更新 CHANGELOG.md
 changelog_update = true
@@ -56,8 +56,8 @@ pr_body = """
 
 ### 合并说明
 1. 检查版本号和变更日志是否正确
-2. 合并此 PR 将自动创建 GitHub release 和 git 标签
-3. 不会发布到 crates.io
+2. 合并此 PR 将自动发布到 crates.io、创建 GitHub release 和 git 标签
+3. 使用 Trusted Publishing，无需 API Token
 
 ---
 
@@ -77,7 +77,7 @@ git_release_body = """
 
 ---
 
-📦 **注意**: 此版本未发布到 crates.io，仅作为 GitHub release 提供。
+📦 **Crates.io**: 此版本已发布到 [crates.io](https://crates.io/crates/strict-num-extended)。
 """
 
 # 主包配置

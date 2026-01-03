@@ -49,6 +49,7 @@ jobs:
 
     permissions:
       contents: write
+      id-token: write  # 用于 Trusted Publishing 发布到 crates.io
 
     steps:
       - name: Checkout repository
