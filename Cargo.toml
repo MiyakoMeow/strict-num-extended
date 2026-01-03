@@ -8,6 +8,13 @@ edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
 
+# Crates.io Publish Config
+description = "Type-safe constrained floating-point types for Rust - eliminate NaN and infinity at compile time"
+repository = "https://github.com/MiyakoMeow/strict-num-extended"
+keywords = ["float", "constrained", "type-safe", "math", "validation"]
+categories = ["mathematics", "data-structures"]
+readme = "README.md"
+
 [workspace.dependencies]
 # Internal dependencies
 strict-num-extended-macros = { path = "macros" }
