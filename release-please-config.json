@@ -1,17 +1,10 @@
 {
-  "bootstrap-sha": "c895e98d6b99c1dd30eccb5c7ad6526add5a81fb",
-  "release-type": "rust",
-  "packages": {
-    ".": {
-      "package-name": "strict-num-extended",
-      "bump-minor-pre-major": true
-    }
+  ".": {
+    "package-name": "strict-num-extended",
+    "bump-minor-pre-major": true
   },
-  "extra-files": [
-    {
-      "type": "toml",
-      "path": "Cargo.toml",
-      "jsonpath": "$.workspace.package.version"
-    }
-  ]
+  "macros": {
+    "package-name": "strict-num-extended-macros",
+    "bump-minor-pre-major": true
+  }
 }
