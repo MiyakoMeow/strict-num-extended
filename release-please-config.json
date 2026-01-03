@@ -2,5 +2,9 @@
   ".": {
     "package-name": "strict-num-extended",
     "bump-minor-pre-major": true
+  },
+  "macros": {
+    "package-name": "strict-num-extended-macros",
+    "bump-minor-pre-major": true
   }
 }
