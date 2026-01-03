@@ -18,12 +18,6 @@ fn to_uppercase_ident(ident: &Ident) -> String {
 }
 
 /// Generates type alias identifier for type and floating-point type
-///
-/// # Example
-/// ```rust
-/// let alias = make_type_alias(&format_ident!("Fin"), &format_ident!("f32"));
-/// assert_eq!(alias.to_string(), "FinF32");
-/// ```
 fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, to_uppercase_ident(float_type))
 }
