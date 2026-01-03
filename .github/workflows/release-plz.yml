@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Job 1: 创建 Release PR
+  # Job 1: Create Release PR
   release-plz-pr:
     name: Release-plz PR
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Job 2: 创建 Release（合并 PR 后触发）
+  # Job 2: Create Release (triggered after merging PR)
   release-plz-release:
     name: Release-plz release
     runs-on: ubuntu-latest
@@ -49,7 +49,7 @@ jobs:
 
     permissions:
       contents: write
-      id-token: write  # 用于 Trusted Publishing 发布到 crates.io
+      id-token: write  # For Trusted Publishing to crates.io
 
     steps:
       - name: Checkout repository
