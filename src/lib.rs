@@ -7,6 +7,7 @@
 //! - `NonZeroPositiveF32` 和 `NonZeroPositiveF64`：非零正值浮点数（> 0，有限值）
 //! - `NegativeF32` 和 `NegativeF64`：非正值浮点数（<= 0，有限值）
 //! - `NonZeroNegativeF32` 和 `NonZeroNegativeF64`：非零负值浮点数（< 0，有限值）
+//! - `NormalizedF32` 和 `NormalizedF64`：标准化浮点数（0.0 <= value <= 1.0，有限值）
 //!
 //! ## 可组合约束
 //!
@@ -26,7 +27,7 @@
 //! ```
 //! use strict_num_extended::{
 //!     FinF32, PositiveF32, NonZeroF32, NonZeroPositiveF32,
-//!     NegativeF32, NonZeroNegativeF32
+//!     NegativeF32, NonZeroNegativeF32, NormalizedF32
 //! };
 //!
 //! let finite = FinF32::new(3.14).unwrap();
@@ -35,12 +36,14 @@
 //! let non_zero_positive = NonZeroPositiveF32::new(10.0).unwrap();
 //! let negative = NegativeF32::new(-5.0).unwrap();
 //! let non_zero_negative = NonZeroNegativeF32::new(-10.0).unwrap();
+//! let normalized = NormalizedF32::new(0.75).unwrap();
 //! assert_eq!(finite.get(), 3.14);
 //! assert_eq!(positive.get(), 42.0);
 //! assert_eq!(non_zero.get(), 5.0);
 //! assert_eq!(non_zero_positive.get(), 10.0);
 //! assert_eq!(negative.get(), -5.0);
 //! assert_eq!(non_zero_negative.get(), -10.0);
+//! assert_eq!(normalized.get(), 0.75);
 //! ```
 //!
 //! # Option 版本
@@ -84,6 +87,10 @@ strict_num_extended_macros::generate_constrained_types!({
         NonZero {
             doc: "非零的浮点值（!= 0.0 && != -0.0）",
             validate: "!value.is_nan() && !value.is_infinite() && value != 0.0 && value != -0.0"
+        },
+        Normalized {
+            doc: "标准化的浮点值（0.0 <= value <= 1.0，有限值）",
+            validate: "!value.is_nan() && !value.is_infinite() && value >= 0.0 && value <= 1.0"
         }
     ],
 
@@ -94,6 +101,7 @@ strict_num_extended_macros::generate_constrained_types!({
         (Positive, [f32, f64], [Positive]),
         (Negative, [f32, f64], [Negative]),
         (NonZero, [f32, f64], [NonZero]),
+        (Normalized, [f32, f64], [Normalized]),
         // 组合约束类型
         (NonZeroPositive, [f32, f64], [Positive, NonZero]),
         (NonZeroNegative, [f32, f64], [Negative, NonZero]),
