@@ -1,13 +1,13 @@
-//! # `new_const` 方法测试
+//! # `new_const` Method Tests
 //!
-//! 测试所有类型的 `new_const` 方法
+//! Tests `new_const` method for all types
 
-// 测试代码中的浮点数严格比较是合理的，用于验证 new_const 功能
+// Strict floating-point comparisons in test code are justified for verifying new_const functionality
 #![expect(clippy::float_cmp)]
 
 use strict_num_extended::*;
 
-/// 测试 ``FinF32::new_const``
+/// Tests ``FinF32::new_const``
 mod test_finf32_new_const {
     use super::*;
 
@@ -36,7 +36,7 @@ mod test_finf32_new_const {
     }
 }
 
-/// 测试 ``PositiveF32::new_const``
+/// Tests ``PositiveF32::new_const``
 mod test_positivef32_new_const {
     use super::*;
 
@@ -53,7 +53,7 @@ mod test_positivef32_new_const {
     }
 }
 
-/// 测试 `NegativeF32::new_const`
+/// Tests `NegativeF32::new_const`
 mod test_negativef32_new_const {
     use super::*;
 
@@ -76,7 +76,7 @@ mod test_negativef32_new_const {
     }
 }
 
-/// 测试 `NonZeroF32::new_const`
+/// Tests `NonZeroF32::new_const`
 mod test_nonzerof32_new_const {
     use super::*;
 
@@ -99,7 +99,7 @@ mod test_nonzerof32_new_const {
     }
 }
 
-/// 测试 `NonZeroPositiveF32::new_const`
+/// Tests `NonZeroPositiveF32::new_const`
 mod test_nonzero_positivef32_new_const {
     use super::*;
 
@@ -116,7 +116,7 @@ mod test_nonzero_positivef32_new_const {
     }
 }
 
-/// 测试 `NonZeroNegativeF32::new_const`
+/// Tests `NonZeroNegativeF32::new_const`
 mod test_nonzero_negativef32_new_const {
     use super::*;
 
@@ -133,7 +133,7 @@ mod test_nonzero_negativef32_new_const {
     }
 }
 
-/// 测试 f64 类型的 `new_const`
+/// Tests `new_const` for f64 types
 mod test_f64_new_const {
     use super::*;
 
@@ -176,7 +176,7 @@ mod test_f64_new_const {
     }
 }
 
-/// 测试边界值
+/// Tests boundary values
 mod test_boundary_values {
     use super::*;
 
@@ -229,7 +229,7 @@ mod test_boundary_values {
     }
 }
 
-/// 测试 `NegativeNormalizedF32::new_const`
+/// Tests `NegativeNormalizedF32::new_const`
 mod test_negative_normalizedf32_new_const {
     use super::*;
 
@@ -258,7 +258,7 @@ mod test_negative_normalizedf32_new_const {
     }
 }
 
-/// 测试 `NegativeNormalizedF64::new_const`
+/// Tests `NegativeNormalizedF64::new_const`
 mod test_negative_normalizedf64_new_const {
     use super::*;
 

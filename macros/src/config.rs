@@ -43,16 +43,16 @@ pub struct TypeDef {
 
 impl Parse for TypeConfig {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        // 解析方括号内容：[ ... ]
+        // Parse bracketed content: [ ... ]
         let content;
         syn::bracketed!(content in input);
 
         let mut constraints = Vec::new();
         let mut constraint_types = Vec::new();
 
-        // 解析每个类型定义
+        // Parse each type definition
         while !content.is_empty() {
-            // 解析 (TypeName, ["条件1", "条件2", ...])
+            // Parse (TypeName, ["condition1", "condition2", ...])
             let paren_content;
             syn::parenthesized!(paren_content in content);
 
@@ -62,7 +62,7 @@ impl Parse for TypeConfig {
             let bracket_content;
             syn::bracketed!(bracket_content in &paren_content);
 
-            // 解析条件列表
+            // Parse condition list
             let mut conditions = Vec::new();
             while !bracket_content.is_empty() {
                 let expr: Expr = bracket_content.parse()?;
@@ -79,19 +79,19 @@ impl Parse for TypeConfig {
                 };
                 conditions.push(condition);
 
-                // 如果不是最后一个，解析逗号
+                // If not the last one, parse comma
                 if !bracket_content.is_empty() {
                     bracket_content.parse::<syn::Token![,]>()?;
                 }
             }
 
-            // 自动添加 is_finite 检查，然后组合所有条件（AND 逻辑）
+            // Automatically add is_finite check, then combine all conditions (AND logic)
             let finite_check = "value.is_finite()";
             let mut all_conditions = vec![finite_check.to_string()];
             all_conditions.extend(conditions.clone());
             let validate_expr = all_conditions.join(" && ");
 
-            // 生成约束定义
+            // Generate constraint definition
             let doc = generate_auto_doc(&type_name, &conditions);
             constraints.push(ConstraintDef {
                 name: type_name.clone(),
@@ -99,7 +99,7 @@ impl Parse for TypeConfig {
                 validate: validate_expr.clone(),
             });
 
-            // 生成类型定义（自动添加 f32 和 f64）
+            // Generate type definition (automatically add f32 and f64)
             let type_name_clone = type_name.clone();
             constraint_types.push(TypeDef {
                 type_name,
@@ -121,10 +121,10 @@ impl Parse for TypeConfig {
 }
 
 // ============================================================================
-// Simplified format helpers (新格式辅助函数)
+// Simplified format helpers
 // ============================================================================
 
-/// 自动生成文档
+/// Automatically generate documentation
 fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {
     let name_str = type_name.to_string();
 
