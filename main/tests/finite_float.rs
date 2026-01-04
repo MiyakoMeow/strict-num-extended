@@ -1,13 +1,13 @@
-//! # struct-num-extended 测试
+//! # struct-num-extended Tests
 //!
-//! 这个模块测试有限浮点数类型的所有功能。
+//! This module tests all functionality of finite floating-point types.
 
-// 测试代码中的浮点数严格比较、unwrap 使用和变量名覆盖是合理的
+// Strict floating-point comparisons, unwrap usage, and variable shadowing in test code are justified
 #![expect(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
 
 use strict_num_extended::*;
 
-/// 测试 `FinF32` 的基本功能
+/// Tests basic functionality of `FinF32`
 mod test_finf32 {
     use super::*;
 
@@ -47,7 +47,7 @@ mod test_finf32 {
     }
 }
 
-/// 测试 `FinF64` 的基本功能
+/// Tests basic functionality of `FinF64`
 mod test_finf64 {
     use super::*;
 
@@ -74,7 +74,7 @@ mod test_finf64 {
     }
 }
 
-/// 测试 `PositiveF32` 的基本功能
+/// Tests basic functionality of `PositiveF32`
 mod test_positivef32 {
     use super::*;
 
@@ -82,7 +82,7 @@ mod test_positivef32 {
     fn test_positivef32_new_valid() {
         assert!(PositiveF32::new(1.0).is_some());
         assert!(PositiveF32::new(0.0).is_some());
-        // Positive 现在不再允许无穷大
+        // Positive no longer allows infinity
         assert!(PositiveF32::new(f32::INFINITY).is_none());
         assert!(PositiveF32::new(f32::MAX).is_some());
     }
@@ -91,7 +91,7 @@ mod test_positivef32 {
     fn test_positivef32_new_invalid() {
         assert!(PositiveF32::new(f32::NAN).is_none());
         assert!(PositiveF32::new(-1.0).is_none());
-        // Positive 现在使用数值比较 (>= 0.0)，接受 -0.0
+        // Positive now uses numeric comparison (>= 0.0), accepts -0.0
         assert!(PositiveF32::new(-0.0).is_some());
         assert!(PositiveF32::new(f32::NEG_INFINITY).is_none());
         assert!(PositiveF32::new(f32::INFINITY).is_none());
@@ -104,7 +104,7 @@ mod test_positivef32 {
     }
 }
 
-/// 测试 `PositiveF64` 的基本功能
+/// Tests basic functionality of `PositiveF64`
 mod test_positivef64 {
     use super::*;
 
@@ -112,7 +112,7 @@ mod test_positivef64 {
     fn test_positivef64_new_valid() {
         assert!(PositiveF64::new(1.0).is_some());
         assert!(PositiveF64::new(0.0).is_some());
-        // Positive 现在不再允许无穷大
+        // Positive no longer allows infinity
         assert!(PositiveF64::new(f64::INFINITY).is_none());
         assert!(PositiveF64::new(f64::MAX).is_some());
     }
@@ -121,7 +121,7 @@ mod test_positivef64 {
     fn test_positivef64_new_invalid() {
         assert!(PositiveF64::new(f64::NAN).is_none());
         assert!(PositiveF64::new(-1.0).is_none());
-        // Positive 现在使用数值比较 (>= 0.0)，接受 -0.0
+        // Positive now uses numeric comparison (>= 0.0), accepts -0.0
         assert!(PositiveF64::new(-0.0).is_some());
         assert!(PositiveF64::new(f64::NEG_INFINITY).is_none());
         assert!(PositiveF64::new(f64::INFINITY).is_none());
@@ -134,7 +134,7 @@ mod test_positivef64 {
     }
 }
 
-/// 测试算术运算
+/// Tests arithmetic operations
 mod test_arithmetic_operations {
     use super::*;
 
@@ -247,7 +247,7 @@ mod test_arithmetic_operations {
         assert_eq!(c.get(), 10.0);
     }
 
-    // 复合运算
+    // Complex operations
     #[test]
     fn test_complex_arithmetic() {
         let a = FinF32::new(10.0).unwrap();
@@ -258,7 +258,7 @@ mod test_arithmetic_operations {
     }
 }
 
-/// 测试比较运算
+/// Tests comparison operations
 mod test_comparison_operations {
     use super::*;
 
@@ -303,7 +303,7 @@ mod test_comparison_operations {
     }
 }
 
-/// 测试类型转换
+/// Tests type conversions
 mod test_conversions {
     use super::*;
 
@@ -311,7 +311,7 @@ mod test_conversions {
     fn test_try_from_f32_to_f64() {
         let value_f32 = std::f32::consts::PI;
         let finite_64 = FinF64::try_from(value_f32).unwrap();
-        // f32::PI 转换为 f64 后的精度有限，使用适当的容差
+        // f32::PI has limited precision after conversion to f64, use appropriate tolerance
         assert!((finite_64.get() - std::f64::consts::PI).abs() < 1e-6);
     }
 
@@ -324,30 +324,30 @@ mod test_conversions {
 
     #[test]
     fn test_try_from_with_constraint_validation() {
-        // 尝试从 FinF32 转换到 PositiveF32，负值会失败
+        // Try to convert from FinF32 to PositiveF32, negative value will fail
         let finite_32 = FinF32::new(-5.0).unwrap();
         let value = finite_32.get();
         assert!(PositiveF32::new(value).is_none());
 
-        // 正值应该成功
+        // Positive value should succeed
         let finite_32 = FinF32::new(5.0).unwrap();
         let positive_32 = PositiveF32::new(finite_32.get()).unwrap();
         assert_eq!(positive_32.get(), 5.0);
 
-        // FinF32 可以接受 PositiveF32 的值
+        // FinF32 can accept PositiveF32 values
         let positive_32 = PositiveF32::new(5.0).unwrap();
         let finite_32 = FinF32::new(positive_32.get()).unwrap();
         assert_eq!(finite_32.get(), 5.0);
     }
 }
 
-/// 测试 unsafe `new_unchecked`
+/// Tests unsafe `new_unchecked`
 mod test_unchecked {
     use super::*;
 
     #[test]
     fn test_new_unchecked_valid() {
-        // 安全使用：传入满足约束的值
+        // Safe usage: passing values that satisfy constraints
         let finite = unsafe { FinF32::new_unchecked(std::f32::consts::PI) };
         assert!((finite.get() - std::f32::consts::PI).abs() < f32::EPSILON);
 
@@ -357,8 +357,8 @@ mod test_unchecked {
 
     #[test]
     fn test_new_unchecked_behavior() {
-        // unsafe 函数不会 panic，只是允许创建可能无效的值
-        // 这些测试验证了函数的存在和行为，但不测试 panic
+        // unsafe function doesn't panic, just allows creating potentially invalid values
+        // These tests verify the function's existence and behavior, but don't test panic
         let nan_value = unsafe { FinF32::new_unchecked(f32::NAN) };
         assert!(nan_value.get().is_nan());
 
@@ -370,7 +370,7 @@ mod test_unchecked {
     }
 }
 
-/// 测试 Optional 类型
+/// Tests Optional types
 mod test_optional_types {
     use super::*;
 
@@ -394,7 +394,7 @@ mod test_optional_types {
 
     #[test]
     fn test_optional_arithmetic() {
-        // 测试 Option 类型的基本操作
+        // Test basic operations on Option types
         let a: OptFinF32 = Some(FinF32::new(2.0).unwrap());
         let b: OptFinF32 = Some(FinF32::new(3.0).unwrap());
         let c: OptFinF32 = None;
@@ -403,7 +403,7 @@ mod test_optional_types {
         assert!(b.is_some());
         assert!(c.is_none());
 
-        // 测试从 Some 中提取值并进行运算
+        // Test extracting values from Some and performing operations
         if let Some(fin_a) = a
             && let Some(fin_b) = b
         {
@@ -411,12 +411,12 @@ mod test_optional_types {
             assert_eq!(result.get(), 5.0);
         }
 
-        // 测试与 None 的交互
+        // Test interaction with None
         if let Some(fin_a) = a {
             assert_eq!(fin_a.get(), 2.0);
         }
 
-        // 测试 None
+        // Test None
         assert!(c.is_none());
     }
 
@@ -425,14 +425,14 @@ mod test_optional_types {
         let some: OptFinF32 = Some(FinF32::new(std::f32::consts::PI).unwrap());
         let none: OptFinF32 = None;
 
-        // OptFinF32 可以直接作为 OptFinF64 使用（协变性）
-        // 这测试了类型别名的工作方式
+        // OptFinF32 can be used directly as OptFinF64 (covariance)
+        // This tests how type aliases work
         assert!(some.is_some());
         assert!(none.is_none());
     }
 }
 
-/// 测试边界值
+/// Tests edge cases
 mod test_edge_cases {
     use super::*;
 
@@ -493,7 +493,7 @@ mod test_edge_cases {
     }
 }
 
-/// 测试约束 trait 的工作方式
+/// Tests how constraint traits work
 mod test_constraints {
     use super::*;
 
@@ -509,14 +509,14 @@ mod test_constraints {
     fn test_positivef32_constraint() {
         assert!(PositiveF32::new(1.0).is_some());
         assert!(PositiveF32::new(0.0).is_some());
-        // Positive 现在不再允许无穷大
+        // Positive no longer allows infinity
         assert!(PositiveF32::new(f32::INFINITY).is_none());
         assert!(PositiveF32::new(-1.0).is_none());
         assert!(PositiveF32::new(f32::NAN).is_none());
     }
 }
 
-/// 测试 `NonZeroF32` 的基本功能
+/// Tests basic functionality of `NonZeroF32`
 mod test_nonzerof32 {
     use super::*;
 
@@ -545,7 +545,7 @@ mod test_nonzerof32 {
     }
 }
 
-/// 测试 `NonZeroF64` 的基本功能
+/// Tests basic functionality of `NonZeroF64`
 mod test_nonzerof64 {
     use super::*;
 
@@ -573,7 +573,7 @@ mod test_nonzerof64 {
     }
 }
 
-/// 测试 `NonZeroPositiveF32` 的基本功能
+/// Tests basic functionality of `NonZeroPositiveF32`
 mod test_nonzero_positivef32 {
     use super::*;
 
@@ -601,7 +601,7 @@ mod test_nonzero_positivef32 {
     }
 }
 
-/// 测试 `NonZeroPositiveF64` 的基本功能
+/// Tests basic functionality of `NonZeroPositiveF64`
 mod test_nonzero_positivef64 {
     use super::*;
 
@@ -629,7 +629,7 @@ mod test_nonzero_positivef64 {
     }
 }
 
-/// 测试 `NonZero` 类型的算术运算
+/// Tests arithmetic operations for `NonZero` types
 mod test_nonzero_arithmetic_operations {
     use super::*;
 
@@ -726,7 +726,7 @@ mod test_nonzero_arithmetic_operations {
     }
 }
 
-/// 测试 `NonZero` 类型的比较运算
+/// Tests comparison operations for `NonZero` types
 mod test_nonzero_comparison_operations {
     use super::*;
 
@@ -759,7 +759,7 @@ mod test_nonzero_comparison_operations {
     }
 }
 
-/// 测试 `NonZero` 类型的 Optional 类型
+/// Tests Optional types for `NonZero` types
 mod test_nonzero_optional_types {
     use super::*;
 
@@ -782,7 +782,7 @@ mod test_nonzero_optional_types {
     }
 }
 
-/// 测试 `NonZero` 类型的约束验证
+/// Tests constraint validation for `NonZero` types
 mod test_nonzero_constraints {
     use super::*;
 
@@ -809,7 +809,7 @@ mod test_nonzero_constraints {
     }
 }
 
-/// 测试 `NegativeF32` 的基本功能
+/// Tests basic functionality of `NegativeF32`
 mod test_negativef32 {
     use super::*;
 
@@ -817,10 +817,10 @@ mod test_negativef32 {
     fn test_negativef32_new_valid() {
         assert!(NegativeF32::new(-1.0).is_some());
         assert!(NegativeF32::new(f32::MIN).is_some());
-        // Negative 现在不再允许无穷大
+        // Negative no longer allows infinity
         assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
         assert!(NegativeF32::new(-0.0).is_some());
-        // Negative 现在使用数值比较 (<= 0.0)，接受 +0.0
+        // Negative now uses numeric comparison (<= 0.0), accepts +0.0
         assert!(NegativeF32::new(0.0).is_some());
     }
 
@@ -839,7 +839,7 @@ mod test_negativef32 {
     }
 }
 
-/// 测试 `NegativeF64` 的基本功能
+/// Tests basic functionality of `NegativeF64`
 mod test_negativef64 {
     use super::*;
 
@@ -847,10 +847,10 @@ mod test_negativef64 {
     fn test_negativef64_new_valid() {
         assert!(NegativeF64::new(-1.0).is_some());
         assert!(NegativeF64::new(f64::MIN).is_some());
-        // Negative 现在不再允许无穷大
+        // Negative no longer allows infinity
         assert!(NegativeF64::new(f64::NEG_INFINITY).is_none());
         assert!(NegativeF64::new(-0.0).is_some());
-        // Negative 现在使用数值比较 (<= 0.0)，接受 +0.0
+        // Negative now uses numeric comparison (<= 0.0), accepts +0.0
         assert!(NegativeF64::new(0.0).is_some());
     }
 
@@ -869,7 +869,7 @@ mod test_negativef64 {
     }
 }
 
-/// 测试 `NonZeroNegativeF32` 的基本功能
+/// Tests basic functionality of `NonZeroNegativeF32`
 mod test_nonzero_negativef32 {
     use super::*;
 
@@ -897,7 +897,7 @@ mod test_nonzero_negativef32 {
     }
 }
 
-/// 测试 `NonZeroNegativeF64` 的基本功能
+/// Tests basic functionality of `NonZeroNegativeF64`
 mod test_nonzero_negativef64 {
     use super::*;
 
@@ -925,7 +925,7 @@ mod test_nonzero_negativef64 {
     }
 }
 
-/// 测试 Negative 类型的算术运算
+/// Tests arithmetic operations for Negative types
 mod test_negative_arithmetic_operations {
     use super::*;
 
@@ -948,8 +948,8 @@ mod test_negative_arithmetic_operations {
 
     #[test]
     fn test_negativef32_mul() {
-        // 负数乘以负数会得到正数，但这违反了 Negative 类型约束
-        // 因此我们只测试加法和减法
+        // Multiplying negative by negative gives positive, which violates Negative type constraint
+        // So we only test addition and subtraction
         let a = NegativeF32::new(-4.0).unwrap();
         let b = NegativeF32::new(-3.0).unwrap();
         let c = a + b;
@@ -958,8 +958,8 @@ mod test_negative_arithmetic_operations {
 
     #[test]
     fn test_negativef32_div() {
-        // 负数除以负数会得到正数，但这违反了 Negative 类型约束
-        // 因此我们只测试加法和减法
+        // Dividing negative by negative gives positive, which violates Negative type constraint
+        // So we only test addition and subtraction
         let a = NegativeF32::new(-12.0).unwrap();
         let b = NegativeF32::new(-3.0).unwrap();
         let c = a - b;
@@ -977,8 +977,8 @@ mod test_negative_arithmetic_operations {
 
     #[test]
     fn test_nonzero_negativef32_mul() {
-        // 非零负数乘以非零负数会得到正数，违反了约束
-        // 因此我们只测试加法和减法
+        // Multiplying non-zero negative by non-zero negative gives positive, violates constraint
+        // So we only test addition and subtraction
         let a = NonZeroNegativeF32::new(-4.0).unwrap();
         let b = NonZeroNegativeF32::new(-3.0).unwrap();
         let c = a + b;
@@ -987,8 +987,8 @@ mod test_negative_arithmetic_operations {
 
     #[test]
     fn test_nonzero_negativef32_div() {
-        // 非零负数除以非零负数会得到正数，违反了约束
-        // 因此我们只测试加法和减法
+        // Dividing non-zero negative by non-zero negative gives positive, violates constraint
+        // So we only test addition and subtraction
         let a = NonZeroNegativeF32::new(-12.0).unwrap();
         let b = NonZeroNegativeF32::new(-3.0).unwrap();
         let c = a - b;
@@ -1006,8 +1006,8 @@ mod test_negative_arithmetic_operations {
 
     #[test]
     fn test_negativef64_mul() {
-        // 负数乘以负数会得到正数，违反了约束
-        // 因此我们只测试加法和减法
+        // Multiplying negative by negative gives positive, violates constraint
+        // So we only test addition and subtraction
         let a = NegativeF64::new(-2.5).unwrap();
         let b = NegativeF64::new(-4.0).unwrap();
         let c = a + b;
@@ -1025,8 +1025,8 @@ mod test_negative_arithmetic_operations {
 
     #[test]
     fn test_nonzero_negativef64_mul() {
-        // 非零负数乘以非零负数会得到正数，违反了约束
-        // 因此我们只测试加法和减法
+        // Multiplying non-zero negative by non-zero negative gives positive, violates constraint
+        // So we only test addition and subtraction
         let a = NonZeroNegativeF64::new(-2.5).unwrap();
         let b = NonZeroNegativeF64::new(-4.0).unwrap();
         let c = a + b;
@@ -1034,7 +1034,7 @@ mod test_negative_arithmetic_operations {
     }
 }
 
-/// 测试 Negative 类型的比较运算
+/// Tests comparison operations for Negative types
 mod test_negative_comparison_operations {
     use super::*;
 
@@ -1067,7 +1067,7 @@ mod test_negative_comparison_operations {
     }
 }
 
-/// 测试 Negative 类型的 Optional 类型
+/// Tests Optional types for Negative types
 mod test_negative_optional_types {
     use super::*;
 
@@ -1090,7 +1090,7 @@ mod test_negative_optional_types {
     }
 }
 
-/// 测试 Negative 类型的约束验证
+/// Tests constraint validation for Negative types
 mod test_negative_constraints {
     use super::*;
 
@@ -1098,10 +1098,10 @@ mod test_negative_constraints {
     fn test_negativef32_constraint() {
         assert!(NegativeF32::new(-1.0).is_some());
         assert!(NegativeF32::new(f32::MIN).is_some());
-        // Negative 现在不再允许无穷大
+        // Negative no longer allows infinity
         assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
         assert!(NegativeF32::new(-0.0).is_some());
-        // Negative 现在使用数值比较 (<= 0.0)，接受 +0.0
+        // Negative now uses numeric comparison (<= 0.0), accepts +0.0
         assert!(NegativeF32::new(0.0).is_some());
         assert!(NegativeF32::new(f32::NAN).is_none());
         assert!(NegativeF32::new(1.0).is_none());
@@ -1121,18 +1121,18 @@ mod test_negative_constraints {
     }
 }
 
-/// 测试 `NegativeNormalizedF32` 的基本功能
+/// Tests basic functionality of `NegativeNormalizedF32`
 mod test_negative_normalizedf32 {
     use super::*;
 
     #[test]
     fn test_negative_normalizedf32_new_valid() {
-        // 边界值
+        // Boundary values
         assert!(NegativeNormalizedF32::new(-1.0).is_some());
         assert!(NegativeNormalizedF32::new(0.0).is_some());
         assert!(NegativeNormalizedF32::new(-0.0).is_some());
 
-        // 中间值
+        // Middle values
         assert!(NegativeNormalizedF32::new(-0.5).is_some());
         assert!(NegativeNormalizedF32::new(-0.75).is_some());
         assert!(NegativeNormalizedF32::new(-0.001).is_some());
@@ -1141,17 +1141,17 @@ mod test_negative_normalizedf32 {
 
     #[test]
     fn test_negative_normalizedf32_new_invalid() {
-        // 超出下界
+        // Below lower bound
         assert!(NegativeNormalizedF32::new(-1.1).is_none());
         assert!(NegativeNormalizedF32::new(-2.0).is_none());
         assert!(NegativeNormalizedF32::new(f32::MIN).is_none());
 
-        // 超出上界
+        // Above upper bound
         assert!(NegativeNormalizedF32::new(0.1).is_none());
         assert!(NegativeNormalizedF32::new(1.0).is_none());
         assert!(NegativeNormalizedF32::new(f32::MAX).is_none());
 
-        // 特殊值
+        // Special values
         assert!(NegativeNormalizedF32::new(f32::NAN).is_none());
         assert!(NegativeNormalizedF32::new(f32::INFINITY).is_none());
         assert!(NegativeNormalizedF32::new(f32::NEG_INFINITY).is_none());
@@ -1164,17 +1164,17 @@ mod test_negative_normalizedf32 {
     }
 }
 
-/// 测试 `NegativeNormalizedF64` 的基本功能
+/// Tests basic functionality of `NegativeNormalizedF64`
 mod test_negative_normalizedf64 {
     use super::*;
 
     #[test]
     fn test_negative_normalizedf64_new_valid() {
-        // 边界值
+        // Boundary values
         assert!(NegativeNormalizedF64::new(-1.0).is_some());
         assert!(NegativeNormalizedF64::new(0.0).is_some());
 
-        // 中间值
+        // Middle values
         assert!(NegativeNormalizedF64::new(-0.5).is_some());
         assert!(NegativeNormalizedF64::new(-0.75).is_some());
     }
