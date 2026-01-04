@@ -359,29 +359,6 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                     });
                 }
             }
-            TypeDef::Combined {
-                type_name,
-                float_types,
-                constraints,
-            } => {
-                // Combined constraint type aliases
-                for float_type in float_types {
-                    let alias_name = make_type_alias(type_name, float_type);
-
-                    // Build constraint tuple
-                    let constraint_types: Vec<_> = constraints
-                        .iter()
-                        .map(|c| quote! { #c<#float_type> })
-                        .collect();
-
-                    aliases.push(quote! {
-                        #[doc = concat!(
-                            stringify!(#type_name), " constrained ", stringify!(#float_type), " value"
-                        )]
-                        pub type #alias_name = Constrained<#float_type, (#(#constraint_types),*)>;
-                    });
-                }
-            }
         }
     }
 
@@ -446,56 +423,6 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                             #[must_use]
                             pub const fn new_const(value: #float_type) -> Self {
                                 if #validate {
-                                    unsafe { Self::new_unchecked(value) }
-                                } else {
-                                    panic!("Value does not satisfy the constraint");
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-            TypeDef::Combined {
-                type_name,
-                float_types,
-                constraints,
-            } => {
-                // Generate for combined constraint types
-                for float_type in float_types {
-                    let type_alias = make_type_alias(type_name, float_type);
-
-                    // Collect all constraint validation conditions
-                    let mut checks = Vec::new();
-                    for constraint_name in constraints {
-                        let constraint_def = config
-                            .constraints
-                            .iter()
-                            .find(|c| &c.name == constraint_name)
-                            .expect("Constraint definition not found");
-
-                        let validate = parse_validate_expr(
-                            &constraint_def.validate,
-                            &constraint_def.name.to_string(),
-                        );
-                        checks.push(validate);
-                    }
-
-                    // Combine all check conditions
-                    let combined_check = checks
-                        .iter()
-                        .fold(quote! { true }, |acc, check| quote! { #acc && #check });
-
-                    impls.push(quote! {
-                        impl #type_alias {
-                            /// Creates a value at compile time
-                            ///
-                            /// # Panics
-                            ///
-                            /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
-                            #[inline]
-                            #[must_use]
-                            pub const fn new_const(value: #float_type) -> Self {
-                                if #combined_check {
                                     unsafe { Self::new_unchecked(value) }
                                 } else {
                                     panic!("Value does not satisfy the constraint");

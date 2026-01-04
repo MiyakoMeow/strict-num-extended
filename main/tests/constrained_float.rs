@@ -818,7 +818,8 @@ mod test_negativef32 {
         // Negative 现在不再允许无穷大
         assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
         assert!(NegativeF32::new(-0.0).is_some());
-        assert!(NegativeF32::new(0.0).is_some()); // 0.0 对 Negative 是有效的
+        // Negative 使用 is_sign_negative()，0.0 不是负数
+        assert!(NegativeF32::new(0.0).is_none());
     }
 
     #[test]
@@ -847,7 +848,8 @@ mod test_negativef64 {
         // Negative 现在不再允许无穷大
         assert!(NegativeF64::new(f64::NEG_INFINITY).is_none());
         assert!(NegativeF64::new(-0.0).is_some());
-        assert!(NegativeF64::new(0.0).is_some()); // 0.0 对 Negative 是有效的
+        // Negative 使用 is_sign_negative()，0.0 不是负数
+        assert!(NegativeF64::new(0.0).is_none());
     }
 
     #[test]
@@ -1097,7 +1099,8 @@ mod test_negative_constraints {
         // Negative 现在不再允许无穷大
         assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
         assert!(NegativeF32::new(-0.0).is_some());
-        assert!(NegativeF32::new(0.0).is_some()); // 0.0 对 Negative 是有效的
+        // Negative 使用 is_sign_negative()，0.0 不是负数
+        assert!(NegativeF32::new(0.0).is_none());
         assert!(NegativeF32::new(f32::NAN).is_none());
         assert!(NegativeF32::new(1.0).is_none());
         assert!(NegativeF32::new(f32::INFINITY).is_none());
