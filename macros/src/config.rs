@@ -156,7 +156,7 @@ fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {
         "NegativeNormalized" => "Negative normalized floating-point value (-1.0 <= value <= 0.0)",
         "NonZeroPositive" => "Non-zero positive floating-point value (> 0, finite)",
         "NonZeroNegative" => "Non-zero negative floating-point value (< 0, finite)",
-        _ => &format!("Constrained floating-point value: {}", name_str),
+        _ => &format!("Finite floating-point value: {}", name_str),
     };
 
     let conditions_str = conditions.join(" && ");

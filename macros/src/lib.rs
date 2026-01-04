@@ -11,8 +11,8 @@ mod generator;
 
 use config::TypeConfig;
 use generator::{
-    generate_arithmetic_impls, generate_comparison_traits, generate_constrained_struct,
-    generate_constraint_markers, generate_constraint_trait, generate_new_const_methods,
+    generate_arithmetic_impls, generate_comparison_traits, generate_constraint_markers,
+    generate_constraint_trait, generate_finite_float_struct, generate_new_const_methods,
     generate_type_aliases,
 };
 
@@ -25,7 +25,7 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let mut all_code = vec![
         generate_constraint_trait(),
         generate_constraint_markers(&config),
-        generate_constrained_struct(),
+        generate_finite_float_struct(),
         generate_comparison_traits(),
     ];
 

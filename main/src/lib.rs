@@ -1,8 +1,8 @@
 #![allow(clippy::manual_range_contains)]
 
-//! # Constrained Floating-Point Types
+//! # Finite Floating-Point Types
 //!
-//! This module provides constrained floating-point types. All types guarantee finite values
+//! This module provides finite floating-point types. All types guarantee finite values
 //! (excluding NaN and infinity) **automatically** - no need to manually specify `is_finite()`:
 //! - `FinF32` and `FinF64`: Finite floating-point numbers (excludes NaN and infinity)
 //! - `PositiveF32` and `PositiveF64`: Non-negative floating-point numbers (>= 0, finite)

@@ -1,6 +1,6 @@
 //! # struct-num-extended 测试
 //!
-//! 这个模块测试受约束浮点数类型的所有功能。
+//! 这个模块测试有限浮点数类型的所有功能。
 
 // 测试代码中的浮点数严格比较、unwrap 使用和变量名覆盖是合理的
 #![expect(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
@@ -37,7 +37,7 @@ mod test_finf32 {
     #[test]
     fn test_finf32_debug() {
         let finite = FinF32::new(1.5).unwrap();
-        assert!(format!("{:?}", finite).contains("Constrained"));
+        assert!(format!("{:?}", finite).contains("FiniteFloat"));
     }
 
     #[test]

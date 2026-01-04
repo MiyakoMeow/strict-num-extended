@@ -161,18 +161,18 @@ pub fn generate_tuple_constraints() -> TokenStream2 {
     }
 }
 
-/// Generates Constrained struct and basic methods.
-pub fn generate_constrained_struct() -> TokenStream2 {
+/// Generates `FiniteFloat` struct and basic methods.
+pub fn generate_finite_float_struct() -> TokenStream2 {
     quote! {
-        /// Generic constrained floating-point structure
+        /// Generic finite floating-point structure
         #[derive(Clone, Copy)]
-        pub struct Constrained<T, V> {
+        pub struct FiniteFloat<T, V> {
             value: T,
             phantom: std::marker::PhantomData<V>,
         }
 
-        impl<T: std::fmt::Display + Copy, V: Constraint<Base = T>> Constrained<T, V> {
-            /// Creates a new constrained floating-point number
+        impl<T: std::fmt::Display + Copy, V: Constraint<Base = T>> FiniteFloat<T, V> {
+            /// Creates a new finite floating-point number
             ///
             /// # Example
             ///
@@ -192,7 +192,7 @@ pub fn generate_constrained_struct() -> TokenStream2 {
                 })
             }
 
-            /// Unsafely creates a constrained floating-point number (no validation)
+            /// Unsafely creates a finite floating-point number (no validation)
             ///
             /// # Safety
             ///
@@ -258,38 +258,38 @@ pub fn generate_comparison_traits() -> TokenStream2 {
         use std::ops::{Add, Sub, Mul, Div};
 
         // Comparison operation implementations
-        impl<T: PartialEq, V> PartialEq for Constrained<T, V> {
+        impl<T: PartialEq, V> PartialEq for FiniteFloat<T, V> {
             fn eq(&self, other: &Self) -> bool {
                 self.value == other.value
             }
         }
 
-        impl<T: PartialEq, V> Eq for Constrained<T, V> {}
+        impl<T: PartialEq, V> Eq for FiniteFloat<T, V> {}
 
-        impl<T: PartialOrd, V> Ord for Constrained<T, V> {
+        impl<T: PartialOrd, V> Ord for FiniteFloat<T, V> {
             fn cmp(&self, other: &Self) -> Ordering {
                 self.value
                     .partial_cmp(&other.value)
-                    .expect("Constrained values should always be comparable")
+                    .expect("FiniteFloat values should always be comparable")
             }
         }
 
-        impl<T: PartialOrd, V> PartialOrd for Constrained<T, V> {
+        impl<T: PartialOrd, V> PartialOrd for FiniteFloat<T, V> {
             fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
                 Some(self.cmp(other))
             }
         }
 
         // Formatting implementations
-        impl<T: fmt::Display, V> fmt::Display for Constrained<T, V> {
+        impl<T: fmt::Display, V> fmt::Display for FiniteFloat<T, V> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.value)
             }
         }
 
-        impl<T: fmt::Debug, V> fmt::Debug for Constrained<T, V> {
+        impl<T: fmt::Debug, V> fmt::Debug for FiniteFloat<T, V> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "Constrained({:?})", self.value)
+                write!(f, "FiniteFloat({:?})", self.value)
             }
         }
     }
@@ -312,7 +312,7 @@ pub fn generate_arithmetic_impls(_config: &TypeConfig) -> TokenStream2 {
         let method_ident = Ident::new(method_name, Span::call_site());
 
         impls.push(quote! {
-            impl<T, V> #trait_ident for Constrained<T, V>
+            impl<T, V> #trait_ident for FiniteFloat<T, V>
             where
                 T: std::fmt::Display + Copy + #trait_ident<Output = T>,
                 V: Constraint<Base = T>,
@@ -353,9 +353,9 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
 
                     aliases.push(quote! {
                         #[doc = concat!(
-                            stringify!(#type_name), " constrained ", stringify!(#float_type), " value"
+                            stringify!(#type_name), " finite ", stringify!(#float_type), " value"
                         )]
-                        pub type #alias_name = Constrained<#float_type, #constraint_name<#float_type>>;
+                        pub type #alias_name = FiniteFloat<#float_type, #constraint_name<#float_type>>;
                     });
                 }
             }
