@@ -29,13 +29,10 @@
 //!
 //! # Examples
 //!
-//! ## Basic Creation and Validation
+//! ## Quick Overview
 //!
 //! ```
-//! use strict_num_extended::{
-//!     FinF32, PositiveF32, NonZeroF32, NonZeroPositiveF32,
-//!     NegativeF32, NonZeroNegativeF32, NormalizedF32, NegativeNormalizedF32
-//! };
+//! use strict_num_extended::{FinF32, PositiveF32, NonZeroPositiveF32};
 //!
 //! // Create finite floating-point numbers (no NaN or infinity)
 //! let finite = FinF32::new(3.14).unwrap();
@@ -52,13 +49,6 @@
 //! // Non-zero positive numbers (> 0)
 //! let nonzero_pos = NonZeroPositiveF32::new(10.0).unwrap();
 //! assert!(nonzero_pos.get() > 0.0);
-//!
-//! // Various constraint types
-//! let non_zero = NonZeroF32::new(5.0).unwrap();
-//! let negative = NegativeF32::new(-5.0).unwrap();
-//! let non_zero_negative = NonZeroNegativeF32::new(-10.0).unwrap();
-//! let normalized = NormalizedF32::new(0.75).unwrap();
-//! let negative_normalized = NegativeNormalizedF32::new(-0.75).unwrap();
 //! ```
 //!
 //! ## Arithmetic Operations
