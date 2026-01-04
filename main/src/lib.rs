@@ -84,6 +84,6 @@ strict_num_extended_macros::generate_finite_float_types!([
     (NonZero, ["value != 0.0"]),
     (Normalized, ["value >= 0.0", "value <= 1.0"]),
     (NegativeNormalized, ["value >= -1.0", "value <= 0.0"]),
-    (NonZeroPositive, ["value >= 0.0", "value != 0.0"]),
-    (NonZeroNegative, ["value <= 0.0", "value != 0.0"]),
+    (NonZeroPositive, ["value > 0.0"]),
+    (NonZeroNegative, ["value < 0.0"]),
 ]);
