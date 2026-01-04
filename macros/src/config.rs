@@ -28,32 +28,13 @@ pub struct ConstraintDef {
 }
 
 /// Type definition (single constraint).
-pub enum TypeDef {
-    /// Single constraint type.
-    Single {
-        /// Type name.
-        type_name: Ident,
-        /// List of floating-point types.
-        float_types: Vec<Ident>,
-        /// Constraint name.
-        constraint_name: Ident,
-    },
-}
-
-impl TypeDef {
-    /// Get the type name
-    pub const fn type_name(&self) -> &Ident {
-        match self {
-            TypeDef::Single { type_name, .. } => type_name,
-        }
-    }
-
-    /// Get the list of floating-point types
-    pub fn float_types(&self) -> &[Ident] {
-        match self {
-            TypeDef::Single { float_types, .. } => float_types,
-        }
-    }
+pub struct TypeDef {
+    /// Type name.
+    pub type_name: Ident,
+    /// List of floating-point types.
+    pub float_types: Vec<Ident>,
+    /// Constraint name.
+    pub constraint_name: Ident,
 }
 
 // ============================================================================
@@ -120,7 +101,7 @@ impl Parse for TypeConfig {
 
             // 生成类型定义（自动添加 f32 和 f64）
             let type_name_clone = type_name.clone();
-            constraint_types.push(TypeDef::Single {
+            constraint_types.push(TypeDef {
                 type_name,
                 float_types: vec![
                     Ident::new("f32", Span::call_site()),

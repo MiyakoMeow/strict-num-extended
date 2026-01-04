@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 use syn::Expr;
 
-use crate::config::{TypeConfig, TypeDef};
+use crate::config::TypeConfig;
 
 // ============================================================================
 // Helper functions
@@ -341,32 +341,26 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
     let mut option_aliases = Vec::new();
 
     for type_def in &config.constraint_types {
-        match type_def {
-            TypeDef::Single {
-                type_name,
-                float_types,
-                constraint_name,
-            } => {
-                // Single constraint type aliases
-                for float_type in float_types {
-                    let alias_name = make_type_alias(type_name, float_type);
+        // Single constraint type aliases
+        let type_name = &type_def.type_name;
+        let constraint_name = &type_def.constraint_name;
 
-                    aliases.push(quote! {
-                        #[doc = concat!(
-                            stringify!(#type_name), " finite ", stringify!(#float_type), " value"
-                        )]
-                        pub type #alias_name = FiniteFloat<#float_type, #constraint_name<#float_type>>;
-                    });
-                }
-            }
+        for float_type in &type_def.float_types {
+            let alias_name = make_type_alias(type_name, float_type);
+
+            aliases.push(quote! {
+                #[doc = concat!(
+                    stringify!(#type_name), " finite ", stringify!(#float_type), " value"
+                )]
+                pub type #alias_name = FiniteFloat<#float_type, #constraint_name<#float_type>>;
+            });
         }
     }
 
     // Option type aliases (always generate)
     for type_def in &config.constraint_types {
-        // Use TypeDef helper methods to get type name and floating-point types
-        let type_name = type_def.type_name();
-        let float_types = type_def.float_types();
+        let type_name = &type_def.type_name;
+        let float_types = &type_def.float_types;
 
         for float_type in float_types {
             let type_alias = make_type_alias(type_name, float_type);
@@ -393,45 +387,41 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
     for type_def in &config.constraint_types {
-        match type_def {
-            TypeDef::Single {
-                type_name,
-                float_types,
-                constraint_name,
-            } => {
-                // Generate for single constraint types
-                let constraint_def = config
-                    .constraints
-                    .iter()
-                    .find(|c| &c.name == constraint_name)
-                    .expect("Constraint definition not found");
+        // Generate for single constraint types
+        let type_name = &type_def.type_name;
+        let float_types = &type_def.float_types;
+        let constraint_name = &type_def.constraint_name;
 
-                let validate =
-                    parse_validate_expr(&constraint_def.validate, &constraint_def.name.to_string());
+        let constraint_def = config
+            .constraints
+            .iter()
+            .find(|c| &c.name == constraint_name)
+            .expect("Constraint definition not found");
 
-                for float_type in float_types {
-                    let type_alias = make_type_alias(type_name, float_type);
+        let validate =
+            parse_validate_expr(&constraint_def.validate, &constraint_def.name.to_string());
 
-                    impls.push(quote! {
-                        impl #type_alias {
-                            /// Creates a value at compile time
-                            ///
-                            /// # Panics
-                            ///
-                            /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
-                            #[inline]
-                            #[must_use]
-                            pub const fn new_const(value: #float_type) -> Self {
-                                if #validate {
-                                    unsafe { Self::new_unchecked(value) }
-                                } else {
-                                    panic!("Value does not satisfy the constraint");
-                                }
-                            }
+        for float_type in float_types {
+            let type_alias = make_type_alias(type_name, float_type);
+
+            impls.push(quote! {
+                impl #type_alias {
+                    /// Creates a value at compile time
+                    ///
+                    /// # Panics
+                    ///
+                    /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
+                    #[inline]
+                    #[must_use]
+                    pub const fn new_const(value: #float_type) -> Self {
+                        if #validate {
+                            unsafe { Self::new_unchecked(value) }
+                        } else {
+                            panic!("Value does not satisfy the constraint");
                         }
-                    });
+                    }
                 }
-            }
+            });
         }
     }
 
