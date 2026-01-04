@@ -5,9 +5,9 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Rust Edition: 2024](https://img.shields.io/badge/Rust-Edition%202024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/index.html)
 
-**Type-safe constrained floating-point numbers for Rust**
+**Type-safe finite floating-point numbers for Rust**
 
-A Rust library providing zero-cost constrained floating-point types through the type system, guaranteeing safety by eliminating NaN and infinity values at compile time.
+A Rust library providing zero-cost finite floating-point types through the type system, guaranteeing safety by eliminating NaN and infinity values at compile time.
 
 ## Features
 

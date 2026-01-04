@@ -1,9 +1,9 @@
 #![allow(clippy::manual_range_contains)]
 
-//! # Constrained Floating-Point Types
+//! # Finite Floating-Point Types
 //!
-//! This module provides constrained floating-point types. All types guarantee finite values
-//! (excluding NaN and infinity) by default:
+//! This module provides finite floating-point types. All types guarantee finite values
+//! (excluding NaN and infinity) **automatically** - no need to manually specify `is_finite()`:
 //! - `FinF32` and `FinF64`: Finite floating-point numbers (excludes NaN and infinity)
 //! - `PositiveF32` and `PositiveF64`: Non-negative floating-point numbers (>= 0, finite)
 //! - `NonZeroF32` and `NonZeroF64`: Non-zero floating-point numbers (!= 0, excludes 0.0, -0.0, NaN, infinity)
@@ -77,46 +77,19 @@
 //! compile time if the value does not satisfy the constraint conditions.
 
 // Generate all code using proc_macro
-strict_num_extended_macros::generate_constrained_types!({
-    // Atomic constraint types
-    constraints: [
-        Finite {
-            doc: "Finite floating-point value (excludes NaN and infinity)",
-            validate: "!value.is_nan() && !value.is_infinite()"
-        },
-        Positive {
-            doc: "Non-negative floating-point value (>= 0, finite)",
-            validate: "!value.is_nan() && !value.is_infinite() && !value.is_sign_negative()"
-        },
-        Negative {
-            doc: "Non-positive floating-point value (<= 0, finite)",
-            validate: "!(value.is_nan() || value.is_infinite() || (value.is_sign_positive() && value != 0.0))"
-        },
-        NonZero {
-            doc: "Non-zero floating-point value (!= 0.0 && != -0.0)",
-            validate: "!value.is_nan() && !value.is_infinite() && value != 0.0 && value != -0.0"
-        },
-        Normalized {
-            doc: "Normalized floating-point value (0.0 <= value <= 1.0, finite)",
-            validate: "!value.is_nan() && !value.is_infinite() && value >= 0.0 && value <= 1.0"
-        },
-        NegativeNormalized {
-            doc: "Negative normalized floating-point value (-1.0 <= value <= 0.0, finite)",
-            validate: "!value.is_nan() && !value.is_infinite() && value >= -1.0 && value <= 0.0"
-        }
-    ],
-
-    // Type definitions (uniformly use square brackets)
-    constraint_types: [
-        // Single constraint types
-        (Fin, [f32, f64], [Finite]),
-        (Positive, [f32, f64], [Positive]),
-        (Negative, [f32, f64], [Negative]),
-        (NonZero, [f32, f64], [NonZero]),
-        (Normalized, [f32, f64], [Normalized]),
-        (NegativeNormalized, [f32, f64], [NegativeNormalized]),
-        // Combined constraint types
-        (NonZeroPositive, [f32, f64], [Positive, NonZero]),
-        (NonZeroNegative, [f32, f64], [Negative, NonZero]),
-    ]
-});
+strict_num_extended_macros::generate_finite_float_types!([
+    (Fin, []),
+    (Positive, ["value.is_sign_positive()"]),
+    (Negative, ["value.is_sign_negative()"]),
+    (NonZero, ["value != 0.0"]),
+    (Normalized, ["value >= 0.0", "value <= 1.0"]),
+    (NegativeNormalized, ["value >= -1.0", "value <= 0.0"]),
+    (
+        NonZeroPositive,
+        ["value.is_sign_positive()", "value != 0.0"]
+    ),
+    (
+        NonZeroNegative,
+        ["value.is_sign_negative()", "value != 0.0"]
+    ),
+]);

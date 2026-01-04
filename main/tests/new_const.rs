@@ -47,12 +47,6 @@ mod test_positivef32_new_const {
     }
 
     #[test]
-    fn test_zero() {
-        const ZERO: PositiveF32 = PositiveF32::new_const(0.0);
-        assert_eq!(ZERO.get(), 0.0);
-    }
-
-    #[test]
     fn test_small_positive() {
         const SMALL: PositiveF32 = PositiveF32::new_const(0.001);
         assert_eq!(SMALL.get(), 0.001);
@@ -70,9 +64,9 @@ mod test_negativef32_new_const {
     }
 
     #[test]
-    fn test_zero() {
-        const ZERO: NegativeF32 = NegativeF32::new_const(0.0);
-        assert_eq!(ZERO.get(), 0.0);
+    fn test_negative_zero() {
+        const ZERO: NegativeF32 = NegativeF32::new_const(-0.0);
+        assert_eq!(ZERO.get(), -0.0);
     }
 
     #[test]

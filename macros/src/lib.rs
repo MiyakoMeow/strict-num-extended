@@ -11,21 +11,21 @@ mod generator;
 
 use config::TypeConfig;
 use generator::{
-    generate_arithmetic_impls, generate_comparison_traits, generate_constrained_struct,
-    generate_constraint_markers, generate_constraint_trait, generate_new_const_methods,
+    generate_arithmetic_impls, generate_comparison_traits, generate_constraint_markers,
+    generate_constraint_trait, generate_finite_float_struct, generate_new_const_methods,
     generate_type_aliases,
 };
 
-/// Main macro: generates all code based on configuration.
+/// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
-pub fn generate_constrained_types(input: TokenStream) -> TokenStream {
+pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let config = parse_macro_input!(input as TypeConfig);
 
     // Collect all code to be generated
     let mut all_code = vec![
         generate_constraint_trait(),
         generate_constraint_markers(&config),
-        generate_constrained_struct(),
+        generate_finite_float_struct(),
         generate_comparison_traits(),
     ];
 
