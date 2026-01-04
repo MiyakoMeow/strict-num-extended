@@ -79,17 +79,11 @@
 // Generate all code using proc_macro
 strict_num_extended_macros::generate_finite_float_types!([
     (Fin, []),
-    (Positive, ["value.is_sign_positive()"]),
-    (Negative, ["value.is_sign_negative()"]),
+    (Positive, ["value >= 0.0"]),
+    (Negative, ["value <= 0.0"]),
     (NonZero, ["value != 0.0"]),
     (Normalized, ["value >= 0.0", "value <= 1.0"]),
     (NegativeNormalized, ["value >= -1.0", "value <= 0.0"]),
-    (
-        NonZeroPositive,
-        ["value.is_sign_positive()", "value != 0.0"]
-    ),
-    (
-        NonZeroNegative,
-        ["value.is_sign_negative()", "value != 0.0"]
-    ),
+    (NonZeroPositive, ["value > 0.0"]),
+    (NonZeroNegative, ["value < 0.0"]),
 ]);
