@@ -110,16 +110,5 @@ strict_num_extended_macros::generate_constrained_types!({
         // Combined constraint types
         (NonZeroPositive, [f32, f64], [Positive, NonZero]),
         (NonZeroNegative, [f32, f64], [Negative, NonZero]),
-    ],
-
-    // Feature configuration
-    features: {
-        impl_traits: [
-            PartialEq, Eq, PartialOrd, Ord,
-            Display, Debug,
-            Add, Sub, Mul, Div
-        ],
-        generate_option_types: true,
-        generate_new_const: true
-    }
+    ]
 });

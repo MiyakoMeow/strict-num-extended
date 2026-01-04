@@ -296,21 +296,16 @@ pub fn generate_comparison_traits() -> TokenStream2 {
 }
 
 /// Generates arithmetic operation implementations.
-pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
+pub fn generate_arithmetic_impls(_config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
-    let traits_to_impl: Vec<_> = config
-        .features
-        .impl_traits
-        .iter()
-        .filter_map(|t| match t.to_string().as_str() {
-            "Add" => Some(("Add", "add", quote! { + })),
-            "Sub" => Some(("Sub", "sub", quote! { - })),
-            "Mul" => Some(("Mul", "mul", quote! { * })),
-            "Div" => Some(("Div", "div", quote! { / })),
-            _ => None,
-        })
-        .collect();
+    // Always implement all arithmetic operations
+    let traits_to_impl: &[(&str, &str, TokenStream2)] = &[
+        ("Add", "add", quote! { + }),
+        ("Sub", "sub", quote! { - }),
+        ("Mul", "mul", quote! { * }),
+        ("Div", "div", quote! { / }),
+    ];
 
     for (trait_name, method_name, op) in traits_to_impl {
         let trait_ident = Ident::new(trait_name, Span::call_site());
@@ -390,22 +385,20 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
         }
     }
 
-    // Option type aliases
-    if config.features.generate_option_types {
-        for type_def in &config.constraint_types {
-            // Use TypeDef helper methods to get type name and floating-point types
-            let type_name = type_def.type_name();
-            let float_types = type_def.float_types();
+    // Option type aliases (always generate)
+    for type_def in &config.constraint_types {
+        // Use TypeDef helper methods to get type name and floating-point types
+        let type_name = type_def.type_name();
+        let float_types = type_def.float_types();
 
-            for float_type in float_types {
-                let type_alias = make_type_alias(type_name, float_type);
-                let opt_alias = format_ident!("Opt{}", type_alias);
+        for float_type in float_types {
+            let type_alias = make_type_alias(type_name, float_type);
+            let opt_alias = format_ident!("Opt{}", type_alias);
 
-                option_aliases.push(quote! {
-                    #[doc = concat!("`", stringify!(#type_alias), "` Option version")]
-                    pub type #opt_alias = Option<#type_alias>;
-                });
-            }
+            option_aliases.push(quote! {
+                #[doc = concat!("`", stringify!(#type_alias), "` Option version")]
+                pub type #opt_alias = Option<#type_alias>;
+            });
         }
     }
 
