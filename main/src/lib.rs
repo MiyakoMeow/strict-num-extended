@@ -193,7 +193,7 @@
 //! let invalid = NegativeF32::new(f32::NEG_INFINITY); // ✗ None (infinite)
 //! ```
 //!
-//! ## NonZero Constraint
+//! ## `NonZero` Constraint
 //!
 //! The `NonZero` types require finite AND non-zero values (x ≠ 0), excluding both +0.0 and -0.0:
 //!
@@ -220,7 +220,7 @@
 //! let invalid = NormalizedF32::new(-0.5); // ✗ None (< 0.0)
 //! ```
 //!
-//! ## NegativeNormalized Constraint
+//! ## `NegativeNormalized` Constraint
 //!
 //! The `NegativeNormalized` types require finite values in [-1.0, 0.0]:
 //!
