@@ -234,3 +234,55 @@ mod test_boundary_values {
         assert_eq!(MIN.get(), f64::MIN);
     }
 }
+
+/// 测试 `NegativeNormalizedF32::new_const`
+mod test_negative_normalizedf32_new_const {
+    use super::*;
+
+    #[test]
+    fn test_valid_value() {
+        const VALID: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(-0.75);
+        assert_eq!(VALID.get(), -0.75);
+    }
+
+    #[test]
+    fn test_boundary_negative_one() {
+        const NEG_ONE: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(-1.0);
+        assert_eq!(NEG_ONE.get(), -1.0);
+    }
+
+    #[test]
+    fn test_boundary_zero() {
+        const ZERO: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(0.0);
+        assert_eq!(ZERO.get(), 0.0);
+    }
+
+    #[test]
+    fn test_small_negative() {
+        const SMALL: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(-0.001);
+        assert_eq!(SMALL.get(), -0.001);
+    }
+}
+
+/// 测试 `NegativeNormalizedF64::new_const`
+mod test_negative_normalizedf64_new_const {
+    use super::*;
+
+    #[test]
+    fn test_valid_value() {
+        const VALID: NegativeNormalizedF64 = NegativeNormalizedF64::new_const(-0.75);
+        assert_eq!(VALID.get(), -0.75);
+    }
+
+    #[test]
+    fn test_boundary_negative_one() {
+        const NEG_ONE: NegativeNormalizedF64 = NegativeNormalizedF64::new_const(-1.0);
+        assert_eq!(NEG_ONE.get(), -1.0);
+    }
+
+    #[test]
+    fn test_boundary_zero() {
+        const ZERO: NegativeNormalizedF64 = NegativeNormalizedF64::new_const(0.0);
+        assert_eq!(ZERO.get(), 0.0);
+    }
+}

@@ -1115,3 +1115,76 @@ mod test_negative_constraints {
         assert!(NonZeroNegativeF32::new(f32::NEG_INFINITY).is_none());
     }
 }
+
+/// 测试 `NegativeNormalizedF32` 的基本功能
+mod test_negative_normalizedf32 {
+    use super::*;
+
+    #[test]
+    fn test_negative_normalizedf32_new_valid() {
+        // 边界值
+        assert!(NegativeNormalizedF32::new(-1.0).is_some());
+        assert!(NegativeNormalizedF32::new(0.0).is_some());
+        assert!(NegativeNormalizedF32::new(-0.0).is_some());
+
+        // 中间值
+        assert!(NegativeNormalizedF32::new(-0.5).is_some());
+        assert!(NegativeNormalizedF32::new(-0.75).is_some());
+        assert!(NegativeNormalizedF32::new(-0.001).is_some());
+        assert!(NegativeNormalizedF32::new(-0.999).is_some());
+    }
+
+    #[test]
+    fn test_negative_normalizedf32_new_invalid() {
+        // 超出下界
+        assert!(NegativeNormalizedF32::new(-1.1).is_none());
+        assert!(NegativeNormalizedF32::new(-2.0).is_none());
+        assert!(NegativeNormalizedF32::new(f32::MIN).is_none());
+
+        // 超出上界
+        assert!(NegativeNormalizedF32::new(0.1).is_none());
+        assert!(NegativeNormalizedF32::new(1.0).is_none());
+        assert!(NegativeNormalizedF32::new(f32::MAX).is_none());
+
+        // 特殊值
+        assert!(NegativeNormalizedF32::new(f32::NAN).is_none());
+        assert!(NegativeNormalizedF32::new(f32::INFINITY).is_none());
+        assert!(NegativeNormalizedF32::new(f32::NEG_INFINITY).is_none());
+    }
+
+    #[test]
+    fn test_negative_normalizedf32_get() {
+        let negative_normalized = NegativeNormalizedF32::new(-0.75).unwrap();
+        assert_eq!(negative_normalized.get(), -0.75);
+    }
+}
+
+/// 测试 `NegativeNormalizedF64` 的基本功能
+mod test_negative_normalizedf64 {
+    use super::*;
+
+    #[test]
+    fn test_negative_normalizedf64_new_valid() {
+        // 边界值
+        assert!(NegativeNormalizedF64::new(-1.0).is_some());
+        assert!(NegativeNormalizedF64::new(0.0).is_some());
+
+        // 中间值
+        assert!(NegativeNormalizedF64::new(-0.5).is_some());
+        assert!(NegativeNormalizedF64::new(-0.75).is_some());
+    }
+
+    #[test]
+    fn test_negative_normalizedf64_new_invalid() {
+        assert!(NegativeNormalizedF64::new(-1.1).is_none());
+        assert!(NegativeNormalizedF64::new(0.1).is_none());
+        assert!(NegativeNormalizedF64::new(f64::NAN).is_none());
+        assert!(NegativeNormalizedF64::new(f64::INFINITY).is_none());
+    }
+
+    #[test]
+    fn test_negative_normalizedf64_get() {
+        let negative_normalized = NegativeNormalizedF64::new(-0.75).unwrap();
+        assert_eq!(negative_normalized.get(), -0.75);
+    }
+}

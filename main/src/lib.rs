@@ -11,6 +11,7 @@
 //! - `NegativeF32` and `NegativeF64`: Non-positive floating-point numbers (<= 0, finite)
 //! - `NonZeroNegativeF32` and `NonZeroNegativeF64`: Non-zero negative floating-point numbers (< 0, finite)
 //! - `NormalizedF32` and `NormalizedF64`: Normalized floating-point numbers (0.0 <= value <= 1.0, finite)
+//! - `NegativeNormalizedF32` and `NegativeNormalizedF64`: Negative normalized floating-point numbers (-1.0 <= value <= 0.0, finite)
 //!
 //! ## Composable Constraints
 //!
@@ -31,7 +32,7 @@
 //! ```
 //! use strict_num_extended::{
 //!     FinF32, PositiveF32, NonZeroF32, NonZeroPositiveF32,
-//!     NegativeF32, NonZeroNegativeF32, NormalizedF32
+//!     NegativeF32, NonZeroNegativeF32, NormalizedF32, NegativeNormalizedF32
 //! };
 //!
 //! let finite = FinF32::new(3.14).unwrap();
@@ -41,6 +42,7 @@
 //! let negative = NegativeF32::new(-5.0).unwrap();
 //! let non_zero_negative = NonZeroNegativeF32::new(-10.0).unwrap();
 //! let normalized = NormalizedF32::new(0.75).unwrap();
+//! let negative_normalized = NegativeNormalizedF32::new(-0.75).unwrap();
 //! assert_eq!(finite.get(), 3.14);
 //! assert_eq!(positive.get(), 42.0);
 //! assert_eq!(non_zero.get(), 5.0);
@@ -48,6 +50,7 @@
 //! assert_eq!(negative.get(), -5.0);
 //! assert_eq!(non_zero_negative.get(), -10.0);
 //! assert_eq!(normalized.get(), 0.75);
+//! assert_eq!(negative_normalized.get(), -0.75);
 //! ```
 //!
 //! # Option Types
@@ -96,6 +99,10 @@ strict_num_extended_macros::generate_constrained_types!({
         Normalized {
             doc: "Normalized floating-point value (0.0 <= value <= 1.0, finite)",
             validate: "!value.is_nan() && !value.is_infinite() && value >= 0.0 && value <= 1.0"
+        },
+        NegativeNormalized {
+            doc: "Negative normalized floating-point value (-1.0 <= value <= 0.0, finite)",
+            validate: "!value.is_nan() && !value.is_infinite() && value >= -1.0 && value <= 0.0"
         }
     ],
 
@@ -107,19 +114,9 @@ strict_num_extended_macros::generate_constrained_types!({
         (Negative, [f32, f64], [Negative]),
         (NonZero, [f32, f64], [NonZero]),
         (Normalized, [f32, f64], [Normalized]),
+        (NegativeNormalized, [f32, f64], [NegativeNormalized]),
         // Combined constraint types
         (NonZeroPositive, [f32, f64], [Positive, NonZero]),
         (NonZeroNegative, [f32, f64], [Negative, NonZero]),
-    ],
-
-    // Feature configuration
-    features: {
-        impl_traits: [
-            PartialEq, Eq, PartialOrd, Ord,
-            Display, Debug,
-            Add, Sub, Mul, Div
-        ],
-        generate_option_types: true,
-        generate_new_const: true
-    }
+    ]
 });

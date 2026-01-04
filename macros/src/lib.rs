@@ -29,23 +29,14 @@ pub fn generate_constrained_types(input: TokenStream) -> TokenStream {
         generate_comparison_traits(),
     ];
 
-    // Generate arithmetic operations
-    if config
-        .features
-        .impl_traits
-        .iter()
-        .any(|t| matches!(t.to_string().as_str(), "Add" | "Sub" | "Mul" | "Div"))
-    {
-        all_code.push(generate_arithmetic_impls(&config));
-    }
+    // Always generate arithmetic operations
+    all_code.push(generate_arithmetic_impls(&config));
 
     // Generate type aliases
     all_code.push(generate_type_aliases(&config));
 
-    // Generate new_const methods
-    if config.features.generate_new_const {
-        all_code.push(generate_new_const_methods(&config));
-    }
+    // Always generate new_const methods
+    all_code.push(generate_new_const_methods(&config));
 
     // Combine all code
     let expanded = quote! {

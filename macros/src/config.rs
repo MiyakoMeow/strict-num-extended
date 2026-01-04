@@ -15,8 +15,6 @@ pub struct TypeConfig {
     pub constraints: Vec<ConstraintDef>,
     /// List of constraint type definitions.
     pub constraint_types: Vec<TypeDef>,
-    /// Feature configuration.
-    pub features: FeaturesConfig,
 }
 
 /// Single constraint definition.
@@ -69,16 +67,6 @@ impl TypeDef {
     }
 }
 
-/// Feature configuration.
-pub struct FeaturesConfig {
-    /// List of traits to implement.
-    pub impl_traits: Vec<Ident>,
-    /// Whether to generate Option types.
-    pub generate_option_types: bool,
-    /// Whether to generate const new methods.
-    pub generate_new_const: bool,
-}
-
 // ============================================================================
 // Parse trait implementations
 // ============================================================================
@@ -91,9 +79,6 @@ impl Parse for TypeConfig {
 
         let mut constraints = Vec::new();
         let mut constraint_types = Vec::new();
-        let mut impl_traits = Vec::new();
-        let mut generate_option_types = true;
-        let mut generate_new_const = true;
 
         // Parse each field
         while !content.is_empty() {
@@ -107,36 +92,6 @@ impl Parse for TypeConfig {
                 "constraint_types" => {
                     content.parse::<syn::Token![:]>()?;
                     constraint_types = parse_constraint_types(&content)?;
-                }
-                "features" => {
-                    content.parse::<syn::Token![:]>()?;
-                    let feature_content;
-                    syn::braced!(feature_content in content);
-
-                    while !feature_content.is_empty() {
-                        let feature_ident: Ident = feature_content.parse()?;
-                        feature_content.parse::<syn::Token![:]>()?;
-
-                        match feature_ident.to_string().as_str() {
-                            "impl_traits" => {
-                                impl_traits = parse_ident_list(&feature_content)?;
-                            }
-                            "generate_option_types" => {
-                                generate_option_types = parse_bool_lit(&feature_content)?;
-                            }
-                            "generate_new_const" => {
-                                generate_new_const = parse_bool_lit(&feature_content)?;
-                            }
-                            _ => {
-                                return Err(syn::Error::new(
-                                    feature_ident.span(),
-                                    format!("Unknown feature: {}", feature_ident),
-                                ));
-                            }
-                        }
-
-                        let _ = feature_content.parse::<syn::Token![,]>();
-                    }
                 }
                 _ => {
                     return Err(syn::Error::new(
@@ -152,11 +107,6 @@ impl Parse for TypeConfig {
         Ok(TypeConfig {
             constraints,
             constraint_types,
-            features: FeaturesConfig {
-                impl_traits,
-                generate_option_types,
-                generate_new_const,
-            },
         })
     }
 }
@@ -283,10 +233,4 @@ pub fn parse_ident_list(input: ParseStream) -> syn::Result<Vec<Ident>> {
     }
 
     Ok(idents)
-}
-
-/// Parse `LitBool` value from `ParseStream`.
-fn parse_bool_lit(input: ParseStream) -> syn::Result<bool> {
-    let lit: syn::LitBool = input.parse()?;
-    Ok(lit.value)
 }
