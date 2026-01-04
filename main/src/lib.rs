@@ -3,7 +3,7 @@
 //! # Constrained Floating-Point Types
 //!
 //! This module provides constrained floating-point types. All types guarantee finite values
-//! (excluding NaN and infinity) by default:
+//! (excluding NaN and infinity) **automatically** - no need to manually specify `is_finite()`:
 //! - `FinF32` and `FinF64`: Finite floating-point numbers (excludes NaN and infinity)
 //! - `PositiveF32` and `PositiveF64`: Non-negative floating-point numbers (>= 0, finite)
 //! - `NonZeroF32` and `NonZeroF64`: Non-zero floating-point numbers (!= 0, excludes 0.0, -0.0, NaN, infinity)
@@ -77,33 +77,19 @@
 //! compile time if the value does not satisfy the constraint conditions.
 
 // Generate all code using proc_macro
-strict_num_extended_macros::generate_constrained_types!([
-    (Fin, ["value.is_finite()"]),
-    (Positive, ["value.is_finite()", "value.is_sign_positive()"]),
-    (Negative, ["value.is_finite()", "value.is_sign_negative()"]),
-    (NonZero, ["value.is_finite()", "value != 0.0"]),
-    (
-        Normalized,
-        ["value.is_finite()", "value >= 0.0", "value <= 1.0"]
-    ),
-    (
-        NegativeNormalized,
-        ["value.is_finite()", "value >= -1.0", "value <= 0.0"]
-    ),
+strict_num_extended_macros::generate_finite_float_types!([
+    (Fin, []),
+    (Positive, ["value.is_sign_positive()"]),
+    (Negative, ["value.is_sign_negative()"]),
+    (NonZero, ["value != 0.0"]),
+    (Normalized, ["value >= 0.0", "value <= 1.0"]),
+    (NegativeNormalized, ["value >= -1.0", "value <= 0.0"]),
     (
         NonZeroPositive,
-        [
-            "value.is_finite()",
-            "value.is_sign_positive()",
-            "value != 0.0"
-        ]
+        ["value.is_sign_positive()", "value != 0.0"]
     ),
     (
         NonZeroNegative,
-        [
-            "value.is_finite()",
-            "value.is_sign_negative()",
-            "value != 0.0"
-        ]
+        ["value.is_sign_negative()", "value != 0.0"]
     ),
 ]);

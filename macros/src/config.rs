@@ -104,8 +104,11 @@ impl Parse for TypeConfig {
                 }
             }
 
-            // 组合所有条件（AND 逻辑）
-            let validate_expr = conditions.join(" && ");
+            // 自动添加 is_finite 检查，然后组合所有条件（AND 逻辑）
+            let finite_check = "value.is_finite()";
+            let mut all_conditions = vec![finite_check.to_string()];
+            all_conditions.extend(conditions.clone());
+            let validate_expr = all_conditions.join(" && ");
 
             // 生成约束定义
             let doc = generate_auto_doc(&type_name, &conditions);

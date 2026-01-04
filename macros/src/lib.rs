@@ -16,9 +16,9 @@ use generator::{
     generate_type_aliases,
 };
 
-/// Main macro: generates all code based on configuration.
+/// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
-pub fn generate_constrained_types(input: TokenStream) -> TokenStream {
+pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let config = parse_macro_input!(input as TypeConfig);
 
     // Collect all code to be generated
