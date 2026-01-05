@@ -457,7 +457,14 @@ fn compute_arithmetic_result(
     };
 
     // Find the best matching constraint type for the output
-    let output_type = find_matching_constraint(output_sign, output_excludes_zero, all_constraints);
+    let output_type = find_matching_constraint(
+        op,
+        output_sign,
+        output_excludes_zero,
+        lhs,
+        rhs,
+        all_constraints,
+    );
 
     ArithmeticResult {
         output_type,
@@ -581,41 +588,92 @@ const fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Si
 
 /// Find the best matching constraint type for given output properties.
 fn find_matching_constraint(
+    op: ArithmeticOp,
     sign: Sign,
     excludes_zero: bool,
+    lhs: &ConstraintDef,
+    rhs: &ConstraintDef,
     constraints: &[ConstraintDef],
 ) -> Ident {
-    // Priority: more specific types first
-    // 1. Try to find exact match (sign + excludes_zero)
-    // 2. Fall back to sign-only match
-    // 3. Fall back to Fin
+    // Check if both operands have the same bounded range
+    let operands_have_same_bounds = lhs.bounds.is_bounded()
+        && rhs.bounds.is_bounded()
+        && lhs.bounds.lower == rhs.bounds.lower
+        && lhs.bounds.upper == rhs.bounds.upper;
 
-    for c in constraints {
-        if c.sign == sign
-            && c.excludes_zero == excludes_zero
-            && c.bounds.lower.is_none()
-            && c.bounds.upper.is_none()
-        {
-            return c.name.clone();
-        }
-    }
+    // Collect all matching constraints
+    let mut matches = Vec::new();
 
-    // Relaxed match: just sign and excludes_zero
     for c in constraints {
         if c.sign == sign && c.excludes_zero == excludes_zero {
-            // Skip bounded types for unbounded results
-            if c.bounds.is_bounded() {
-                continue;
-            }
-            return c.name.clone();
+            matches.push(c);
         }
     }
 
-    // Further relaxed: just sign
-    for c in constraints {
-        if c.sign == sign && !c.bounds.is_bounded() {
-            return c.name.clone();
+    // If we found exact matches
+    if !matches.is_empty() {
+        // For multiplication with same bounds, prefer bounded types to preserve the range
+        if matches!(op, ArithmeticOp::Mul) && operands_have_same_bounds {
+            let operand_lower = lhs.bounds.lower;
+            let operand_upper = lhs.bounds.upper;
+
+            // First, try to find a bounded type with the same bounds
+            for c in &matches {
+                if c.bounds.is_bounded()
+                    && c.bounds.lower == operand_lower
+                    && c.bounds.upper == operand_upper
+                {
+                    return c.name.clone();
+                }
+            }
         }
+
+        // Prefer unbounded types over bounded types
+        for c in &matches {
+            if c.bounds.lower.is_none() && c.bounds.upper.is_none() {
+                return c.name.clone();
+            }
+        }
+
+        // No unbounded types found, return the first bounded match
+        return matches[0].name.clone();
+    }
+
+    // No exact match, try relaxed match on sign only
+    let mut sign_matches = Vec::new();
+
+    for c in constraints {
+        if c.sign == sign {
+            sign_matches.push(c);
+        }
+    }
+
+    if !sign_matches.is_empty() {
+        // When operands have same bounds, prefer bounded types that match those bounds
+        if operands_have_same_bounds {
+            let operand_lower = lhs.bounds.lower;
+            let operand_upper = lhs.bounds.upper;
+
+            // Try to find a bounded type with the same bounds
+            for c in &sign_matches {
+                if c.bounds.is_bounded()
+                    && c.bounds.lower == operand_lower
+                    && c.bounds.upper == operand_upper
+                {
+                    return c.name.clone();
+                }
+            }
+        }
+
+        // Prefer unbounded types
+        for c in &sign_matches {
+            if c.bounds.lower.is_none() && c.bounds.upper.is_none() {
+                return c.name.clone();
+            }
+        }
+
+        // All are bounded, return the first one
+        return sign_matches[0].name.clone();
     }
 
     // Default to Fin
