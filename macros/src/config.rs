@@ -547,7 +547,10 @@ const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Si
 
 /// Compute output properties for division.
 const fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Division is never safe (divide by zero possible, or result overflow)
+    // Division is never safe (overflow/underflow possible, even with NonZero divisor)
+    // Examples:
+    // - 极大值 ÷ 极小值 → 可能溢出到无穷大
+    // - 极小值 ÷ 极小值 → 结果可能无效
     let is_safe = false;
 
     // Sign rules for division (same as multiplication):

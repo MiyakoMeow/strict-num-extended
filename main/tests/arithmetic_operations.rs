@@ -27,6 +27,28 @@ mod test_same_type_arithmetic {
     }
 
     #[test]
+    fn test_negative_sub_negative() {
+        let a = NegativeF64::new(-10.0).unwrap();
+        let b = NegativeF64::new(-3.0).unwrap();
+        // Safe operation: returns direct value (result is Fin, not Option)
+        let result = a - b;
+        assert_eq!(result.get(), -7.0);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_negative_sub_negative_positive_result() {
+        let a = NegativeF64::new(-5.0).unwrap();
+        let b = NegativeF64::new(-10.0).unwrap();
+        // Safe operation: returns direct value (result is Fin, not Option)
+        // Note: -5.0 - (-10.0) = 5.0 (positive result from Negative - Negative)
+        let result = a - b;
+        assert_eq!(result.get(), 5.0);
+        // Result is Fin (not Negative) because it can be positive
+        assert!(result.get() > 0.0);
+    }
+
+    #[test]
     fn test_nonzero_add_nonzero() {
         let a = NonZeroF64::new(5.0).unwrap();
         let b = NonZeroF64::new(3.0).unwrap();
@@ -38,9 +60,23 @@ mod test_same_type_arithmetic {
     fn test_positive_sub_positive() {
         let a = PositiveF64::new(10.0).unwrap();
         let b = PositiveF64::new(3.0).unwrap();
-        // Safe operation: returns direct value (not Option)
+        // Safe operation: returns direct value (result is Fin, not Option)
         let result = a - b;
         assert_eq!(result.get(), 7.0);
+        // Result can be Fin (may be positive or negative)
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_positive_sub_positive_negative_result() {
+        let a = PositiveF64::new(5.0).unwrap();
+        let b = PositiveF64::new(10.0).unwrap();
+        // Safe operation: returns direct value (result is Fin, not Option)
+        // Note: 5.0 - 10.0 = -5.0 (negative result from Positive - Positive)
+        let result = a - b;
+        assert_eq!(result.get(), -5.0);
+        // Result is Fin (not Positive) because it can be negative
+        assert!(result.get() < 0.0);
     }
 
     #[test]
@@ -141,6 +177,7 @@ mod test_cross_type_arithmetic {
     fn test_nonzero_positive_div_nonzero_negative() {
         let pos = NonZeroPositiveF64::new(10.0).unwrap();
         let neg = NonZeroNegativeF64::new(-2.0).unwrap();
+        // Division always returns Option (overflow/underflow possible)
         let result = (pos / neg).unwrap();
         assert_eq!(result.get(), -5.0);
         // Result should be NonZeroNegative type
@@ -258,10 +295,11 @@ mod test_fallible_operations {
     }
 
     #[test]
-    fn test_division_by_zero_nonzero() {
-        let a = NonZeroF64::new(10.0).unwrap();
+    fn test_division_by_zero_positive() {
+        let a = PositiveF64::new(10.0).unwrap();
         let b = PositiveF64::new(0.0).unwrap(); // Positive allows 0.0
         let result = a / b;
+        // Should fail: dividing by zero (Positive includes zero)
         assert!(result.is_none());
     }
 
