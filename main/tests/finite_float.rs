@@ -193,7 +193,7 @@ mod test_arithmetic_operations {
     fn test_positivef32_sub() {
         let a = PositiveF32::new(10.0).unwrap();
         let b = PositiveF32::new(3.0).unwrap();
-        let c = (a - b).unwrap();
+        let c = a - b;
         assert_eq!(c.get(), 7.0);
     }
 
@@ -945,7 +945,7 @@ mod test_negative_arithmetic_operations {
     fn test_negativef32_sub() {
         let a = NegativeF32::new(-10.0).unwrap();
         let b = NegativeF32::new(-3.0).unwrap();
-        let c = (a - b).unwrap();
+        let c = a - b;
         assert_eq!(c.get(), -7.0);
     }
 
@@ -965,7 +965,7 @@ mod test_negative_arithmetic_operations {
         // So we only test addition and subtraction
         let a = NegativeF32::new(-12.0).unwrap();
         let b = NegativeF32::new(-3.0).unwrap();
-        let c = (a - b).unwrap();
+        let c = a - b;
         assert_eq!(c.get(), -9.0);
     }
 
@@ -994,7 +994,7 @@ mod test_negative_arithmetic_operations {
         // So we only test addition and subtraction
         let a = NonZeroNegativeF32::new(-12.0).unwrap();
         let b = NonZeroNegativeF32::new(-3.0).unwrap();
-        let c = (a - b).unwrap();
+        let c = a - b;
         assert_eq!(c.get(), -9.0);
     }
 

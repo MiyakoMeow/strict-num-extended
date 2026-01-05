@@ -38,7 +38,8 @@ mod test_same_type_arithmetic {
     fn test_positive_sub_positive() {
         let a = PositiveF64::new(10.0).unwrap();
         let b = PositiveF64::new(3.0).unwrap();
-        let result = (a - b).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = a - b;
         assert_eq!(result.get(), 7.0);
     }
 
@@ -46,6 +47,7 @@ mod test_same_type_arithmetic {
     fn test_positive_sub_negative() {
         let a = PositiveF64::new(10.0).unwrap();
         let b = NegativeF64::new(-3.0).unwrap();
+        // Unsafe operation: returns Option (Positive - Negative = Positive + Positive)
         let result = (a - b).unwrap();
         assert_eq!(result.get(), 13.0);
     }
@@ -54,6 +56,7 @@ mod test_same_type_arithmetic {
     fn test_negative_sub_positive() {
         let a = NegativeF64::new(-10.0).unwrap();
         let b = PositiveF64::new(3.0).unwrap();
+        // Unsafe operation: returns Option (Negative - Positive = Negative + Negative)
         let result = (a - b).unwrap();
         assert_eq!(result.get(), -13.0);
     }
@@ -90,7 +93,8 @@ mod test_cross_type_arithmetic {
     fn test_positive_plus_negative() {
         let pos = PositiveF64::new(5.0).unwrap();
         let neg = NegativeF64::new(-3.0).unwrap();
-        let result = (pos + neg).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = pos + neg;
         assert_eq!(result.get(), 2.0);
         // Result should be Fin type (not necessarily positive or negative)
         assert!(result.get().is_finite());
@@ -100,7 +104,8 @@ mod test_cross_type_arithmetic {
     fn test_negative_plus_positive() {
         let neg = NegativeF64::new(-5.0).unwrap();
         let pos = PositiveF64::new(3.0).unwrap();
-        let result = (neg + pos).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = neg + pos;
         assert_eq!(result.get(), -2.0);
     }
 
@@ -108,6 +113,7 @@ mod test_cross_type_arithmetic {
     fn test_positive_minus_negative() {
         let pos = PositiveF64::new(10.0).unwrap();
         let neg = NegativeF64::new(-3.0).unwrap();
+        // Unsafe operation: returns Option (Positive - Negative = Positive + Positive)
         let result = (pos - neg).unwrap();
         assert_eq!(result.get(), 13.0);
     }
@@ -116,6 +122,7 @@ mod test_cross_type_arithmetic {
     fn test_negative_minus_positive() {
         let neg = NegativeF64::new(-10.0).unwrap();
         let pos = PositiveF64::new(3.0).unwrap();
+        // Unsafe operation: returns Option (Negative - Positive = Negative + Negative)
         let result = (neg - pos).unwrap();
         assert_eq!(result.get(), -13.0);
     }
@@ -145,7 +152,8 @@ mod test_cross_type_arithmetic {
     fn test_f32_cross_type() {
         let pos = PositiveF32::new(5.0).unwrap();
         let neg = NegativeF32::new(-3.0).unwrap();
-        let result = (pos + neg).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = pos + neg;
         assert_eq!(result.get(), 2.0);
     }
 }
@@ -393,6 +401,7 @@ mod test_combined_constraints {
     fn test_nonzero_positive_sub_nonzero_negative() {
         let a = NonZeroPositiveF64::new(10.0).unwrap();
         let b = NonZeroNegativeF64::new(-3.0).unwrap();
+        // Unsafe operation: returns Option (NonZeroPositive - NonZeroNegative = NonZeroPositive + NonZeroPositive)
         let result = (a - b).unwrap();
         assert_eq!(result.get(), 13.0);
         assert!(result.get() > 0.0);
@@ -424,7 +433,8 @@ mod test_f32_types {
     fn test_f32_cross_type_operations() {
         let a = PositiveF32::new(5.0).unwrap();
         let b = NegativeF32::new(-3.0).unwrap();
-        let result = (a + b).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = a + b;
         assert_eq!(result.get(), 2.0);
     }
 
@@ -454,7 +464,8 @@ mod test_negation_interaction {
         let b = PositiveF64::new(5.0).unwrap();
         // a + (-b) = a - b
         let neg_b: NegativeF64 = -b;
-        let result = (a + neg_b).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = a + neg_b;
         assert_eq!(result.get(), 5.0);
     }
 
@@ -464,7 +475,8 @@ mod test_negation_interaction {
         let b = PositiveF64::new(5.0).unwrap();
         // a - b = a + (-b)
         let neg_b: NegativeF64 = -b;
-        let result = (a + neg_b).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = a + neg_b;
         assert_eq!(result.get(), 5.0);
     }
 
@@ -492,7 +504,8 @@ mod test_edge_cases {
     fn test_subtraction_with_zero() {
         let a = PositiveF64::new(5.0).unwrap();
         let b = PositiveF64::new(0.0).unwrap();
-        let result = (a - b).unwrap();
+        // Safe operation: returns direct value (not Option)
+        let result = a - b;
         assert_eq!(result.get(), 5.0);
     }
 

@@ -467,8 +467,12 @@ fn compute_arithmetic_result(
 
 /// Compute output properties for addition.
 fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Addition can never be safe (overflow possible)
-    let is_safe = false;
+    // Safe if signs are different (effectively bounded subtraction)
+    // Positive + Negative and Negative + Positive cannot overflow
+    let is_safe = matches!(
+        (lhs.sign, rhs.sign),
+        (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive)
+    );
 
     // Sign rules for addition:
     // Positive + Positive = Positive
@@ -489,8 +493,9 @@ fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
 
 /// Compute output properties for subtraction.
 fn compute_sub_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Subtraction can never be safe (overflow possible)
-    let is_safe = false;
+    // Safe when both operands have the same sign (no overflow possible)
+    // Positive - Positive and Negative - Negative cannot overflow
+    let is_safe = lhs.sign == rhs.sign && lhs.sign != Sign::Any;
 
     // a - b: negate rhs sign
     let rhs_negated_sign = match rhs.sign {
