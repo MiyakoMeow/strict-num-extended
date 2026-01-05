@@ -69,7 +69,7 @@ impl Parse for TypeConfig {
                 let condition = match &expr {
                     Expr::Lit(syn::ExprLit {
                         lit: Lit::Str(s), ..
-                    }) => s.value(),
+                    }) => normalize_condition(&s.value()),
                     _ => {
                         return Err(syn::Error::new_spanned(
                             expr,
@@ -123,6 +123,11 @@ impl Parse for TypeConfig {
 // ============================================================================
 // Simplified format helpers
 // ============================================================================
+
+/// Normalize validation condition string by automatically adding `value` prefix
+fn normalize_condition(condition: &str) -> String {
+    format!("value {}", condition.trim())
+}
 
 /// Automatically generate documentation
 fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {

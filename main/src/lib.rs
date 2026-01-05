@@ -251,11 +251,11 @@
 // Generate all code using proc_macro
 strict_num_extended_macros::generate_finite_float_types!([
     (Fin, []),
-    (Positive, ["value >= 0.0"]),
-    (Negative, ["value <= 0.0"]),
-    (NonZero, ["value != 0.0"]),
-    (Normalized, ["value >= 0.0", "value <= 1.0"]),
-    (NegativeNormalized, ["value >= -1.0", "value <= 0.0"]),
-    (NonZeroPositive, ["value > 0.0"]),
-    (NonZeroNegative, ["value < 0.0"]),
+    (Positive, [">= 0.0"]),
+    (Negative, ["<= 0.0"]),
+    (NonZero, ["!= 0.0"]),
+    (Normalized, [">= 0.0", "<= 1.0"]),
+    (NegativeNormalized, [">= -1.0", "<= 0.0"]),
+    (NonZeroPositive, ["> 0.0"]),
+    (NonZeroNegative, ["< 0.0"]),
 ]);
