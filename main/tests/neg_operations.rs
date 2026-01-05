@@ -7,23 +7,75 @@
 
 use strict_num_extended::*;
 
+/// Macro for testing basic negation operations with exact comparison
+macro_rules! test_neg {
+    ($test_name:ident, $InputType:ty, $input_value:expr, $OutputType:ty, $expected_value:expr) => {
+        #[test]
+        fn $test_name() {
+            const INPUT: $InputType = <$InputType>::new_const($input_value);
+            let output: $OutputType = -INPUT;
+            assert_eq!(output.get(), $expected_value);
+        }
+    };
+}
+
+/// Macro for testing negation operations with floating-point tolerance
+macro_rules! test_neg_approx {
+    ($test_name:ident, $InputType:ty, $input_value:expr, $OutputType:ty, $expected_value:expr, $eps:ty) => {
+        #[test]
+        fn $test_name() {
+            const INPUT: $InputType = <$InputType>::new_const($input_value);
+            let output: $OutputType = -INPUT;
+            assert!((output.get() - $expected_value).abs() < <$eps>::EPSILON);
+        }
+    };
+}
+
+/// Macro for testing double negation operations
+macro_rules! test_double_neg {
+    ($test_name:ident, $InputType:ty, $intermediate_type:ty, $value:expr) => {
+        #[test]
+        fn $test_name() {
+            const ORIGINAL: $InputType = <$InputType>::new_const($value);
+            let neg1: $intermediate_type = -ORIGINAL;
+            let back: $InputType = -neg1;
+            assert_eq!(back.get(), $value);
+        }
+    };
+}
+
+/// Macro for testing double negation with floating-point tolerance
+macro_rules! test_double_neg_approx {
+    ($test_name:ident, $InputType:ty, $value:expr, $eps:ty) => {
+        #[test]
+        fn $test_name() {
+            const ORIGINAL: $InputType = <$InputType>::new_const($value);
+            let neg1: $InputType = -ORIGINAL;
+            let back: $InputType = -neg1;
+            assert!((back.get() - $value).abs() < <$eps>::EPSILON);
+        }
+    };
+}
+
 /// Tests for Positive ↔ Negative conversion
 mod test_positive_negative {
     use super::*;
 
-    #[test]
-    fn test_positive_to_negative_f64() {
-        const POS: PositiveF64 = PositiveF64::new_const(5.0);
-        let neg: NegativeF64 = -POS;
-        assert_eq!(neg.get(), -5.0);
-    }
-
-    #[test]
-    fn test_negative_to_positive_f32() {
-        const NEG: NegativeF32 = NegativeF32::new_const(-2.5);
-        let pos: PositiveF32 = -NEG;
-        assert!((pos.get() - 2.5).abs() < f32::EPSILON);
-    }
+    test_neg!(
+        test_positive_to_negative_f64,
+        PositiveF64,
+        5.0,
+        NegativeF64,
+        -5.0
+    );
+    test_neg_approx!(
+        test_negative_to_positive_f32,
+        NegativeF32,
+        -2.5,
+        PositiveF32,
+        2.5,
+        f32
+    );
 
     #[test]
     fn test_zero_negation() {
@@ -41,46 +93,46 @@ mod test_positive_negative {
 mod test_nonzero_positive_negative {
     use super::*;
 
-    #[test]
-    fn test_nonzero_positive_to_negative() {
-        const NZ_POS: NonZeroPositiveF64 = NonZeroPositiveF64::new_const(10.0);
-        let nz_neg: NonZeroNegativeF64 = -NZ_POS;
-        assert_eq!(nz_neg.get(), -10.0);
-    }
-
-    #[test]
-    fn test_nonzero_negative_to_positive() {
-        const NZ_NEG: NonZeroNegativeF32 = NonZeroNegativeF32::new_const(-2.5);
-        let nz_pos: NonZeroPositiveF32 = -NZ_NEG;
-        assert_eq!(nz_pos.get(), 2.5);
-    }
-
-    #[test]
-    fn test_double_negation() {
-        const ORIGINAL: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
-        let neg1: NonZeroNegativeF32 = -ORIGINAL;
-        let back: NonZeroPositiveF32 = -neg1;
-        assert_eq!(back.get(), 10.0);
-    }
+    test_neg!(
+        test_nonzero_positive_to_negative,
+        NonZeroPositiveF64,
+        10.0,
+        NonZeroNegativeF64,
+        -10.0
+    );
+    test_neg!(
+        test_nonzero_negative_to_positive,
+        NonZeroNegativeF32,
+        -2.5,
+        NonZeroPositiveF32,
+        2.5
+    );
+    test_double_neg!(
+        test_double_negation,
+        NonZeroPositiveF32,
+        NonZeroNegativeF32,
+        10.0
+    );
 }
 
 /// Tests for Normalized ↔ `NegativeNormalized` conversion
 mod test_normalized {
     use super::*;
 
-    #[test]
-    fn test_normalized_to_negative_normalized() {
-        const NORM: NormalizedF64 = NormalizedF64::new_const(0.75);
-        let neg_norm: NegativeNormalizedF64 = -NORM;
-        assert_eq!(neg_norm.get(), -0.75);
-    }
-
-    #[test]
-    fn test_negative_normalized_to_normalized() {
-        const NEG_NORM: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(-0.5);
-        let norm: NormalizedF32 = -NEG_NORM;
-        assert_eq!(norm.get(), 0.5);
-    }
+    test_neg!(
+        test_normalized_to_negative_normalized,
+        NormalizedF64,
+        0.75,
+        NegativeNormalizedF64,
+        -0.75
+    );
+    test_neg!(
+        test_negative_normalized_to_normalized,
+        NegativeNormalizedF32,
+        -0.5,
+        NormalizedF32,
+        0.5
+    );
 
     #[test]
     fn test_boundary_values() {
@@ -103,58 +155,23 @@ mod test_normalized {
 mod test_reflexive {
     use super::*;
 
-    #[test]
-    fn test_fin_negation_f64() {
-        const FIN: FinF64 = FinF64::new_const(2.5);
-        let neg: FinF64 = -FIN;
-        assert_eq!(neg.get(), -2.5);
-    }
-
-    #[test]
-    fn test_fin_negation_f32() {
-        const FIN: FinF32 = FinF32::new_const(-1.5);
-        let neg: FinF32 = -FIN;
-        assert_eq!(neg.get(), 1.5);
-    }
-
-    #[test]
-    fn test_nonzero_negation() {
-        const NZ: NonZeroF32 = NonZeroF32::new_const(5.0);
-        let nz_neg: NonZeroF32 = -NZ;
-        assert_eq!(nz_neg.get(), -5.0);
-    }
-
-    #[test]
-    fn test_double_fin_negation() {
-        const ORIGINAL: FinF64 = FinF64::new_const(1.414);
-        let neg1: FinF64 = -ORIGINAL;
-        let back: FinF64 = -neg1;
-        assert!((back.get() - 1.414).abs() < f64::EPSILON);
-    }
+    test_neg!(test_fin_negation_f64, FinF64, 2.5, FinF64, -2.5);
+    test_neg!(test_fin_negation_f32, FinF32, -1.5, FinF32, 1.5);
+    test_neg!(test_nonzero_negation, NonZeroF32, 5.0, NonZeroF32, -5.0);
+    test_double_neg_approx!(test_double_fin_negation, FinF64, 1.414, f64);
 }
 
 /// Tests for edge cases
 mod test_edge_cases {
     use super::*;
 
-    #[test]
-    fn test_large_values() {
-        const POS: PositiveF64 = PositiveF64::new_const(1e100);
-        let neg: NegativeF64 = -POS;
-        assert_eq!(neg.get(), -1e100);
-    }
-
-    #[test]
-    fn test_small_values() {
-        const POS: PositiveF32 = PositiveF32::new_const(1e-30);
-        let neg: NegativeF32 = -POS;
-        assert_eq!(neg.get(), -1e-30);
-    }
-
-    #[test]
-    fn test_normalized_midpoint() {
-        const MID: NormalizedF64 = NormalizedF64::new_const(0.5);
-        let neg_mid: NegativeNormalizedF64 = -MID;
-        assert_eq!(neg_mid.get(), -0.5);
-    }
+    test_neg!(test_large_values, PositiveF64, 1e100, NegativeF64, -1e100);
+    test_neg!(test_small_values, PositiveF32, 1e-30, NegativeF32, -1e-30);
+    test_neg!(
+        test_normalized_midpoint,
+        NormalizedF64,
+        0.5,
+        NegativeNormalizedF64,
+        -0.5
+    );
 }
