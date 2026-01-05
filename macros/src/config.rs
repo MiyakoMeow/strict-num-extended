@@ -685,7 +685,11 @@ fn find_matching_constraint(
         }
 
         // No unbounded types found, return the first bounded match
-        return matches[0].name.clone();
+        return matches
+            .first()
+            .expect("matches should not be empty at this point")
+            .name
+            .clone();
     }
 
     // No exact match, try relaxed match on sign only
@@ -722,7 +726,11 @@ fn find_matching_constraint(
         }
 
         // All are bounded, return the first one
-        return sign_matches[0].name.clone();
+        return sign_matches
+            .first()
+            .expect("sign_matches should not be empty at this point")
+            .name
+            .clone();
     }
 
     // Default to Fin

@@ -223,7 +223,7 @@ mod test_fallible_operations {
     test_arith!(test_normalized_add_normalized, NormalizedF64, 0.9, +, NormalizedF64, 0.9, Option<PositiveF64>, Some(1.8));
 
     // Original: test_fallible_some! -> returns Some
-    test_arith!(test_symmetric_add_symmetric, SymmetricF64, 0.9, +, SymmetricF64, 0.9, Option<PositiveF64>, Some(1.8));
+    test_arith!(test_symmetric_add_symmetric, SymmetricF64, 0.9, +, SymmetricF64, 0.9, Option<FinF64>, Some(1.8));
 }
 
 mod test_option_arithmetic {
