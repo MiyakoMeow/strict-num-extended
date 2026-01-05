@@ -77,7 +77,7 @@ macro_rules! test_safe_arithmetic {
     };
 }
 
-/// Macro for testing NonZero types
+/// Macro for testing `NonZero` types
 macro_rules! test_nonzero_get {
     ($test_name:ident, $Type:ty, $value:expr) => {
         #[test]
