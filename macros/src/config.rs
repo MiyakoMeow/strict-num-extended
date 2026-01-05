@@ -628,48 +628,51 @@ fn find_matching_constraint(
     // If we found exact matches
     if !matches.is_empty() {
         // For multiplication, compute the actual result bounds and match them
-        if matches!(op, ArithmeticOp::Mul) && operands_have_same_bounds {
-            // Compute result bounds for bounded multiplication
-            // |a| * |b| gives the max absolute value
-            let max_abs_lhs = max_abs_value(lhs.bounds);
-            let max_abs_rhs = max_abs_value(rhs.bounds);
-            let max_abs_result = max_abs_lhs * max_abs_rhs;
+        if matches!(op, ArithmeticOp::Mul) {
+            // Check if both operands are bounded (even if bounds are different)
+            if lhs.bounds.is_bounded() && rhs.bounds.is_bounded() {
+                // Compute result bounds for bounded multiplication
+                // |a| * |b| gives the max absolute value
+                let max_abs_lhs = max_abs_value(lhs.bounds);
+                let max_abs_rhs = max_abs_value(rhs.bounds);
+                let max_abs_result = max_abs_lhs * max_abs_rhs;
 
-            // Determine sign of result
-            let result_lower;
-            let result_upper;
-            match (lhs.sign, rhs.sign) {
-                // Both positive or both negative → positive result [0, max]
-                (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
-                    result_lower = Some(0.0);
-                    result_upper = Some(max_abs_result);
+                // Determine sign of result
+                let result_lower;
+                let result_upper;
+                match (lhs.sign, rhs.sign) {
+                    // Both positive or both negative → positive result [0, max]
+                    (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
+                        result_lower = Some(0.0);
+                        result_upper = Some(max_abs_result);
+                    }
+                    // Different signs → negative result [-max, 0]
+                    (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
+                        result_lower = Some(-max_abs_result);
+                        result_upper = Some(0.0);
+                    }
+                    // Any sign → symmetric bounds [-max, max]
+                    _ => {
+                        result_lower = Some(-max_abs_result);
+                        result_upper = Some(max_abs_result);
+                    }
                 }
-                // Different signs → negative result [-max, 0]
-                (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
-                    result_lower = Some(-max_abs_result);
-                    result_upper = Some(0.0);
-                }
-                // Any sign → symmetric bounds [-max, max]
-                _ => {
-                    result_lower = Some(-max_abs_result);
-                    result_upper = Some(max_abs_result);
-                }
-            }
 
-            // First, try to find a bounded type with the computed result bounds
-            for c in &matches {
-                if c.bounds.is_bounded()
-                    && c.bounds.lower == result_lower
-                    && c.bounds.upper == result_upper
-                {
-                    return c.name.clone();
+                // First, try to find a bounded type with the computed result bounds
+                for c in &matches {
+                    if c.bounds.is_bounded()
+                        && c.bounds.lower == result_lower
+                        && c.bounds.upper == result_upper
+                    {
+                        return c.name.clone();
+                    }
                 }
-            }
 
-            // If exact bounds match not found, prefer bounded types over unbounded
-            for c in &matches {
-                if c.bounds.is_bounded() {
-                    return c.name.clone();
+                // If exact bounds match not found, prefer bounded types over unbounded
+                for c in &matches {
+                    if c.bounds.is_bounded() {
+                        return c.name.clone();
+                    }
                 }
             }
         }

@@ -157,7 +157,7 @@ mod test_safe_operations {
         *,
         NegativeNormalizedF64,
         -0.4,
-        NegativeF64,
+        NegativeNormalizedF64,
         -0.2
     );
 
