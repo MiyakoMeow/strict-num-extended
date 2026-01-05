@@ -75,8 +75,10 @@ pub struct ConstraintDef {
     /// Constraint name.
     pub name: Ident,
     /// Constraint documentation.
+    #[allow(dead_code)]
     pub doc: String,
     /// Validation expression.
+    #[allow(dead_code)]
     pub validate: String,
     /// Name of the constraint type after negation (e.g., Positive -> Negative).
     pub neg_constraint_name: Option<Ident>,

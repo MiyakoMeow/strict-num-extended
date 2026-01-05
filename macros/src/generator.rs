@@ -4,7 +4,6 @@
 
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
-use syn::Expr;
 
 use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
 
@@ -17,142 +16,68 @@ fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
 }
 
-/// Parses constraint validation expression
-///
-/// # Panics
-/// Panics if the expression is invalid
-fn parse_validate_expr(validate_str: &str, constraint_name: &str) -> Expr {
-    syn::parse_str(validate_str).unwrap_or_else(|e| {
-        panic!(
-            "Invalid validate expression for constraint '{}': {}\nExpression: {}",
-            constraint_name, e, validate_str
-        );
-    })
-}
-
 // ============================================================================
 // Code generation functions
 // ============================================================================
 
-/// Generates Constraint trait.
-pub fn generate_constraint_trait() -> TokenStream2 {
+/// Generates `FloatBase` trait and constants.
+pub fn generate_float_base_trait() -> TokenStream2 {
     quote! {
-        /// Constraint type marker trait
-        pub trait Constraint {
-            /// Base type (f32 or f64)
-            type Base;
-
-            /// Validates whether a value satisfies the constraint
-            ///
-            /// Returns `true` if the value satisfies the constraint, `false` otherwise.
-            fn validate(value: Self::Base) -> bool;
+        /// 浮点数基础 trait，提供类型转换和验证方法
+        pub trait FloatBase: Copy {
+            /// 转换为 f64 用于边界检查
+            fn as_f64(self) -> f64;
+            /// 检查是否为有限值（非 NaN、非无穷大）
+            fn is_finite(self) -> bool;
         }
-    }
-}
 
-/// Generates constraint marker types.
-pub fn generate_constraint_markers(config: &TypeConfig) -> TokenStream2 {
-    let mut markers = Vec::new();
-    let mut impls = Vec::new();
-
-    for constraint in &config.constraints {
-        let name = &constraint.name;
-        let doc = &constraint.doc;
-
-        // Parse validation expression
-        let validate = parse_validate_expr(&constraint.validate, &constraint.name.to_string());
-
-        // Generate marker types
-        markers.push(quote! {
-            #[doc = #doc]
-            #[derive(Debug, Clone, Copy)]
-            pub struct #name<F = ()> {
-                _marker: std::marker::PhantomData<F>,
+        impl FloatBase for f32 {
+            #[inline]
+            fn as_f64(self) -> f64 {
+                self as f64
             }
-        });
 
-        // Generate f32 implementation
-        impls.push(quote! {
-            impl Constraint for #name<f32> {
-                type Base = f32;
-
-                fn validate(value: Self::Base) -> bool {
-                    #validate
-                }
-            }
-        });
-
-        // Generate f64 implementation
-        impls.push(quote! {
-            impl Constraint for #name<f64> {
-                type Base = f64;
-
-                fn validate(value: Self::Base) -> bool {
-                    #validate
-                }
-            }
-        });
-    }
-
-    // Generate tuple combination constraint implementations
-    let tuple_impls = generate_tuple_constraints();
-
-    quote! {
-        // Constraint marker types
-        #(#markers)*
-
-        // Constraint trait implementations
-        #(#impls)*
-
-        // Tuple combination constraints
-        #tuple_impls
-    }
-}
-
-/// Generates tuple combination constraints.
-pub fn generate_tuple_constraints() -> TokenStream2 {
-    quote! {
-        /// Single-element tuple (C1,)
-        impl<T, C1> Constraint for (C1,)
-        where
-            T: Copy,
-            C1: Constraint<Base = T>,
-        {
-            type Base = T;
-
-            fn validate(value: Self::Base) -> bool {
-                C1::validate(value)
+            #[inline]
+            fn is_finite(self) -> bool {
+                self.is_finite()
             }
         }
 
-        /// Two-element tuple (C1, C2)
-        impl<T, C1, C2> Constraint for (C1, C2)
-        where
-            T: Copy,
-            C1: Constraint<Base = T>,
-            C2: Constraint<Base = T>,
-        {
-            type Base = T;
+        impl FloatBase for f64 {
+            #[inline]
+            fn as_f64(self) -> f64 {
+                self
+            }
 
-            fn validate(value: Self::Base) -> bool {
-                C1::validate(value) && C2::validate(value)
+            #[inline]
+            fn is_finite(self) -> bool {
+                self.is_finite()
             }
         }
 
-        /// Three-element tuple (C1, C2, C3)
-        impl<T, C1, C2, C3> Constraint for (C1, C2, C3)
-        where
-            T: Copy,
-            C1: Constraint<Base = T>,
-            C2: Constraint<Base = T>,
-            C3: Constraint<Base = T>,
-        {
-            type Base = T;
+        use std::marker::PhantomData;
+        use std::ops::{Add, Sub, Mul, Div, Neg};
 
-            fn validate(value: Self::Base) -> bool {
-                C1::validate(value) && C2::validate(value) && C3::validate(value)
-            }
-        }
+        // ========== f64 边界的位表示常量 ==========
+        const F64_MIN_BITS: i64 = f64::MIN.to_bits() as i64;
+        const F64_MAX_BITS: i64 = f64::MAX.to_bits() as i64;
+        const ZERO_BITS: i64 = 0.0f64.to_bits() as i64;
+        // 使用最小正规化正数代替 EPSILON（避免排除过小的正数）
+        const F64_MIN_POSITIVE_BITS: i64 = f64::MIN_POSITIVE.to_bits() as i64;
+        const F64_NEG_MIN_POSITIVE_BITS: i64 = (-f64::MIN_POSITIVE).to_bits() as i64;
+        const ONE_BITS: i64 = 1.0f64.to_bits() as i64;
+        const NEG_ONE_BITS: i64 = (-1.0f64).to_bits() as i64;
+
+        // ========== f32 边界的位表示常量（转换为 f64 存储） ==========
+        const F32_MIN_BITS: i64 = (f32::MIN as f64).to_bits() as i64;
+        const F32_MAX_BITS: i64 = (f32::MAX as f64).to_bits() as i64;
+        // 使用最小正规化正数代替 EPSILON
+        const F32_MIN_POSITIVE_BITS: i64 = (f32::MIN_POSITIVE as f64).to_bits() as i64;
+        const F32_NEG_MIN_POSITIVE_BITS: i64 = ((-f32::MIN_POSITIVE) as f64).to_bits() as i64;
+
+        /// 边界标记类型（使用 i64 编码 f64 边界）
+        #[derive(Debug, Clone, Copy)]
+        pub struct Bounded<const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool = false>;
     }
 }
 
@@ -161,12 +86,20 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
     quote! {
         /// Generic finite floating-point structure
         #[derive(Clone, Copy)]
-        pub struct FiniteFloat<T, V> {
+        pub struct FiniteFloat<T, B> {
             value: T,
-            phantom: std::marker::PhantomData<V>,
+            _marker: PhantomData<B>,
         }
 
-        impl<T: std::fmt::Display + Copy, V: Constraint<Base = T>> FiniteFloat<T, V> {
+        impl<T, const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool>
+            FiniteFloat<T, Bounded<MIN_BITS, MAX_BITS, EXCLUDE_ZERO>>
+        where
+            T: FloatBase,
+        {
+            /// 从位表示解码边界常量
+            const MIN: f64 = f64::from_bits(MIN_BITS as u64);
+            const MAX: f64 = f64::from_bits(MAX_BITS as u64);
+
             /// Creates a new finite floating-point number
             ///
             /// # Example
@@ -181,10 +114,26 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
             /// Returns `None` if the value does not satisfy the constraint.
             #[must_use]
             pub fn new(value: T) -> Option<Self> {
-                V::validate(value).then_some(Self {
-                    value,
-                    phantom: std::marker::PhantomData,
-                })
+                let val_f64 = value.as_f64();
+
+                let in_bounds = value.is_finite()
+                    && val_f64 >= Self::MIN
+                    && val_f64 <= Self::MAX;
+
+                let not_zero = if EXCLUDE_ZERO {
+                    (val_f64 as f64) != 0.0
+                } else {
+                    true
+                };
+
+                if in_bounds && not_zero {
+                    Some(Self {
+                        value,
+                        _marker: PhantomData,
+                    })
+                } else {
+                    None
+                }
             }
 
             /// Unsafely creates a finite floating-point number (no validation)
@@ -197,7 +146,7 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
             pub const unsafe fn new_unchecked(value: T) -> Self {
                 Self {
                     value,
-                    phantom: std::marker::PhantomData,
+                    _marker: PhantomData,
                 }
             }
 
@@ -235,9 +184,8 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
             #[expect(clippy::result_unit_err)]
             pub fn try_from<U>(value: U) -> Result<Self, ()>
             where
-                U: std::fmt::Display + Copy,
+                U: FloatBase,
                 T: From<U>,
-                V: Constraint<Base = T>,
             {
                 Self::new(T::from(value)).ok_or(())
             }
@@ -250,18 +198,17 @@ pub fn generate_comparison_traits() -> TokenStream2 {
     quote! {
         use std::cmp::Ordering;
         use std::fmt;
-        use std::ops::{Add, Sub, Mul, Div, Neg};
 
         // Comparison operation implementations
-        impl<T: PartialEq, V> PartialEq for FiniteFloat<T, V> {
+        impl<T: PartialEq, B> PartialEq for FiniteFloat<T, B> {
             fn eq(&self, other: &Self) -> bool {
                 self.value == other.value
             }
         }
 
-        impl<T: PartialEq, V> Eq for FiniteFloat<T, V> {}
+        impl<T: PartialEq, B> Eq for FiniteFloat<T, B> {}
 
-        impl<T: PartialOrd, V> Ord for FiniteFloat<T, V> {
+        impl<T: PartialOrd, B> Ord for FiniteFloat<T, B> {
             fn cmp(&self, other: &Self) -> Ordering {
                 self.value
                     .partial_cmp(&other.value)
@@ -269,20 +216,20 @@ pub fn generate_comparison_traits() -> TokenStream2 {
             }
         }
 
-        impl<T: PartialOrd, V> PartialOrd for FiniteFloat<T, V> {
+        impl<T: PartialOrd, B> PartialOrd for FiniteFloat<T, B> {
             fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
                 Some(self.cmp(other))
             }
         }
 
         // Formatting implementations
-        impl<T: fmt::Display, V> fmt::Display for FiniteFloat<T, V> {
+        impl<T: fmt::Display, B> fmt::Display for FiniteFloat<T, B> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.value)
             }
         }
 
-        impl<T: fmt::Debug, V> fmt::Debug for FiniteFloat<T, V> {
+        impl<T: fmt::Debug, B> fmt::Debug for FiniteFloat<T, B> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "FiniteFloat({:?})", self.value)
             }
@@ -514,17 +461,144 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
 
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
-        let constraint_name = &type_def.constraint_name;
+        let type_name_str = type_name.to_string();
+        let constraint_def = config
+            .constraints
+            .iter()
+            .find(|c| c.name == type_def.constraint_name)
+            .expect("Constraint not found");
 
         for float_type in &type_def.float_types {
-            // Generate single constraint type alias
+            let float_type_str = float_type.to_string();
             let alias_name = make_type_alias(type_name, float_type);
+
+            // 根据类型名称和浮点类型确定边界常量
+            let (min_bits, max_bits, exclude_zero) =
+                match (type_name_str.as_str(), float_type_str.as_str()) {
+                    // Fin: 无界，不排除零
+                    ("Fin", "f32") => (
+                        quote! { F32_MIN_BITS },
+                        quote! { F32_MAX_BITS },
+                        quote! { false },
+                    ),
+                    ("Fin", "f64") => (
+                        quote! { F64_MIN_BITS },
+                        quote! { F64_MAX_BITS },
+                        quote! { false },
+                    ),
+
+                    // Positive: >= 0，不排除零
+                    ("Positive", "f32") => (
+                        quote! { ZERO_BITS },
+                        quote! { F32_MAX_BITS },
+                        quote! { false },
+                    ),
+                    ("Positive", "f64") => (
+                        quote! { ZERO_BITS },
+                        quote! { F64_MAX_BITS },
+                        quote! { false },
+                    ),
+
+                    // Negative: <= 0，不排除零
+                    ("Negative", "f32") => (
+                        quote! { F32_MIN_BITS },
+                        quote! { ZERO_BITS },
+                        quote! { false },
+                    ),
+                    ("Negative", "f64") => (
+                        quote! { F64_MIN_BITS },
+                        quote! { ZERO_BITS },
+                        quote! { false },
+                    ),
+
+                    // NonZero: != 0，使用无界边界 + 排除零
+                    ("NonZero", "f32") => (
+                        quote! { F32_MIN_BITS },
+                        quote! { F32_MAX_BITS },
+                        quote! { true },
+                    ),
+                    ("NonZero", "f64") => (
+                        quote! { F64_MIN_BITS },
+                        quote! { F64_MAX_BITS },
+                        quote! { true },
+                    ),
+
+                    // NonZeroPositive: >= MIN_POSITIVE (> 0)，边界已排除零
+                    ("NonZeroPositive", "f32") => (
+                        quote! { F32_MIN_POSITIVE_BITS },
+                        quote! { F32_MAX_BITS },
+                        quote! { false },
+                    ),
+                    ("NonZeroPositive", "f64") => (
+                        quote! { F64_MIN_POSITIVE_BITS },
+                        quote! { F64_MAX_BITS },
+                        quote! { false },
+                    ),
+
+                    // NonZeroNegative: <= -MIN_POSITIVE (< 0)，边界已排除零
+                    ("NonZeroNegative", "f32") => (
+                        quote! { F32_MIN_BITS },
+                        quote! { F32_NEG_MIN_POSITIVE_BITS },
+                        quote! { false },
+                    ),
+                    ("NonZeroNegative", "f64") => (
+                        quote! { F64_MIN_BITS },
+                        quote! { F64_NEG_MIN_POSITIVE_BITS },
+                        quote! { false },
+                    ),
+
+                    // Normalized: [0, 1]，不排除零
+                    ("Normalized", "f32") => {
+                        (quote! { ZERO_BITS }, quote! { ONE_BITS }, quote! { false })
+                    }
+                    ("Normalized", "f64") => {
+                        (quote! { ZERO_BITS }, quote! { ONE_BITS }, quote! { false })
+                    }
+
+                    // NegativeNormalized: [-1, 0]，不排除零
+                    ("NegativeNormalized", "f32") => (
+                        quote! { NEG_ONE_BITS },
+                        quote! { ZERO_BITS },
+                        quote! { false },
+                    ),
+                    ("NegativeNormalized", "f64") => (
+                        quote! { NEG_ONE_BITS },
+                        quote! { ZERO_BITS },
+                        quote! { false },
+                    ),
+
+                    // Symmetric: [-1, 1]，不排除零
+                    ("Symmetric", "f32") => (
+                        quote! { NEG_ONE_BITS },
+                        quote! { ONE_BITS },
+                        quote! { false },
+                    ),
+                    ("Symmetric", "f64") => (
+                        quote! { NEG_ONE_BITS },
+                        quote! { ONE_BITS },
+                        quote! { false },
+                    ),
+
+                    // 其他类型：根据 bounds 字段计算
+                    _ => {
+                        let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
+                        let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
+                        let min_expr = quote! { (#min as f64).to_bits() as i64 };
+                        let max_expr = quote! { (#max as f64).to_bits() as i64 };
+                        let exclude_zero = if constraint_def.excludes_zero {
+                            quote! { true }
+                        } else {
+                            quote! { false }
+                        };
+                        (min_expr, max_expr, exclude_zero)
+                    }
+                };
 
             aliases.push(quote! {
                 #[doc = concat!(
                     stringify!(#type_name), " finite ", stringify!(#float_type), " value"
                 )]
-                pub type #alias_name = FiniteFloat<#float_type, #constraint_name<#float_type>>;
+                pub type #alias_name = FiniteFloat<#float_type, Bounded<#min_bits, #max_bits, #exclude_zero>>;
             });
 
             // Generate Option type alias
@@ -551,22 +625,95 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
     for type_def in &config.constraint_types {
-        // Generate for single constraint types
         let type_name = &type_def.type_name;
-        let float_types = &type_def.float_types;
-        let constraint_name = &type_def.constraint_name;
-
+        let type_name_str = type_name.to_string();
         let constraint_def = config
             .constraints
             .iter()
-            .find(|c| &c.name == constraint_name)
-            .expect("Constraint definition not found");
+            .find(|c| c.name == type_def.constraint_name)
+            .expect("Constraint not found");
 
-        let validate =
-            parse_validate_expr(&constraint_def.validate, &constraint_def.name.to_string());
-
-        for float_type in float_types {
+        for float_type in &type_def.float_types {
+            let float_type_str = float_type.to_string();
             let type_alias = make_type_alias(type_name, float_type);
+
+            // 根据类型确定边界验证表达式
+            let validate_expr = match (type_name_str.as_str(), float_type_str.as_str()) {
+                ("Fin", _) => quote! { value.is_finite() },
+
+                ("Positive", "f32") => quote! {
+                    value.is_finite() && (value as f64) >= (0.0f64)
+                },
+                ("Positive", "f64") => quote! {
+                    value.is_finite() && value >= 0.0
+                },
+
+                ("Negative", "f32") => quote! {
+                    value.is_finite() && (value as f64) <= (0.0f64)
+                },
+                ("Negative", "f64") => quote! {
+                    value.is_finite() && value <= 0.0
+                },
+
+                ("NonZero", "f32") => quote! {
+                    value.is_finite() && value != 0.0
+                },
+                ("NonZero", "f64") => quote! {
+                    value.is_finite() && value != 0.0
+                },
+
+                ("NonZeroPositive", "f32") => quote! {
+                    value.is_finite() && (value as f64) >= (f32::MIN_POSITIVE as f64)
+                },
+                ("NonZeroPositive", "f64") => quote! {
+                    value.is_finite() && value >= f64::MIN_POSITIVE
+                },
+
+                ("NonZeroNegative", "f32") => quote! {
+                    value.is_finite() && (value as f64) <= -(f32::MIN_POSITIVE as f64)
+                },
+                ("NonZeroNegative", "f64") => quote! {
+                    value.is_finite() && value <= -f64::MIN_POSITIVE
+                },
+
+                ("Normalized", "f32") => quote! {
+                    value.is_finite()
+                        && (value as f64) >= (0.0f64)
+                        && (value as f64) <= (1.0f64)
+                },
+                ("Normalized", "f64") => quote! {
+                    value.is_finite() && value >= 0.0 && value <= 1.0
+                },
+
+                ("NegativeNormalized", "f32") => quote! {
+                    value.is_finite()
+                        && (value as f64) >= (-1.0f64)
+                        && (value as f64) <= (0.0f64)
+                },
+                ("NegativeNormalized", "f64") => quote! {
+                    value.is_finite() && value >= -1.0 && value <= 0.0
+                },
+
+                ("Symmetric", "f32") => quote! {
+                    value.is_finite()
+                        && (value as f64) >= (-1.0f64)
+                        && (value as f64) <= (1.0f64)
+                },
+                ("Symmetric", "f64") => quote! {
+                    value.is_finite() && value >= -1.0 && value <= 1.0
+                },
+
+                _ => {
+                    // 默认情况：使用 bounds 字段
+                    let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
+                    let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
+                    quote! {
+                        value.is_finite()
+                            && (value as f64) >= (#min as f64)
+                            && (value as f64) <= (#max as f64)
+                    }
+                }
+            };
 
             impls.push(quote! {
                 impl #type_alias {
@@ -578,7 +725,7 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                     #[inline]
                     #[must_use]
                     pub const fn new_const(value: #float_type) -> Self {
-                        if #validate {
+                        if #validate_expr {
                             unsafe { Self::new_unchecked(value) }
                         } else {
                             panic!("Value does not satisfy the constraint");
