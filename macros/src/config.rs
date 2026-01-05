@@ -25,6 +25,10 @@ pub struct ConstraintDef {
     pub doc: String,
     /// Validation expression.
     pub validate: String,
+    /// Name of the constraint type after negation (e.g., Positive -> Negative).
+    pub neg_constraint_name: Option<Ident>,
+    /// Raw conditions before adding `is_finite()` check (used for negation calculation).
+    pub raw_conditions: Vec<String>,
 }
 
 /// Type definition (single constraint).
@@ -97,6 +101,8 @@ impl Parse for TypeConfig {
                 name: type_name.clone(),
                 doc,
                 validate: validate_expr.clone(),
+                neg_constraint_name: None, // Will be calculated later
+                raw_conditions: conditions,
             });
 
             // Generate type definition (automatically add f32 and f64)
@@ -111,6 +117,19 @@ impl Parse for TypeConfig {
             });
 
             let _ = content.parse::<syn::Token![,]>();
+        }
+
+        // Calculate negation mappings for all constraints
+        for i in 0..constraints.len() {
+            let negated_conditions = negate_conditions(&constraints[i].raw_conditions);
+
+            // Find a matching constraint in the list
+            for other in &constraints {
+                if conditions_match(&negated_conditions, &other.raw_conditions) {
+                    constraints[i].neg_constraint_name = Some(other.name.clone());
+                    break;
+                }
+            }
         }
 
         Ok(TypeConfig {
@@ -147,4 +166,100 @@ fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {
 
     let conditions_str = conditions.join(" && ");
     format!("{}\n\nValidation: {}", base_desc, conditions_str)
+}
+
+// ============================================================================
+// Negation constraint matching helpers
+// ============================================================================
+
+/// Apply negation to a list of constraint conditions.
+///
+/// # Rules
+/// - `">= x"` becomes `"<= -x"`
+/// - `"<= x"` becomes `">= -x"`
+/// - `"> x"` becomes `"< -x"`
+/// - `"< x"` becomes `"> -x"`
+/// - `"!= x"` stays `"!= x"` (reflexive)
+///
+/// # Examples
+/// - `">= 0.0"` → `"<= 0.0"` (since -0.0 == 0.0)
+/// - `">= -1.0"` → `"<= 1.0"` (double negation)
+/// - `"<= 0.0"` → `">= 0.0"` (since -0.0 == 0.0)
+fn negate_conditions(conditions: &[String]) -> Vec<String> {
+    conditions
+        .iter()
+        .map(|cond| {
+            // Remove "value " prefix if present
+            let cond = cond.strip_prefix("value ").unwrap_or(cond);
+
+            // Apply negation rules with double negation handling
+            if let Some(rest) = cond.strip_prefix(">=") {
+                let rest = rest.trim();
+                // Handle double negation: >= -x becomes <= x
+                if let Some(num) = rest.strip_prefix('-') {
+                    format!("<= {}", num)
+                } else {
+                    format!("<= -{}", rest)
+                }
+            } else if let Some(rest) = cond.strip_prefix("<=") {
+                let rest = rest.trim();
+                // Handle double negation: <= -x becomes >= x
+                if let Some(num) = rest.strip_prefix('-') {
+                    format!(">= {}", num)
+                } else {
+                    format!(">= -{}", rest)
+                }
+            } else if let Some(rest) = cond.strip_prefix(">") {
+                let rest = rest.trim();
+                // Handle double negation: > -x becomes < x
+                if let Some(num) = rest.strip_prefix('-') {
+                    format!("< {}", num)
+                } else {
+                    format!("< -{}", rest)
+                }
+            } else if let Some(rest) = cond.strip_prefix("<") {
+                let rest = rest.trim();
+                // Handle double negation: < -x becomes > x
+                if let Some(num) = rest.strip_prefix('-') {
+                    format!("> {}", num)
+                } else {
+                    format!("> -{}", rest)
+                }
+            } else if cond.starts_with("!=") {
+                // Inequality stays the same
+                cond.to_string()
+            } else {
+                // Unknown condition, keep as-is
+                cond.to_string()
+            }
+        })
+        .map(|s| normalize_condition(&s)) // Re-add "value " prefix
+        .collect()
+}
+
+/// Normalize floating-point representation (handle -0.0 == 0.0).
+fn normalize_float_repr(s: String) -> String {
+    // Replace -0.0 with 0.0 in various contexts
+    let s = s.replace("-0.0", "0.0");
+    // Also handle cases with extra spaces like ">= - 0.0"
+    let s = s.replace("- 0.0", "0.0");
+    // Also handle "= -0.0" -> "= 0.0"
+
+    s.replace("= -0.0", "= 0.0")
+}
+
+/// Check if two constraint condition lists match (order-insensitive).
+fn conditions_match(a: &[String], b: &[String]) -> bool {
+    // Normalize and compare
+    let a_normalized: Vec<String> = a.iter().map(|s| normalize_float_repr(s.clone())).collect();
+
+    let b_normalized: Vec<String> = b.iter().map(|s| normalize_float_repr(s.clone())).collect();
+
+    // Sort and compare (ignore order)
+    let mut a_sorted = a_normalized;
+    let mut b_sorted = b_normalized;
+    a_sorted.sort();
+    b_sorted.sort();
+
+    a_sorted == b_sorted
 }

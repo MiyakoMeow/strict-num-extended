@@ -255,7 +255,7 @@ pub fn generate_comparison_traits() -> TokenStream2 {
     quote! {
         use std::cmp::Ordering;
         use std::fmt;
-        use std::ops::{Add, Sub, Mul, Div};
+        use std::ops::{Add, Sub, Mul, Div, Neg};
 
         // Comparison operation implementations
         impl<T: PartialEq, V> PartialEq for FiniteFloat<T, V> {
@@ -328,6 +328,52 @@ pub fn generate_arithmetic_impls(_config: &TypeConfig) -> TokenStream2 {
                 }
             }
         });
+    }
+
+    quote! {
+        #(#impls)*
+    }
+}
+
+/// Generates unary negation operation implementations.
+pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
+    let mut impls = Vec::new();
+
+    for type_def in &config.constraint_types {
+        let type_name = &type_def.type_name;
+
+        // Find the constraint definition
+        let constraint_def = match config
+            .constraints
+            .iter()
+            .find(|c| c.name == type_def.constraint_name)
+        {
+            Some(def) => def,
+            None => continue,
+        };
+
+        // Skip if no corresponding negation type
+        let neg_constraint_name = match &constraint_def.neg_constraint_name {
+            Some(name) => name,
+            None => continue,
+        };
+
+        for float_type in &type_def.float_types {
+            let type_alias = make_type_alias(type_name, float_type);
+            let neg_type_alias = make_type_alias(neg_constraint_name, float_type);
+
+            impls.push(quote! {
+                impl Neg for #type_alias {
+                    type Output = #neg_type_alias;
+
+                    fn neg(self) -> Self::Output {
+                        let result = -self.get();
+                        #neg_type_alias::new(result)
+                            .expect("Negation operation failed: result does not satisfy constraint")
+                    }
+                }
+            });
+        }
     }
 
     quote! {
