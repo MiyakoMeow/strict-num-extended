@@ -547,33 +547,20 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { false },
                     ),
 
-                    // Normalized: [0, 1]，不排除零
-                    ("Normalized", "f32") => {
-                        (quote! { ZERO_BITS }, quote! { ONE_BITS }, quote! { false })
-                    }
-                    ("Normalized", "f64") => {
+                    // Normalized: [0, 1]，不排除零（f32 和 f64 相同）
+                    ("Normalized", _) => {
                         (quote! { ZERO_BITS }, quote! { ONE_BITS }, quote! { false })
                     }
 
-                    // NegativeNormalized: [-1, 0]，不排除零
-                    ("NegativeNormalized", "f32") => (
-                        quote! { NEG_ONE_BITS },
-                        quote! { ZERO_BITS },
-                        quote! { false },
-                    ),
-                    ("NegativeNormalized", "f64") => (
+                    // NegativeNormalized: [-1, 0]，不排除零（f32 和 f64 相同）
+                    ("NegativeNormalized", _) => (
                         quote! { NEG_ONE_BITS },
                         quote! { ZERO_BITS },
                         quote! { false },
                     ),
 
-                    // Symmetric: [-1, 1]，不排除零
-                    ("Symmetric", "f32") => (
-                        quote! { NEG_ONE_BITS },
-                        quote! { ONE_BITS },
-                        quote! { false },
-                    ),
-                    ("Symmetric", "f64") => (
+                    // Symmetric: [-1, 1]，不排除零（f32 和 f64 相同）
+                    ("Symmetric", _) => (
                         quote! { NEG_ONE_BITS },
                         quote! { ONE_BITS },
                         quote! { false },
@@ -655,10 +642,8 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                     value.is_finite() && value <= 0.0
                 },
 
-                ("NonZero", "f32") => quote! {
-                    value.is_finite() && value != 0.0
-                },
-                ("NonZero", "f64") => quote! {
+                // NonZero: != 0，f32 和 f64 相同
+                ("NonZero", _) => quote! {
                     value.is_finite() && value != 0.0
                 },
 
@@ -676,31 +661,25 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                     value.is_finite() && value <= -f64::MIN_POSITIVE
                 },
 
-                ("Normalized", "f32") => quote! {
+                // Normalized: [0, 1]，f32 和 f64 统一使用 f64 比较
+                ("Normalized", _) => quote! {
                     value.is_finite()
-                        && (value as f64) >= (0.0f64)
-                        && (value as f64) <= (1.0f64)
-                },
-                ("Normalized", "f64") => quote! {
-                    value.is_finite() && value >= 0.0 && value <= 1.0
+                        && (value as f64) >= 0.0
+                        && (value as f64) <= 1.0
                 },
 
-                ("NegativeNormalized", "f32") => quote! {
+                // NegativeNormalized: [-1, 0]，f32 和 f64 统一使用 f64 比较
+                ("NegativeNormalized", _) => quote! {
                     value.is_finite()
-                        && (value as f64) >= (-1.0f64)
-                        && (value as f64) <= (0.0f64)
-                },
-                ("NegativeNormalized", "f64") => quote! {
-                    value.is_finite() && value >= -1.0 && value <= 0.0
+                        && (value as f64) >= -1.0
+                        && (value as f64) <= 0.0
                 },
 
-                ("Symmetric", "f32") => quote! {
+                // Symmetric: [-1, 1]，f32 和 f64 统一使用 f64 比较
+                ("Symmetric", _) => quote! {
                     value.is_finite()
-                        && (value as f64) >= (-1.0f64)
-                        && (value as f64) <= (1.0f64)
-                },
-                ("Symmetric", "f64") => quote! {
-                    value.is_finite() && value >= -1.0 && value <= 1.0
+                        && (value as f64) >= -1.0
+                        && (value as f64) <= 1.0
                 },
 
                 _ => {
