@@ -3,7 +3,7 @@
 //! Tests for type-safe arithmetic operations between different constraint types.
 
 // Strict floating-point comparisons, unwrap usage, and variable shadowing in test code are justified
-#![expect(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
+#![allow(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
 
 use strict_num_extended::*;
 
@@ -401,12 +401,9 @@ mod test_option_arithmetic {
         let c = Some(PositiveF64::new(2.0).unwrap());
 
         // Note: We can't do (a / b) / c directly because of orphan rules
-        // But we can chain using pattern matching or and_then
+        // But we can chain using and_then
         let result = match (a, b, c) {
-            (Some(x), Some(y), Some(z)) => match x / y {
-                Some(quotient) => quotient / z,
-                None => None,
-            },
+            (Some(x), Some(y), Some(z)) => (x / y).and_then(|quotient| quotient / z),
             _ => None,
         };
         assert!(result.is_some());
