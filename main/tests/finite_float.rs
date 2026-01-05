@@ -138,7 +138,7 @@ mod test_positivef64 {
 mod test_arithmetic_operations {
     use super::*;
 
-    // FinF32 算术运算
+    // FinF32 arithmetic operations
     #[test]
     fn test_finf32_add() {
         let a = FinF32::new(2.0).unwrap();
@@ -180,7 +180,7 @@ mod test_arithmetic_operations {
         assert_eq!((a * b).unwrap().get(), 0.0);
     }
 
-    // PositiveF32 算术运算
+    // PositiveF32 arithmetic operations
     #[test]
     fn test_positivef32_add() {
         let a = PositiveF32::new(2.0).unwrap();
@@ -213,7 +213,7 @@ mod test_arithmetic_operations {
         assert_eq!(c.get(), 4.0);
     }
 
-    // FinF64 算术运算
+    // FinF64 arithmetic operations
     #[test]
     fn test_finf64_add() {
         let a = FinF64::new(2.5).unwrap();
@@ -230,7 +230,7 @@ mod test_arithmetic_operations {
         assert_eq!(c.get(), 10.0);
     }
 
-    // PositiveF64 算术运算
+    // PositiveF64 arithmetic operations
     #[test]
     fn test_positivef64_add() {
         let a = PositiveF64::new(2.5).unwrap();
@@ -636,7 +636,7 @@ mod test_nonzero_positivef64 {
 mod test_nonzero_arithmetic_operations {
     use super::*;
 
-    // NonZeroF32 算术运算
+    // NonZeroF32 arithmetic operations
     #[test]
     fn test_nonzerof32_add() {
         let a = NonZeroF32::new(2.0).unwrap();
@@ -669,7 +669,7 @@ mod test_nonzero_arithmetic_operations {
         assert_eq!(c.get(), 4.0);
     }
 
-    // NonZeroPositiveF32 算术运算
+    // NonZeroPositiveF32 arithmetic operations
     #[test]
     fn test_nonzero_positivef32_add() {
         let a = NonZeroPositiveF32::new(2.0).unwrap();
@@ -694,7 +694,7 @@ mod test_nonzero_arithmetic_operations {
         assert_eq!(c.get(), 4.0);
     }
 
-    // NonZeroF64 算术运算
+    // NonZeroF64 arithmetic operations
     #[test]
     fn test_nonzerof64_add() {
         let a = NonZeroF64::new(2.5).unwrap();
@@ -711,7 +711,7 @@ mod test_nonzero_arithmetic_operations {
         assert_eq!(c.get(), 10.0);
     }
 
-    // NonZeroPositiveF64 算术运算
+    // NonZeroPositiveF64 arithmetic operations
     #[test]
     fn test_nonzero_positivef64_add() {
         let a = NonZeroPositiveF64::new(2.5).unwrap();
@@ -932,7 +932,7 @@ mod test_nonzero_negativef64 {
 mod test_negative_arithmetic_operations {
     use super::*;
 
-    // NegativeF32 算术运算
+    // NegativeF32 arithmetic operations
     #[test]
     fn test_negativef32_add() {
         let a = NegativeF32::new(-2.0).unwrap();
@@ -969,7 +969,7 @@ mod test_negative_arithmetic_operations {
         assert_eq!(c.get(), -9.0);
     }
 
-    // NonZeroNegativeF32 算术运算
+    // NonZeroNegativeF32 arithmetic operations
     #[test]
     fn test_nonzero_negativef32_add() {
         let a = NonZeroNegativeF32::new(-2.0).unwrap();
@@ -998,7 +998,7 @@ mod test_negative_arithmetic_operations {
         assert_eq!(c.get(), -9.0);
     }
 
-    // NegativeF64 算术运算
+    // NegativeF64 arithmetic operations
     #[test]
     fn test_negativef64_add() {
         let a = NegativeF64::new(-2.5).unwrap();
@@ -1017,7 +1017,7 @@ mod test_negative_arithmetic_operations {
         assert_eq!(c.get(), -6.5);
     }
 
-    // NonZeroNegativeF64 算术运算
+    // NonZeroNegativeF64 arithmetic operations
     #[test]
     fn test_nonzero_negativef64_add() {
         let a = NonZeroNegativeF64::new(-2.5).unwrap();
