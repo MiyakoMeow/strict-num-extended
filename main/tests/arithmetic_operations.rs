@@ -10,9 +10,9 @@ use strict_num_extended::*;
 /// Unified macro for testing arithmetic operations
 ///
 /// Supports multiple calling formats:
-/// - Basic: test_arith!(name, TypeA, a, op, TypeB, b, ResultType, expected)
-/// - Option LHS: test_arith!(name, Option<TypeA>, Some(a), op, TypeB, b, Option<ResultType>, Some(expected))
-/// - None result: test_arith!(name, TypeA, a, op, TypeB, b, ResultType, None)
+/// - Basic: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, expected)
+/// - Option LHS: `test_arith!(name`, Option<TypeA>, Some(a), op, `TypeB`, b, Option<ResultType>, Some(expected))
+/// - None result: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, None)
 #[macro_export]
 macro_rules! test_arith {
     // Option LHS with Some result
