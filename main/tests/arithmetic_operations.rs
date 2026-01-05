@@ -576,3 +576,134 @@ mod test_edge_cases {
         assert_eq!(result.get(), 1.0);
     }
 }
+
+mod test_safe_division {
+    use super::*;
+
+    #[test]
+    fn test_normalized_div_nonzero() {
+        let a = NormalizedF64::new(0.5).unwrap();
+        let b = NonZeroF64::new(2.0).unwrap();
+        // Safe operation: Normalized (bounded by [0, 1]) / NonZero = safe
+        let result = a / b;
+        assert_eq!(result.get(), 0.25);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_normalized_div_nonzero_positive() {
+        let a = NormalizedF64::new(1.0).unwrap();
+        let b = NonZeroPositiveF64::new(2.0).unwrap();
+        // Safe operation: Normalized (bounded by [0, 1]) / NonZeroPositive = safe
+        let result = a / b;
+        assert_eq!(result.get(), 0.5);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_normalized_div_nonzero_positive_small() {
+        let a = NormalizedF64::new(0.8).unwrap();
+        let b = NonZeroPositiveF64::new(4.0).unwrap();
+        // Safe operation: Normalized / NonZeroPositive = safe
+        let result = a / b;
+        assert_eq!(result.get(), 0.2);
+        assert!(result.get().is_finite());
+        assert!(result.get() > 0.0);
+    }
+
+    #[test]
+    fn test_negative_normalized_div_nonzero() {
+        let a = NegativeNormalizedF64::new(-0.5).unwrap();
+        let b = NonZeroF64::new(2.0).unwrap();
+        // Safe operation: NegativeNormalized (bounded by [-1, 0]) / NonZero = safe
+        let result = a / b;
+        assert_eq!(result.get(), -0.25);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_negative_normalized_div_nonzero_negative() {
+        let a = NegativeNormalizedF64::new(-1.0).unwrap();
+        let b = NonZeroNegativeF64::new(-2.0).unwrap();
+        // Safe operation: NegativeNormalized / NonZeroNegative = safe
+        let result = a / b;
+        assert_eq!(result.get(), 0.5);
+        assert!(result.get().is_finite());
+        assert!(result.get() > 0.0);
+    }
+
+    #[test]
+    fn test_symmetric_div_nonzero() {
+        let a = SymmetricF64::new(0.5).unwrap();
+        let b = NonZeroF64::new(2.0).unwrap();
+        // Safe operation: Symmetric (bounded by [-1, 1]) / NonZero = safe
+        let result = a / b;
+        assert_eq!(result.get(), 0.25);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_symmetric_div_nonzero_positive() {
+        let a = SymmetricF64::new(-0.8).unwrap();
+        let b = NonZeroPositiveF64::new(4.0).unwrap();
+        // Safe operation: Symmetric / NonZeroPositive = safe
+        let result = a / b;
+        assert_eq!(result.get(), -0.2);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_normalized_zero_div_nonzero() {
+        let a = NormalizedF64::new(0.0).unwrap();
+        let b = NonZeroF64::new(5.0).unwrap();
+        // Safe operation: 0.0 / non_zero = 0.0
+        let result = a / b;
+        assert_eq!(result.get(), 0.0);
+        assert!(result.get().is_finite());
+    }
+
+    #[test]
+    fn test_one_div_f64_min() {
+        let a = NormalizedF64::new(1.0).unwrap();
+        let b = NonZeroF64::new(f64::MIN).unwrap();
+        // Safe operation: 1.0 / f64::MIN ≈ -5.56e-319 (finite, not overflow)
+        let result = a / b;
+        // Result should be very small but finite
+        assert!(result.get().is_finite());
+        assert!(result.get() < 0.0); // Should be negative (1.0 / negative = negative)
+        assert!(result.get().abs() < 1e-308);
+    }
+
+    #[test]
+    fn test_negative_one_div_f64_max() {
+        let a = NegativeNormalizedF64::new(-1.0).unwrap();
+        let b = NonZeroF64::new(f64::MAX).unwrap();
+        // Safe operation: -1.0 / f64::MAX ≈ -5.56e-319 (finite)
+        let result = a / b;
+        assert!(result.get().is_finite());
+        assert!(result.get() < 0.0);
+        assert!(result.get().abs() < 1e-308);
+    }
+
+    #[test]
+    fn test_symmetric_extremes_div() {
+        let a = SymmetricF64::new(1.0).unwrap();
+        let b = NonZeroPositiveF64::new(f64::MIN_POSITIVE).unwrap();
+        // Safe operation: 1.0 / smallest positive ≈ 8.99e+307 (large but finite)
+        let result = a / b;
+        assert!(result.get().is_finite());
+        assert!(result.get() > 0.0);
+        assert!(result.get() > 1e307);
+    }
+
+    #[test]
+    fn test_normalized_div_by_negative_nonzero() {
+        let a = NormalizedF64::new(0.5).unwrap();
+        let b = NonZeroNegativeF64::new(-2.0).unwrap();
+        // Safe operation: Normalized / NonZeroNegative = safe
+        let result = a / b;
+        assert_eq!(result.get(), -0.25);
+        assert!(result.get().is_finite());
+        assert!(result.get() < 0.0);
+    }
+}

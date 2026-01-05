@@ -547,11 +547,24 @@ const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Si
 
 /// Compute output properties for division.
 const fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Division is never safe (overflow/underflow possible, even with NonZero divisor)
-    // Examples:
-    // - Very large value ÷ Very small value → may overflow to infinity
-    // - Very small value ÷ Very small value → result may be invalid
-    let is_safe = false;
+    // Division is safe if dividend (lhs) is bounded within [-1.0, 1.0] and divisor (rhs) is non-zero.
+    // This prevents overflow/underflow because:
+    // - Max positive result: 1.0 / smallest_positive → finite
+    // - Min negative result: -1.0 / smallest_negative → finite
+    // Examples of safe operations:
+    // - NormalizedF64 / NonZeroF64 → safe (result is bounded)
+    // - SymmetricF64 / PositiveF64 → safe (result is bounded)
+    // - 1.0 / f64::MIN → safe (≈ -5.56e-319, finite)
+    //
+    // Examples of unsafe operations:
+    // - PositiveF64 / PositiveF64 → unsafe (1e308 / 1e-308 may overflow)
+    // - NormalizedF64 / FinF64 → unsafe (FinF64 includes 0.0)
+    let is_safe = if let (Some(lower), Some(upper)) = (lhs.bounds.lower, lhs.bounds.upper) {
+        // Check if lhs is bounded within [-1.0, 1.0] and rhs is non-zero
+        lower >= -1.0 && upper <= 1.0 && rhs.excludes_zero
+    } else {
+        false
+    };
 
     // Sign rules for division (same as multiplication):
     let output_sign = match (lhs.sign, rhs.sign) {
