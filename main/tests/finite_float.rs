@@ -7,6 +7,87 @@
 
 use strict_num_extended::*;
 
+/// Macro for testing basic value creation with `new_const`
+macro_rules! test_get {
+    ($test_name:ident, $Type:ty, $value:expr) => {
+        #[test]
+        fn $test_name() {
+            const VAL: $Type = <$Type>::new_const($value);
+            assert_eq!(VAL.get(), $value);
+        }
+    };
+}
+
+/// Macro for testing value creation with floating-point tolerance
+macro_rules! test_get_approx {
+    ($test_name:ident, $Type:ty, $value:expr, $eps:ty) => {
+        #[test]
+        fn $test_name() {
+            const VAL: $Type = <$Type>::new_const($value);
+            assert!((VAL.get() - $value).abs() < <$eps>::EPSILON);
+        }
+    };
+}
+
+/// Macro for testing Debug formatting
+macro_rules! test_debug {
+    ($test_name:ident, $Type:ty, $value:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const VAL: $Type = <$Type>::new_const($value);
+            assert!(format!("{:?}", VAL).contains($expected));
+        }
+    };
+}
+
+/// Macro for testing Display formatting
+macro_rules! test_display {
+    ($test_name:ident, $Type:ty, $value:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const VAL: $Type = <$Type>::new_const($value);
+            assert_eq!(format!("{}", VAL), $expected);
+        }
+    };
+}
+
+/// Macro for testing arithmetic operations (add, sub, mul, div)
+macro_rules! test_arithmetic {
+    ($test_name:ident, $Type:ty, $op:tt, $a:expr, $b:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const A: $Type = <$Type>::new_const($a);
+            const B: $Type = <$Type>::new_const($b);
+            let result = (A $op B).unwrap();
+            assert_eq!(result.get(), $expected);
+        }
+    };
+}
+
+/// Macro for testing safe arithmetic operations (return Fin, not Option)
+macro_rules! test_safe_arithmetic {
+    ($test_name:ident, $Type:ty, $ResultType:ty, $op:tt, $a:expr, $b:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const A: $Type = <$Type>::new_const($a);
+            const B: $Type = <$Type>::new_const($b);
+            let result: $ResultType = A $op B;
+            assert_eq!(result.get(), $expected);
+        }
+    };
+}
+
+/// Macro for testing NonZero types
+macro_rules! test_nonzero_get {
+    ($test_name:ident, $Type:ty, $value:expr) => {
+        #[test]
+        fn $test_name() {
+            const VAL: $Type = <$Type>::new_const($value);
+            assert_eq!(VAL.get(), $value);
+        }
+    };
+}
+
 /// Tests basic functionality of `FinF32`
 mod test_finf32 {
     use super::*;
@@ -28,23 +109,9 @@ mod test_finf32 {
         assert!(FinF32::new(f32::NEG_INFINITY).is_none());
     }
 
-    #[test]
-    fn test_finf32_get() {
-        const FINITE: FinF32 = FinF32::new_const(std::f32::consts::PI);
-        assert!((FINITE.get() - std::f32::consts::PI).abs() < f32::EPSILON);
-    }
-
-    #[test]
-    fn test_finf32_debug() {
-        const FINITE: FinF32 = FinF32::new_const(1.5);
-        assert!(format!("{:?}", FINITE).contains("FiniteFloat"));
-    }
-
-    #[test]
-    fn test_finf32_display() {
-        const FINITE: FinF32 = FinF32::new_const(1.5);
-        assert_eq!(format!("{}", FINITE), "1.5");
-    }
+    test_get_approx!(test_finf32_get, FinF32, std::f32::consts::PI, f32);
+    test_debug!(test_finf32_debug, FinF32, 1.5, "FiniteFloat");
+    test_display!(test_finf32_display, FinF32, 1.5, "1.5");
 }
 
 /// Tests basic functionality of `FinF64`
@@ -67,11 +134,7 @@ mod test_finf64 {
         assert!(FinF64::new(f64::NEG_INFINITY).is_none());
     }
 
-    #[test]
-    fn test_finf64_get() {
-        const FINITE: FinF64 = FinF64::new_const(std::f64::consts::PI);
-        assert!((FINITE.get() - std::f64::consts::PI).abs() < f64::EPSILON);
-    }
+    test_get_approx!(test_finf64_get, FinF64, std::f64::consts::PI, f64);
 }
 
 /// Tests basic functionality of `PositiveF32`
@@ -97,11 +160,7 @@ mod test_positivef32 {
         assert!(PositiveF32::new(f32::INFINITY).is_none());
     }
 
-    #[test]
-    fn test_positivef32_get() {
-        const POSITIVE: PositiveF32 = PositiveF32::new_const(42.0);
-        assert_eq!(POSITIVE.get(), 42.0);
-    }
+    test_get!(test_positivef32_get, PositiveF32, 42.0);
 }
 
 /// Tests basic functionality of `PositiveF64`
@@ -127,11 +186,7 @@ mod test_positivef64 {
         assert!(PositiveF64::new(f64::INFINITY).is_none());
     }
 
-    #[test]
-    fn test_positivef64_get() {
-        const POSITIVE: PositiveF64 = PositiveF64::new_const(123.456);
-        assert_eq!(POSITIVE.get(), 123.456);
-    }
+    test_get!(test_positivef64_get, PositiveF64, 123.456);
 }
 
 /// Tests arithmetic operations
@@ -139,122 +194,42 @@ mod test_arithmetic_operations {
     use super::*;
 
     // FinF32 arithmetic operations
-    #[test]
-    fn test_finf32_add() {
-        let a = FinF32::new(2.0).unwrap();
-        let b = FinF32::new(3.0).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 5.0);
-    }
-
-    #[test]
-    fn test_finf32_sub() {
-        let a = FinF32::new(10.0).unwrap();
-        let b = FinF32::new(3.0).unwrap();
-        let c = (a - b).unwrap();
-        assert_eq!(c.get(), 7.0);
-    }
-
-    #[test]
-    fn test_finf32_mul() {
-        let a = FinF32::new(4.0).unwrap();
-        let b = FinF32::new(3.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 12.0);
-    }
-
-    #[test]
-    fn test_finf32_div() {
-        let a = FinF32::new(12.0).unwrap();
-        let b = FinF32::new(3.0).unwrap();
-        let c = (a / b).unwrap();
-        assert_eq!(c.get(), 4.0);
-    }
+    test_arithmetic!(test_finf32_add, FinF32, +, 2.0, 3.0, 5.0);
+    test_arithmetic!(test_finf32_sub, FinF32, -, 10.0, 3.0, 7.0);
+    test_arithmetic!(test_finf32_mul, FinF32, *, 4.0, 3.0, 12.0);
+    test_arithmetic!(test_finf32_div, FinF32, /, 12.0, 3.0, 4.0);
 
     #[test]
     fn test_finf32_arithmetic_zero() {
-        let a = FinF32::new(5.0).unwrap();
-        let b = FinF32::new(0.0).unwrap();
-        assert_eq!((a + b).unwrap().get(), 5.0);
-        assert_eq!((a - b).unwrap().get(), 5.0);
-        assert_eq!((a * b).unwrap().get(), 0.0);
+        const A: FinF32 = FinF32::new_const(5.0);
+        const B: FinF32 = FinF32::new_const(0.0);
+        assert_eq!((A + B).unwrap().get(), 5.0);
+        assert_eq!((A - B).unwrap().get(), 5.0);
+        assert_eq!((A * B).unwrap().get(), 0.0);
     }
 
     // PositiveF32 arithmetic operations
-    #[test]
-    fn test_positivef32_add() {
-        let a = PositiveF32::new(2.0).unwrap();
-        let b = PositiveF32::new(3.0).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 5.0);
-    }
-
-    #[test]
-    fn test_positivef32_sub() {
-        let a = PositiveF32::new(10.0).unwrap();
-        let b = PositiveF32::new(3.0).unwrap();
-        let c = a - b;
-        assert_eq!(c.get(), 7.0);
-    }
-
-    #[test]
-    fn test_positivef32_mul() {
-        let a = PositiveF32::new(4.0).unwrap();
-        let b = PositiveF32::new(3.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 12.0);
-    }
-
-    #[test]
-    fn test_positivef32_div() {
-        let a = PositiveF32::new(12.0).unwrap();
-        let b = PositiveF32::new(3.0).unwrap();
-        let c = (a / b).unwrap();
-        assert_eq!(c.get(), 4.0);
-    }
+    test_arithmetic!(test_positivef32_add, PositiveF32, +, 2.0, 3.0, 5.0);
+    test_safe_arithmetic!(test_positivef32_sub, PositiveF32, FinF32, -, 10.0, 3.0, 7.0);
+    test_arithmetic!(test_positivef32_mul, PositiveF32, *, 4.0, 3.0, 12.0);
+    test_arithmetic!(test_positivef32_div, PositiveF32, /, 12.0, 3.0, 4.0);
 
     // FinF64 arithmetic operations
-    #[test]
-    fn test_finf64_add() {
-        let a = FinF64::new(2.5).unwrap();
-        let b = FinF64::new(3.5).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 6.0);
-    }
-
-    #[test]
-    fn test_finf64_mul() {
-        let a = FinF64::new(2.5).unwrap();
-        let b = FinF64::new(4.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 10.0);
-    }
+    test_arithmetic!(test_finf64_add, FinF64, +, 2.5, 3.5, 6.0);
+    test_arithmetic!(test_finf64_mul, FinF64, *, 2.5, 4.0, 10.0);
 
     // PositiveF64 arithmetic operations
-    #[test]
-    fn test_positivef64_add() {
-        let a = PositiveF64::new(2.5).unwrap();
-        let b = PositiveF64::new(3.5).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 6.0);
-    }
-
-    #[test]
-    fn test_positivef64_mul() {
-        let a = PositiveF64::new(2.5).unwrap();
-        let b = PositiveF64::new(4.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 10.0);
-    }
+    test_arithmetic!(test_positivef64_add, PositiveF64, +, 2.5, 3.5, 6.0);
+    test_arithmetic!(test_positivef64_mul, PositiveF64, *, 2.5, 4.0, 10.0);
 
     // Complex operations
     #[test]
     fn test_complex_arithmetic() {
-        let a = FinF32::new(10.0).unwrap();
-        let b = FinF32::new(5.0).unwrap();
-        let c = FinF32::new(2.0).unwrap();
-        let ab = (a + b).unwrap();
-        let result = (ab * c).unwrap();
+        const A: FinF32 = FinF32::new_const(10.0);
+        const B: FinF32 = FinF32::new_const(5.0);
+        const C: FinF32 = FinF32::new_const(2.0);
+        let ab = (A + B).unwrap();
+        let result = (ab * C).unwrap();
         assert_eq!(result.get(), 30.0);
     }
 }
@@ -543,8 +518,8 @@ mod test_nonzerof32 {
 
     #[test]
     fn test_nonzerof32_get() {
-        let non_zero = NonZeroF32::new(std::f32::consts::PI).unwrap();
-        assert!((non_zero.get() - std::f32::consts::PI).abs() < f32::EPSILON);
+        const NON_ZERO: NonZeroF32 = NonZeroF32::new_const(std::f32::consts::PI);
+        assert!((NON_ZERO.get() - std::f32::consts::PI).abs() < f32::EPSILON);
     }
 }
 
@@ -571,8 +546,8 @@ mod test_nonzerof64 {
 
     #[test]
     fn test_nonzerof64_get() {
-        let non_zero = NonZeroF64::new(std::f64::consts::PI).unwrap();
-        assert!((non_zero.get() - std::f64::consts::PI).abs() < f64::EPSILON);
+        const NON_ZERO: NonZeroF64 = NonZeroF64::new_const(std::f64::consts::PI);
+        assert!((NON_ZERO.get() - std::f64::consts::PI).abs() < f64::EPSILON);
     }
 }
 
@@ -599,8 +574,8 @@ mod test_nonzero_positivef32 {
 
     #[test]
     fn test_nonzero_positivef32_get() {
-        let non_zero_positive = NonZeroPositiveF32::new(42.0).unwrap();
-        assert_eq!(non_zero_positive.get(), 42.0);
+        const NON_ZERO_POSITIVE: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(42.0);
+        assert_eq!(NON_ZERO_POSITIVE.get(), 42.0);
     }
 }
 
@@ -627,8 +602,8 @@ mod test_nonzero_positivef64 {
 
     #[test]
     fn test_nonzero_positivef64_get() {
-        let non_zero_positive = NonZeroPositiveF64::new(123.456).unwrap();
-        assert_eq!(non_zero_positive.get(), 123.456);
+        const NON_ZERO_POSITIVE: NonZeroPositiveF64 = NonZeroPositiveF64::new_const(123.456);
+        assert_eq!(NON_ZERO_POSITIVE.get(), 123.456);
     }
 }
 
@@ -637,96 +612,23 @@ mod test_nonzero_arithmetic_operations {
     use super::*;
 
     // NonZeroF32 arithmetic operations
-    #[test]
-    fn test_nonzerof32_add() {
-        let a = NonZeroF32::new(2.0).unwrap();
-        let b = NonZeroF32::new(3.0).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 5.0);
-    }
-
-    #[test]
-    fn test_nonzerof32_sub() {
-        let a = NonZeroF32::new(10.0).unwrap();
-        let b = NonZeroF32::new(3.0).unwrap();
-        let c = (a - b).unwrap();
-        assert_eq!(c.get(), 7.0);
-    }
-
-    #[test]
-    fn test_nonzerof32_mul() {
-        let a = NonZeroF32::new(4.0).unwrap();
-        let b = NonZeroF32::new(3.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 12.0);
-    }
-
-    #[test]
-    fn test_nonzerof32_div() {
-        let a = NonZeroF32::new(12.0).unwrap();
-        let b = NonZeroF32::new(3.0).unwrap();
-        let c = (a / b).unwrap();
-        assert_eq!(c.get(), 4.0);
-    }
+    test_arithmetic!(test_nonzerof32_add, NonZeroF32, +, 2.0, 3.0, 5.0);
+    test_arithmetic!(test_nonzerof32_sub, NonZeroF32, -, 10.0, 3.0, 7.0);
+    test_arithmetic!(test_nonzerof32_mul, NonZeroF32, *, 4.0, 3.0, 12.0);
+    test_arithmetic!(test_nonzerof32_div, NonZeroF32, /, 12.0, 3.0, 4.0);
 
     // NonZeroPositiveF32 arithmetic operations
-    #[test]
-    fn test_nonzero_positivef32_add() {
-        let a = NonZeroPositiveF32::new(2.0).unwrap();
-        let b = NonZeroPositiveF32::new(3.0).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 5.0);
-    }
-
-    #[test]
-    fn test_nonzero_positivef32_mul() {
-        let a = NonZeroPositiveF32::new(4.0).unwrap();
-        let b = NonZeroPositiveF32::new(3.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 12.0);
-    }
-
-    #[test]
-    fn test_nonzero_positivef32_div() {
-        let a = NonZeroPositiveF32::new(12.0).unwrap();
-        let b = NonZeroPositiveF32::new(3.0).unwrap();
-        let c = (a / b).unwrap();
-        assert_eq!(c.get(), 4.0);
-    }
+    test_arithmetic!(test_nonzero_positivef32_add, NonZeroPositiveF32, +, 2.0, 3.0, 5.0);
+    test_arithmetic!(test_nonzero_positivef32_mul, NonZeroPositiveF32, *, 4.0, 3.0, 12.0);
+    test_arithmetic!(test_nonzero_positivef32_div, NonZeroPositiveF32, /, 12.0, 3.0, 4.0);
 
     // NonZeroF64 arithmetic operations
-    #[test]
-    fn test_nonzerof64_add() {
-        let a = NonZeroF64::new(2.5).unwrap();
-        let b = NonZeroF64::new(3.5).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 6.0);
-    }
-
-    #[test]
-    fn test_nonzerof64_mul() {
-        let a = NonZeroF64::new(2.5).unwrap();
-        let b = NonZeroF64::new(4.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 10.0);
-    }
+    test_arithmetic!(test_nonzerof64_add, NonZeroF64, +, 2.5, 3.5, 6.0);
+    test_arithmetic!(test_nonzerof64_mul, NonZeroF64, *, 2.5, 4.0, 10.0);
 
     // NonZeroPositiveF64 arithmetic operations
-    #[test]
-    fn test_nonzero_positivef64_add() {
-        let a = NonZeroPositiveF64::new(2.5).unwrap();
-        let b = NonZeroPositiveF64::new(3.5).unwrap();
-        let c = (a + b).unwrap();
-        assert_eq!(c.get(), 6.0);
-    }
-
-    #[test]
-    fn test_nonzero_positivef64_mul() {
-        let a = NonZeroPositiveF64::new(2.5).unwrap();
-        let b = NonZeroPositiveF64::new(4.0).unwrap();
-        let c = (a * b).unwrap();
-        assert_eq!(c.get(), 10.0);
-    }
+    test_arithmetic!(test_nonzero_positivef64_add, NonZeroPositiveF64, +, 2.5, 3.5, 6.0);
+    test_arithmetic!(test_nonzero_positivef64_mul, NonZeroPositiveF64, *, 2.5, 4.0, 10.0);
 }
 
 /// Tests comparison operations for `NonZero` types
