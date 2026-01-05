@@ -12,37 +12,37 @@ mod test_same_type_arithmetic {
 
     #[test]
     fn test_positive_add_positive() {
-        let a: PositiveF64 = PositiveF64::new(5.0).unwrap();
-        let b: PositiveF64 = PositiveF64::new(3.0).unwrap();
-        let result: PositiveF64 = (a + b).unwrap();
+        const A: PositiveF64 = PositiveF64::new_const(5.0);
+        const B: PositiveF64 = PositiveF64::new_const(3.0);
+        let result: PositiveF64 = (A + B).unwrap();
         assert_eq!(result.get(), 8.0);
     }
 
     #[test]
     fn test_negative_add_negative() {
-        let a: NegativeF64 = NegativeF64::new(-5.0).unwrap();
-        let b: NegativeF64 = NegativeF64::new(-3.0).unwrap();
-        let result: NegativeF64 = (a + b).unwrap();
+        const A: NegativeF64 = NegativeF64::new_const(-5.0);
+        const B: NegativeF64 = NegativeF64::new_const(-3.0);
+        let result: NegativeF64 = (A + B).unwrap();
         assert_eq!(result.get(), -8.0);
     }
 
     #[test]
     fn test_negative_sub_negative() {
-        let a: NegativeF64 = NegativeF64::new(-10.0).unwrap();
-        let b: NegativeF64 = NegativeF64::new(-3.0).unwrap();
+        const A: NegativeF64 = NegativeF64::new_const(-10.0);
+        const B: NegativeF64 = NegativeF64::new_const(-3.0);
         // Safe operation: returns direct value (result is Fin, not Option)
-        let result: FinF64 = a - b;
+        let result: FinF64 = A - B;
         assert_eq!(result.get(), -7.0);
         assert!(result.get().is_finite());
     }
 
     #[test]
     fn test_negative_sub_negative_positive_result() {
-        let a: NegativeF64 = NegativeF64::new(-5.0).unwrap();
-        let b: NegativeF64 = NegativeF64::new(-10.0).unwrap();
+        const A: NegativeF64 = NegativeF64::new_const(-5.0);
+        const B: NegativeF64 = NegativeF64::new_const(-10.0);
         // Safe operation: returns direct value (result is Fin, not Option)
         // Note: -5.0 - (-10.0) = 5.0 (positive result from Negative - Negative)
-        let result: FinF64 = a - b;
+        let result: FinF64 = A - B;
         assert_eq!(result.get(), 5.0);
         // Result is Fin (not Negative) because it can be positive
         assert!(result.get() > 0.0);
@@ -50,18 +50,18 @@ mod test_same_type_arithmetic {
 
     #[test]
     fn test_nonzero_add_nonzero() {
-        let a: NonZeroF64 = NonZeroF64::new(5.0).unwrap();
-        let b: NonZeroF64 = NonZeroF64::new(3.0).unwrap();
-        let result = (a + b).unwrap();
+        const A: NonZeroF64 = NonZeroF64::new_const(5.0);
+        const B: NonZeroF64 = NonZeroF64::new_const(3.0);
+        let result = (A + B).unwrap();
         assert_eq!(result.get(), 8.0);
     }
 
     #[test]
     fn test_positive_sub_positive() {
-        let a: PositiveF64 = PositiveF64::new(10.0).unwrap();
-        let b: PositiveF64 = PositiveF64::new(3.0).unwrap();
+        const A: PositiveF64 = PositiveF64::new_const(10.0);
+        const B: PositiveF64 = PositiveF64::new_const(3.0);
         // Safe operation: returns direct value (result is Fin, not Option)
-        let result: FinF64 = a - b;
+        let result: FinF64 = A - B;
         assert_eq!(result.get(), 7.0);
         // Result can be Fin (may be positive or negative)
         assert!(result.get().is_finite());
@@ -69,11 +69,11 @@ mod test_same_type_arithmetic {
 
     #[test]
     fn test_positive_sub_positive_negative_result() {
-        let a: PositiveF64 = PositiveF64::new(5.0).unwrap();
-        let b: PositiveF64 = PositiveF64::new(10.0).unwrap();
+        const A: PositiveF64 = PositiveF64::new_const(5.0);
+        const B: PositiveF64 = PositiveF64::new_const(10.0);
         // Safe operation: returns direct value (result is Fin, not Option)
         // Note: 5.0 - 10.0 = -5.0 (negative result from Positive - Positive)
-        let result: FinF64 = a - b;
+        let result: FinF64 = A - B;
         assert_eq!(result.get(), -5.0);
         // Result is Fin (not Positive) because it can be negative
         assert!(result.get() < 0.0);

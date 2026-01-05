@@ -13,22 +13,22 @@ mod test_positive_negative {
 
     #[test]
     fn test_positive_to_negative_f64() {
-        let pos = PositiveF64::new(5.0).unwrap();
-        let neg: NegativeF64 = -pos;
+        const POS: PositiveF64 = PositiveF64::new_const(5.0);
+        let neg: NegativeF64 = -POS;
         assert_eq!(neg.get(), -5.0);
     }
 
     #[test]
     fn test_negative_to_positive_f32() {
-        let neg = NegativeF32::new(-2.5).unwrap();
-        let pos: PositiveF32 = -neg;
+        const NEG: NegativeF32 = NegativeF32::new_const(-2.5);
+        let pos: PositiveF32 = -NEG;
         assert!((pos.get() - 2.5).abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_zero_negation() {
-        let pos_zero = PositiveF32::new(0.0).unwrap();
-        let neg_zero: NegativeF32 = -pos_zero;
+        const POS_ZERO: PositiveF32 = PositiveF32::new_const(0.0);
+        let neg_zero: NegativeF32 = -POS_ZERO;
         assert_eq!(neg_zero.get(), -0.0);
 
         // Negate again to return to zero
@@ -43,22 +43,22 @@ mod test_nonzero_positive_negative {
 
     #[test]
     fn test_nonzero_positive_to_negative() {
-        let nz_pos = NonZeroPositiveF64::new(10.0).unwrap();
-        let nz_neg: NonZeroNegativeF64 = -nz_pos;
+        const NZ_POS: NonZeroPositiveF64 = NonZeroPositiveF64::new_const(10.0);
+        let nz_neg: NonZeroNegativeF64 = -NZ_POS;
         assert_eq!(nz_neg.get(), -10.0);
     }
 
     #[test]
     fn test_nonzero_negative_to_positive() {
-        let nz_neg = NonZeroNegativeF32::new(-2.5).unwrap();
-        let nz_pos: NonZeroPositiveF32 = -nz_neg;
+        const NZ_NEG: NonZeroNegativeF32 = NonZeroNegativeF32::new_const(-2.5);
+        let nz_pos: NonZeroPositiveF32 = -NZ_NEG;
         assert_eq!(nz_pos.get(), 2.5);
     }
 
     #[test]
     fn test_double_negation() {
-        let original = NonZeroPositiveF32::new(10.0).unwrap();
-        let neg1: NonZeroNegativeF32 = -original;
+        const ORIGINAL: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
+        let neg1: NonZeroNegativeF32 = -ORIGINAL;
         let back: NonZeroPositiveF32 = -neg1;
         assert_eq!(back.get(), 10.0);
     }
@@ -70,31 +70,31 @@ mod test_normalized {
 
     #[test]
     fn test_normalized_to_negative_normalized() {
-        let norm = NormalizedF64::new(0.75).unwrap();
-        let neg_norm: NegativeNormalizedF64 = -norm;
+        const NORM: NormalizedF64 = NormalizedF64::new_const(0.75);
+        let neg_norm: NegativeNormalizedF64 = -NORM;
         assert_eq!(neg_norm.get(), -0.75);
     }
 
     #[test]
     fn test_negative_normalized_to_normalized() {
-        let neg_norm = NegativeNormalizedF32::new(-0.5).unwrap();
-        let norm: NormalizedF32 = -neg_norm;
+        const NEG_NORM: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(-0.5);
+        let norm: NormalizedF32 = -NEG_NORM;
         assert_eq!(norm.get(), 0.5);
     }
 
     #[test]
     fn test_boundary_values() {
         // Test boundary values 0.0 and 1.0
-        let zero = NormalizedF32::new(0.0).unwrap();
-        let neg_zero: NegativeNormalizedF32 = -zero;
+        const ZERO: NormalizedF32 = NormalizedF32::new_const(0.0);
+        let neg_zero: NegativeNormalizedF32 = -ZERO;
         assert_eq!(neg_zero.get(), -0.0);
 
-        let one = NormalizedF32::new(1.0).unwrap();
-        let neg_one: NegativeNormalizedF32 = -one;
+        const ONE: NormalizedF32 = NormalizedF32::new_const(1.0);
+        let neg_one: NegativeNormalizedF32 = -ONE;
         assert_eq!(neg_one.get(), -1.0);
 
-        let neg_minus_one = NegativeNormalizedF32::new(-1.0).unwrap();
-        let back_to_one: NormalizedF32 = -neg_minus_one;
+        const NEG_MINUS_ONE: NegativeNormalizedF32 = NegativeNormalizedF32::new_const(-1.0);
+        let back_to_one: NormalizedF32 = -NEG_MINUS_ONE;
         assert_eq!(back_to_one.get(), 1.0);
     }
 }
@@ -105,29 +105,29 @@ mod test_reflexive {
 
     #[test]
     fn test_fin_negation_f64() {
-        let fin = FinF64::new(2.5).unwrap();
-        let neg: FinF64 = -fin;
+        const FIN: FinF64 = FinF64::new_const(2.5);
+        let neg: FinF64 = -FIN;
         assert_eq!(neg.get(), -2.5);
     }
 
     #[test]
     fn test_fin_negation_f32() {
-        let fin = FinF32::new(-1.5).unwrap();
-        let neg: FinF32 = -fin;
+        const FIN: FinF32 = FinF32::new_const(-1.5);
+        let neg: FinF32 = -FIN;
         assert_eq!(neg.get(), 1.5);
     }
 
     #[test]
     fn test_nonzero_negation() {
-        let nz = NonZeroF32::new(5.0).unwrap();
-        let nz_neg: NonZeroF32 = -nz;
+        const NZ: NonZeroF32 = NonZeroF32::new_const(5.0);
+        let nz_neg: NonZeroF32 = -NZ;
         assert_eq!(nz_neg.get(), -5.0);
     }
 
     #[test]
     fn test_double_fin_negation() {
-        let original = FinF64::new(1.414).unwrap();
-        let neg1: FinF64 = -original;
+        const ORIGINAL: FinF64 = FinF64::new_const(1.414);
+        let neg1: FinF64 = -ORIGINAL;
         let back: FinF64 = -neg1;
         assert!((back.get() - 1.414).abs() < f64::EPSILON);
     }
@@ -139,22 +139,22 @@ mod test_edge_cases {
 
     #[test]
     fn test_large_values() {
-        let pos = PositiveF64::new(1e100).unwrap();
-        let neg: NegativeF64 = -pos;
+        const POS: PositiveF64 = PositiveF64::new_const(1e100);
+        let neg: NegativeF64 = -POS;
         assert_eq!(neg.get(), -1e100);
     }
 
     #[test]
     fn test_small_values() {
-        let pos = PositiveF32::new(1e-30).unwrap();
-        let neg: NegativeF32 = -pos;
+        const POS: PositiveF32 = PositiveF32::new_const(1e-30);
+        let neg: NegativeF32 = -POS;
         assert_eq!(neg.get(), -1e-30);
     }
 
     #[test]
     fn test_normalized_midpoint() {
-        let mid = NormalizedF64::new(0.5).unwrap();
-        let neg_mid: NegativeNormalizedF64 = -mid;
+        const MID: NormalizedF64 = NormalizedF64::new_const(0.5);
+        let neg_mid: NegativeNormalizedF64 = -MID;
         assert_eq!(neg_mid.get(), -0.5);
     }
 }

@@ -30,20 +30,20 @@ mod test_finf32 {
 
     #[test]
     fn test_finf32_get() {
-        let finite = FinF32::new(std::f32::consts::PI).unwrap();
-        assert!((finite.get() - std::f32::consts::PI).abs() < f32::EPSILON);
+        const FINITE: FinF32 = FinF32::new_const(std::f32::consts::PI);
+        assert!((FINITE.get() - std::f32::consts::PI).abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_finf32_debug() {
-        let finite = FinF32::new(1.5).unwrap();
-        assert!(format!("{:?}", finite).contains("FiniteFloat"));
+        const FINITE: FinF32 = FinF32::new_const(1.5);
+        assert!(format!("{:?}", FINITE).contains("FiniteFloat"));
     }
 
     #[test]
     fn test_finf32_display() {
-        let finite = FinF32::new(1.5).unwrap();
-        assert_eq!(format!("{}", finite), "1.5");
+        const FINITE: FinF32 = FinF32::new_const(1.5);
+        assert_eq!(format!("{}", FINITE), "1.5");
     }
 }
 
@@ -69,8 +69,8 @@ mod test_finf64 {
 
     #[test]
     fn test_finf64_get() {
-        let finite = FinF64::new(std::f64::consts::PI).unwrap();
-        assert!((finite.get() - std::f64::consts::PI).abs() < f64::EPSILON);
+        const FINITE: FinF64 = FinF64::new_const(std::f64::consts::PI);
+        assert!((FINITE.get() - std::f64::consts::PI).abs() < f64::EPSILON);
     }
 }
 
@@ -99,8 +99,8 @@ mod test_positivef32 {
 
     #[test]
     fn test_positivef32_get() {
-        let positive = PositiveF32::new(42.0).unwrap();
-        assert_eq!(positive.get(), 42.0);
+        const POSITIVE: PositiveF32 = PositiveF32::new_const(42.0);
+        assert_eq!(POSITIVE.get(), 42.0);
     }
 }
 
@@ -129,8 +129,8 @@ mod test_positivef64 {
 
     #[test]
     fn test_positivef64_get() {
-        let positive = PositiveF64::new(123.456).unwrap();
-        assert_eq!(positive.get(), 123.456);
+        const POSITIVE: PositiveF64 = PositiveF64::new_const(123.456);
+        assert_eq!(POSITIVE.get(), 123.456);
     }
 }
 
@@ -1440,6 +1440,14 @@ mod test_symmetric_new_const {
         assert_eq!(MIN.get(), -1.0);
         assert_eq!(MAX.get(), 1.0);
         assert_eq!(ZERO.get(), 0.0);
+    }
+
+    #[test]
+    fn test_symmetric_negation_new_const() {
+        const ORIGINAL: SymmetricF32 = SymmetricF32::new_const(0.75);
+        const NEGATED: SymmetricF32 = SymmetricF32::new_const(-0.75);
+        let neg_original: SymmetricF32 = -ORIGINAL;
+        assert_eq!(neg_original.get(), NEGATED.get());
     }
 }
 
