@@ -20,9 +20,9 @@ mod test_positive_negative {
 
     #[test]
     fn test_negative_to_positive_f32() {
-        let neg = NegativeF32::new(-3.14).unwrap();
+        let neg = NegativeF32::new(-2.5).unwrap();
         let pos: PositiveF32 = -neg;
-        assert!((pos.get() - 3.14).abs() < f32::EPSILON);
+        assert!((pos.get() - 2.5).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -126,10 +126,10 @@ mod test_reflexive {
 
     #[test]
     fn test_double_fin_negation() {
-        let original = FinF64::new(3.14).unwrap();
+        let original = FinF64::new(1.414).unwrap();
         let neg1: FinF64 = -original;
         let back: FinF64 = -neg1;
-        assert!((back.get() - 3.14).abs() < f64::EPSILON);
+        assert!((back.get() - 1.414).abs() < f64::EPSILON);
     }
 }
 
