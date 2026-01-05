@@ -247,6 +247,34 @@
 //! let invalid = NonZeroPositiveF32::new(0.0);   // ✗ None (zero)
 //! let invalid = NonZeroPositiveF32::new(-1.0);  // ✗ None (negative)
 //! ```
+//!
+//! ## Unary Negation
+//!
+//! The unary negation operator (`-`) is supported with automatic type inference:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Positive ↔ Negative
+//! let pos = PositiveF64::new(5.0).unwrap();
+//! let neg: NegativeF64 = -pos;
+//! assert_eq!(neg.get(), -5.0);
+//!
+//! // NonZeroPositive ↔ NonZeroNegative
+//! let nz_pos = NonZeroPositiveF32::new(10.0).unwrap();
+//! let nz_neg: NonZeroNegativeF32 = -nz_pos;
+//! assert_eq!(nz_neg.get(), -10.0);
+//!
+//! // Normalized ↔ NegativeNormalized
+//! let norm = NormalizedF64::new(0.75).unwrap();
+//! let neg_norm: NegativeNormalizedF64 = -norm;
+//! assert_eq!(neg_norm.get(), -0.75);
+//!
+//! // Fin is reflexive (negating Fin returns Fin)
+//! let fin = FinF32::new(2.5).unwrap();
+//! let neg_fin: FinF32 = -fin;
+//! assert_eq!(neg_fin.get(), -2.5);
+//! ```
 
 // Generate all code using proc_macro
 strict_num_extended_macros::generate_finite_float_types!([
