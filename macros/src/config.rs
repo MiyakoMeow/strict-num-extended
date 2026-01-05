@@ -120,13 +120,20 @@ impl Parse for TypeConfig {
         }
 
         // Calculate negation mappings for all constraints
-        for i in 0..constraints.len() {
-            let negated_conditions = negate_conditions(&constraints[i].raw_conditions);
+        // Build a list of (name, raw_conditions) first to avoid borrow checker issues
+        let constraints_data: Vec<_> = constraints
+            .iter()
+            .map(|c| (c.name.clone(), c.raw_conditions.clone()))
+            .collect();
+
+        // Now calculate negation mappings
+        for constraint in &mut constraints {
+            let negated_conditions = negate_conditions(&constraint.raw_conditions);
 
             // Find a matching constraint in the list
-            for other in &constraints {
-                if conditions_match(&negated_conditions, &other.raw_conditions) {
-                    constraints[i].neg_constraint_name = Some(other.name.clone());
+            for (other_name, other_raw) in &constraints_data {
+                if conditions_match(&negated_conditions, other_raw) {
+                    constraint.neg_constraint_name = Some(other_name.clone());
                     break;
                 }
             }
@@ -185,6 +192,7 @@ fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {
 /// - `">= 0.0"` → `"<= 0.0"` (since -0.0 == 0.0)
 /// - `">= -1.0"` → `"<= 1.0"` (double negation)
 /// - `"<= 0.0"` → `">= 0.0"` (since -0.0 == 0.0)
+#[expect(clippy::option_if_let_else)] // if-let-else is clearer here
 fn negate_conditions(conditions: &[String]) -> Vec<String> {
     conditions
         .iter()
