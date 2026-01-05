@@ -7,6 +7,32 @@
 
 use strict_num_extended::*;
 
+/// Macro for testing arithmetic operations (redefined to avoid duplication)
+macro_rules! test_arithmetic {
+    ($test_name:ident, $Type:ty, $op:tt, $a:expr, $b:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const A: $Type = <$Type>::new_const($a);
+            const B: $Type = <$Type>::new_const($b);
+            let result = (A $op B).unwrap();
+            assert_eq!(result.get(), $expected);
+        }
+    };
+}
+
+/// Macro for testing safe arithmetic operations (redefined to avoid duplication)
+macro_rules! test_safe_arithmetic {
+    ($test_name:ident, $Type:ty, $ResultType:ty, $op:tt, $a:expr, $b:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const A: $Type = <$Type>::new_const($a);
+            const B: $Type = <$Type>::new_const($b);
+            let result: $ResultType = A $op B;
+            assert_eq!(result.get(), $expected);
+        }
+    };
+}
+
 /// Macro for testing basic value creation with `new_const`
 macro_rules! test_get {
     ($test_name:ident, $Type:ty, $value:expr) => {
@@ -47,43 +73,6 @@ macro_rules! test_display {
         fn $test_name() {
             const VAL: $Type = <$Type>::new_const($value);
             assert_eq!(format!("{}", VAL), $expected);
-        }
-    };
-}
-
-/// Macro for testing arithmetic operations (add, sub, mul, div)
-macro_rules! test_arithmetic {
-    ($test_name:ident, $Type:ty, $op:tt, $a:expr, $b:expr, $expected:expr) => {
-        #[test]
-        fn $test_name() {
-            const A: $Type = <$Type>::new_const($a);
-            const B: $Type = <$Type>::new_const($b);
-            let result = (A $op B).unwrap();
-            assert_eq!(result.get(), $expected);
-        }
-    };
-}
-
-/// Macro for testing safe arithmetic operations (return Fin, not Option)
-macro_rules! test_safe_arithmetic {
-    ($test_name:ident, $Type:ty, $ResultType:ty, $op:tt, $a:expr, $b:expr, $expected:expr) => {
-        #[test]
-        fn $test_name() {
-            const A: $Type = <$Type>::new_const($a);
-            const B: $Type = <$Type>::new_const($b);
-            let result: $ResultType = A $op B;
-            assert_eq!(result.get(), $expected);
-        }
-    };
-}
-
-/// Macro for testing `NonZero` types
-macro_rules! test_nonzero_get {
-    ($test_name:ident, $Type:ty, $value:expr) => {
-        #[test]
-        fn $test_name() {
-            const VAL: $Type = <$Type>::new_const($value);
-            assert_eq!(VAL.get(), $value);
         }
     };
 }

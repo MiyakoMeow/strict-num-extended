@@ -8,6 +8,7 @@
 use strict_num_extended::*;
 
 /// Macro for testing arithmetic operations with exact comparison
+#[macro_export]
 macro_rules! test_arith {
     ($test_name:ident, $TypeA:ty, $op:tt, $TypeB:ty, $ResultType:ty, $a:expr, $b:expr, $expected:expr) => {
         #[test]
@@ -21,7 +22,22 @@ macro_rules! test_arith {
 }
 
 /// Macro for testing safe arithmetic operations (return direct value, not Option)
+/// Supports two modes:
+/// 1. With explicit result type: (name, TypeA, op, TypeB, ResultType, a, b, expected)
+/// 2. Without result type (inferred): (name, TypeA, op, TypeB, a, b, expected)
+#[macro_export]
 macro_rules! test_safe_arith {
+    // Version with explicit result type
+    ($test_name:ident, $TypeA:ty, $op:tt, $TypeB:ty, $ResultType:ty, $a:expr, $b:expr, $expected:expr) => {
+        #[test]
+        fn $test_name() {
+            const A: $TypeA = <$TypeA>::new_const($a);
+            const B: $TypeB = <$TypeB>::new_const($b);
+            let result: $ResultType = A $op B;
+            assert_eq!(result.get(), $expected);
+        }
+    };
+    // Version without result type (auto-inferred)
     ($test_name:ident, $TypeA:ty, $op:tt, $TypeB:ty, $a:expr, $b:expr, $expected:expr) => {
         #[test]
         fn $test_name() {
@@ -34,6 +50,7 @@ macro_rules! test_safe_arith {
 }
 
 /// Macro for testing arithmetic operations that return None (failure cases)
+#[macro_export]
 macro_rules! test_fallible_none {
     ($test_name:ident, $TypeA:ty, $op:tt, $TypeB:ty, $a:expr, $b:expr) => {
         #[test]
@@ -47,6 +64,7 @@ macro_rules! test_fallible_none {
 }
 
 /// Macro for testing arithmetic operations that return Some (success cases)
+#[macro_export]
 macro_rules! test_fallible_some {
     ($test_name:ident, $TypeA:ty, $op:tt, $TypeB:ty, $a:expr, $b:expr, $expected:expr) => {
         #[test]
@@ -61,6 +79,7 @@ macro_rules! test_fallible_some {
 }
 
 /// Macro for testing Option arithmetic (LHS with Option RHS)
+#[macro_export]
 macro_rules! test_option_arith {
     ($test_name:ident, $TypeA:ty, $op:tt, $TypeB:ty, $a:expr, $b_opt:expr, $expected:expr) => {
         #[test]
