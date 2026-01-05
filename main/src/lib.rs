@@ -54,7 +54,8 @@
 //!
 //! ## Arithmetic Operations
 //!
-//! Arithmetic operations automatically validate results and preserve constraints:
+//! Arithmetic operations automatically validate results and return `Option` for potentially
+//! failing operations. Safe operations (like bounded type multiplication) return direct values:
 //!
 //! ```
 //! use strict_num_extended::NonZeroPositiveF32;
@@ -62,15 +63,12 @@
 //! let a = NonZeroPositiveF32::new(10.0).unwrap();
 //! let b = NonZeroPositiveF32::new(20.0).unwrap();
 //!
-//! // Addition preserves constraint (result must still be > 0)
-//! let sum = a + b;
+//! // Addition returns Option (overflow possible)
+//! let sum = (a + b).unwrap();
 //! assert_eq!(sum.get(), 30.0);
 //!
-//! // Subtraction panics if result violates constraint
-//! // let invalid = b - a; // This would panic if result <= 0
-//!
-//! // Multiplication preserves constraint
-//! let product = a * b;
+//! // Multiplication returns Option (overflow possible for unbounded types)
+//! let product = (a * b).unwrap();
 //! assert_eq!(product.get(), 200.0);
 //! ```
 //!

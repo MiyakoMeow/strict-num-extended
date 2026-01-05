@@ -1,9 +1,9 @@
 //! # Negation Operation Tests
 //!
-//! 全面测试取负操作的类型推断和约束验证
+//! Comprehensive test of negation operation type inference and constraint validation
 
 // Strict floating-point comparisons and unwrap usage in test code are justified
-#![expect(clippy::float_cmp, clippy::unwrap_used)]
+#![allow(clippy::float_cmp, clippy::unwrap_used)]
 
 use strict_num_extended::*;
 
@@ -31,7 +31,7 @@ mod test_positive_negative {
         let neg_zero: NegativeF32 = -pos_zero;
         assert_eq!(neg_zero.get(), -0.0);
 
-        // 再次取负回到零
+        // Negate again to return to zero
         let back: PositiveF32 = -neg_zero;
         assert_eq!(back.get(), 0.0);
     }
@@ -84,7 +84,7 @@ mod test_normalized {
 
     #[test]
     fn test_boundary_values() {
-        // 测试边界值 0.0 和 1.0
+        // Test boundary values 0.0 and 1.0
         let zero = NormalizedF32::new(0.0).unwrap();
         let neg_zero: NegativeNormalizedF32 = -zero;
         assert_eq!(neg_zero.get(), -0.0);
