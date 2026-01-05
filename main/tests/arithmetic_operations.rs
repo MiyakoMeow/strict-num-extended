@@ -147,7 +147,7 @@ mod test_safe_operations {
     use super::*;
 
     // Original: test_safe_arith! -> returns direct value
-    test_arith!(test_normalized_mul_normalized, NormalizedF64, 0.5, *, NormalizedF64, 0.4, PositiveF64, 0.2);
+    test_arith!(test_normalized_mul_normalized, NormalizedF64, 0.5, *, NormalizedF64, 0.4, NormalizedF64, 0.2);
 
     // Original: test_safe_arith! -> returns direct value
     test_arith!(
@@ -157,7 +157,7 @@ mod test_safe_operations {
         *,
         NegativeNormalizedF64,
         -0.4,
-        NegativeF64,
+        NegativeNormalizedF64,
         -0.2
     );
 
@@ -169,12 +169,12 @@ mod test_safe_operations {
         *,
         NegativeNormalizedF64,
         -0.4,
-        PositiveF64,
+        NormalizedF64,
         0.2
     );
 
     // Original: test_safe_arith! -> returns direct value
-    test_arith!(test_symmetric_mul_symmetric, SymmetricF64, 0.5, *, SymmetricF64, 0.8, FinF64, 0.4);
+    test_arith!(test_symmetric_mul_symmetric, SymmetricF64, 0.5, *, SymmetricF64, 0.8, SymmetricF64, 0.4);
 
     // Original: test_safe_arith! -> returns direct value
     test_arith!(
@@ -184,7 +184,7 @@ mod test_safe_operations {
         *,
         SymmetricF64,
         0.8,
-        FinF64,
+        SymmetricF64,
         -0.4
     );
 
@@ -196,7 +196,7 @@ mod test_safe_operations {
         *,
         SymmetricF64,
         -0.8,
-        FinF64,
+        SymmetricF64,
         0.4
     );
 }
@@ -223,7 +223,7 @@ mod test_fallible_operations {
     test_arith!(test_normalized_add_normalized, NormalizedF64, 0.9, +, NormalizedF64, 0.9, Option<PositiveF64>, Some(1.8));
 
     // Original: test_fallible_some! -> returns Some
-    test_arith!(test_symmetric_add_symmetric, SymmetricF64, 0.9, +, SymmetricF64, 0.9, Option<PositiveF64>, Some(1.8));
+    test_arith!(test_symmetric_add_symmetric, SymmetricF64, 0.9, +, SymmetricF64, 0.9, Option<FinF64>, Some(1.8));
 }
 
 mod test_option_arithmetic {
@@ -374,7 +374,7 @@ mod test_f32_types {
         *,
         NormalizedF32,
         0.4,
-        PositiveF32,
+        NormalizedF32,
         0.2
     );
 

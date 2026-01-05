@@ -457,7 +457,14 @@ fn compute_arithmetic_result(
     };
 
     // Find the best matching constraint type for the output
-    let output_type = find_matching_constraint(output_sign, output_excludes_zero, all_constraints);
+    let output_type = find_matching_constraint(
+        op,
+        output_sign,
+        output_excludes_zero,
+        lhs,
+        rhs,
+        all_constraints,
+    );
 
     ArithmeticResult {
         output_type,
@@ -523,6 +530,21 @@ fn compute_sub_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
     (output_sign, output_excludes_zero, is_safe)
 }
 
+/// Helper to compute the maximum absolute value from bounds
+const fn max_abs_value(bounds: Bounds) -> f64 {
+    let lower_abs = if let Some(v) = bounds.lower {
+        v.abs()
+    } else {
+        0.0
+    };
+    let upper_abs = if let Some(v) = bounds.upper {
+        v.abs()
+    } else {
+        0.0
+    };
+    lower_abs.max(upper_abs)
+}
+
 /// Compute output properties for multiplication.
 const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
     // Multiplication is safe if both operands are bounded (result stays bounded)
@@ -581,41 +603,134 @@ const fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Si
 
 /// Find the best matching constraint type for given output properties.
 fn find_matching_constraint(
+    op: ArithmeticOp,
     sign: Sign,
     excludes_zero: bool,
+    lhs: &ConstraintDef,
+    rhs: &ConstraintDef,
     constraints: &[ConstraintDef],
 ) -> Ident {
-    // Priority: more specific types first
-    // 1. Try to find exact match (sign + excludes_zero)
-    // 2. Fall back to sign-only match
-    // 3. Fall back to Fin
+    // Check if both operands have the same bounded range
+    let operands_have_same_bounds = lhs.bounds.is_bounded()
+        && rhs.bounds.is_bounded()
+        && lhs.bounds.lower == rhs.bounds.lower
+        && lhs.bounds.upper == rhs.bounds.upper;
 
-    for c in constraints {
-        if c.sign == sign
-            && c.excludes_zero == excludes_zero
-            && c.bounds.lower.is_none()
-            && c.bounds.upper.is_none()
-        {
-            return c.name.clone();
-        }
-    }
+    // Collect all matching constraints
+    let mut matches = Vec::new();
 
-    // Relaxed match: just sign and excludes_zero
     for c in constraints {
         if c.sign == sign && c.excludes_zero == excludes_zero {
-            // Skip bounded types for unbounded results
-            if c.bounds.is_bounded() {
-                continue;
-            }
-            return c.name.clone();
+            matches.push(c);
         }
     }
 
-    // Further relaxed: just sign
-    for c in constraints {
-        if c.sign == sign && !c.bounds.is_bounded() {
-            return c.name.clone();
+    // If we found exact matches
+    if !matches.is_empty() {
+        // For multiplication, compute the actual result bounds and match them
+        if matches!(op, ArithmeticOp::Mul) {
+            // Check if both operands are bounded (even if bounds are different)
+            if lhs.bounds.is_bounded() && rhs.bounds.is_bounded() {
+                // Compute result bounds for bounded multiplication
+                // |a| * |b| gives the max absolute value
+                let max_abs_lhs = max_abs_value(lhs.bounds);
+                let max_abs_rhs = max_abs_value(rhs.bounds);
+                let max_abs_result = max_abs_lhs * max_abs_rhs;
+
+                // Determine sign of result
+                let result_lower;
+                let result_upper;
+                match (lhs.sign, rhs.sign) {
+                    // Both positive or both negative → positive result [0, max]
+                    (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
+                        result_lower = Some(0.0);
+                        result_upper = Some(max_abs_result);
+                    }
+                    // Different signs → negative result [-max, 0]
+                    (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
+                        result_lower = Some(-max_abs_result);
+                        result_upper = Some(0.0);
+                    }
+                    // Any sign → symmetric bounds [-max, max]
+                    _ => {
+                        result_lower = Some(-max_abs_result);
+                        result_upper = Some(max_abs_result);
+                    }
+                }
+
+                // First, try to find a bounded type with the computed result bounds
+                for c in &matches {
+                    if c.bounds.is_bounded()
+                        && c.bounds.lower == result_lower
+                        && c.bounds.upper == result_upper
+                    {
+                        return c.name.clone();
+                    }
+                }
+
+                // If exact bounds match not found, prefer bounded types over unbounded
+                for c in &matches {
+                    if c.bounds.is_bounded() {
+                        return c.name.clone();
+                    }
+                }
+            }
         }
+
+        // Prefer unbounded types over bounded types
+        for c in &matches {
+            if c.bounds.lower.is_none() && c.bounds.upper.is_none() {
+                return c.name.clone();
+            }
+        }
+
+        // No unbounded types found, return the first bounded match
+        return matches
+            .first()
+            .expect("matches should not be empty at this point")
+            .name
+            .clone();
+    }
+
+    // No exact match, try relaxed match on sign only
+    let mut sign_matches = Vec::new();
+
+    for c in constraints {
+        if c.sign == sign {
+            sign_matches.push(c);
+        }
+    }
+
+    if !sign_matches.is_empty() {
+        // When operands have same bounds, prefer bounded types that match those bounds
+        if operands_have_same_bounds {
+            let operand_lower = lhs.bounds.lower;
+            let operand_upper = lhs.bounds.upper;
+
+            // Try to find a bounded type with the same bounds
+            for c in &sign_matches {
+                if c.bounds.is_bounded()
+                    && c.bounds.lower == operand_lower
+                    && c.bounds.upper == operand_upper
+                {
+                    return c.name.clone();
+                }
+            }
+        }
+
+        // Prefer unbounded types
+        for c in &sign_matches {
+            if c.bounds.lower.is_none() && c.bounds.upper.is_none() {
+                return c.name.clone();
+            }
+        }
+
+        // All are bounded, return the first one
+        return sign_matches
+            .first()
+            .expect("sign_matches should not be empty at this point")
+            .name
+            .clone();
     }
 
     // Default to Fin
