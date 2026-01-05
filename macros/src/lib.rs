@@ -13,7 +13,7 @@ use config::TypeConfig;
 use generator::{
     generate_arithmetic_impls, generate_comparison_traits, generate_constraint_markers,
     generate_constraint_trait, generate_finite_float_struct, generate_neg_impls,
-    generate_new_const_methods, generate_type_aliases,
+    generate_new_const_methods, generate_option_arithmetic_impls, generate_type_aliases,
 };
 
 /// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
@@ -29,8 +29,11 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
         generate_comparison_traits(),
     ];
 
-    // Always generate arithmetic operations
+    // Generate type-safe arithmetic operations
     all_code.push(generate_arithmetic_impls(&config));
+
+    // Generate arithmetic operations for Option types
+    all_code.push(generate_option_arithmetic_impls(&config));
 
     // Generate negation operations
     all_code.push(generate_neg_impls(&config));

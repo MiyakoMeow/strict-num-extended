@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 use syn::Expr;
 
-use crate::config::TypeConfig;
+use crate::config::{ArithmeticOp, TypeConfig};
 
 // ============================================================================
 // Helper functions
@@ -295,39 +295,155 @@ pub fn generate_comparison_traits() -> TokenStream2 {
     }
 }
 
-/// Generates arithmetic operation implementations.
-pub fn generate_arithmetic_impls(_config: &TypeConfig) -> TokenStream2 {
+/// Generates type-safe arithmetic operation implementations.
+///
+/// This generates cross-type arithmetic operations with automatic output type inference.
+/// Safe operations return the result directly, while potentially failing operations return Option.
+pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
-    // Always implement all arithmetic operations
-    let traits_to_impl: &[(&str, &str, TokenStream2)] = &[
-        ("Add", "add", quote! { + }),
-        ("Sub", "sub", quote! { - }),
-        ("Mul", "mul", quote! { * }),
-        ("Div", "div", quote! { / }),
+    let ops = [
+        (ArithmeticOp::Add, "Add", "add", quote! { + }),
+        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
+        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
+        (ArithmeticOp::Div, "Div", "div", quote! { / }),
     ];
 
-    for (trait_name, method_name, op) in traits_to_impl {
-        let trait_ident = Ident::new(trait_name, Span::call_site());
-        let method_ident = Ident::new(method_name, Span::call_site());
+    // Generate for each type combination
+    for lhs_type in &config.constraint_types {
+        for rhs_type in &config.constraint_types {
+            for (op, trait_name, method_name, op_symbol) in &ops {
+                let trait_ident = Ident::new(trait_name, Span::call_site());
+                let method_ident = Ident::new(method_name, Span::call_site());
 
-        impls.push(quote! {
-            impl<T, V> #trait_ident for FiniteFloat<T, V>
-            where
-                T: std::fmt::Display + Copy + #trait_ident<Output = T>,
-                V: Constraint<Base = T>,
-            {
-                type Output = Self;
+                // Get the arithmetic result from the precomputed table
+                let key = (
+                    *op,
+                    lhs_type.type_name.to_string(),
+                    rhs_type.type_name.to_string(),
+                );
+                let result = config
+                    .arithmetic_results
+                    .get(&key)
+                    .expect("Arithmetic result not found");
 
-                fn #method_ident(self, rhs: Self) -> Self::Output {
-                    let result = self.value #op rhs.value;
-                    Self::new(result).expect(concat!(
-                        "Arithmetic operation failed: ",
-                        stringify!(#trait_name)
-                    ))
+                for float_type in &lhs_type.float_types {
+                    let lhs_alias = make_type_alias(&lhs_type.type_name, float_type);
+                    let rhs_alias = make_type_alias(&rhs_type.type_name, float_type);
+                    let output_alias = make_type_alias(&result.output_type, float_type);
+
+                    if result.is_safe {
+                        // Safe operation: return result directly
+                        impls.push(quote! {
+                            impl #trait_ident<#rhs_alias> for #lhs_alias {
+                                type Output = #output_alias;
+
+                                fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
+                                    let result = self.get() #op_symbol rhs.get();
+                                    // SAFETY: The operation is proven safe by type constraints
+                                    unsafe { #output_alias::new_unchecked(result) }
+                                }
+                            }
+                        });
+                    } else if *op == ArithmeticOp::Div {
+                        // Division: always check for zero
+                        impls.push(quote! {
+                            impl #trait_ident<#rhs_alias> for #lhs_alias {
+                                type Output = Option<#output_alias>;
+
+                                fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
+                                    let rhs_val = rhs.get();
+                                    if rhs_val == 0.0 {
+                                        return None;
+                                    }
+                                    let result = self.get() / rhs_val;
+                                    #output_alias::new(result)
+                                }
+                            }
+                        });
+                    } else {
+                        // Potentially failing operation: return Option
+                        impls.push(quote! {
+                            impl #trait_ident<#rhs_alias> for #lhs_alias {
+                                type Output = Option<#output_alias>;
+
+                                fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
+                                    let result = self.get() #op_symbol rhs.get();
+                                    #output_alias::new(result)
+                                }
+                            }
+                        });
+                    }
                 }
             }
-        });
+        }
+    }
+
+    quote! {
+        #(#impls)*
+    }
+}
+
+/// Generates arithmetic operations for Option types.
+///
+/// Due to orphan rules, we can only implement:
+/// - `Lhs op Option<Rhs>` -> Option<Output>
+///
+/// For `Option<Lhs> op Rhs` and `Option<Lhs> op Option<Rhs>`, users need to use
+/// `.map()` or pattern matching since we can't implement traits for `Option<T>`.
+pub fn generate_option_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
+    let mut impls = Vec::new();
+
+    let ops = [
+        (ArithmeticOp::Add, "Add", "add"),
+        (ArithmeticOp::Sub, "Sub", "sub"),
+        (ArithmeticOp::Mul, "Mul", "mul"),
+        (ArithmeticOp::Div, "Div", "div"),
+    ];
+
+    // Generate for each type combination
+    for lhs_type in &config.constraint_types {
+        for rhs_type in &config.constraint_types {
+            for (op, trait_name, method_name) in &ops {
+                let trait_ident = Ident::new(trait_name, Span::call_site());
+                let method_ident = Ident::new(method_name, Span::call_site());
+
+                // Get the arithmetic result from the precomputed table
+                let key = (
+                    *op,
+                    lhs_type.type_name.to_string(),
+                    rhs_type.type_name.to_string(),
+                );
+                let result = config
+                    .arithmetic_results
+                    .get(&key)
+                    .expect("Arithmetic result not found");
+
+                for float_type in &lhs_type.float_types {
+                    let lhs_alias = make_type_alias(&lhs_type.type_name, float_type);
+                    let rhs_alias = make_type_alias(&rhs_type.type_name, float_type);
+                    let output_alias = make_type_alias(&result.output_type, float_type);
+
+                    // Lhs op Option<Rhs> -> Option<Output>
+                    // This is allowed because Lhs is a local type
+                    impls.push(quote! {
+                        impl #trait_ident<Option<#rhs_alias>> for #lhs_alias {
+                            type Output = Option<#output_alias>;
+
+                            fn #method_ident(self, rhs: Option<#rhs_alias>) -> Self::Output {
+                                match rhs {
+                                    Some(b) => {
+                                        let inner_result = self.#method_ident(b);
+                                        inner_result.into()
+                                    }
+                                    None => None,
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
     }
 
     quote! {
