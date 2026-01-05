@@ -1193,3 +1193,270 @@ mod test_negative_normalizedf64 {
         assert_eq!(negative_normalized.get(), -0.75);
     }
 }
+
+/// Tests basic functionality of `SymmetricF32`
+mod test_symmetric_f32 {
+    use super::*;
+
+    #[test]
+    fn test_symmetric_f32_new_valid() {
+        assert!(SymmetricF32::new(1.0).is_some());
+        assert!(SymmetricF32::new(-1.0).is_some());
+        assert!(SymmetricF32::new(0.0).is_some());
+        assert!(SymmetricF32::new(0.75).is_some());
+        assert!(SymmetricF32::new(-0.5).is_some());
+    }
+
+    #[test]
+    fn test_symmetric_f32_new_invalid() {
+        assert!(SymmetricF32::new(1.1).is_none());
+        assert!(SymmetricF32::new(-1.1).is_none());
+        assert!(SymmetricF32::new(f32::NAN).is_none());
+        assert!(SymmetricF32::new(f32::INFINITY).is_none());
+        assert!(SymmetricF32::new(f32::NEG_INFINITY).is_none());
+    }
+
+    #[test]
+    fn test_symmetric_f32_get() {
+        let val = SymmetricF32::new(0.75).unwrap();
+        assert!((val.get() - 0.75).abs() < f32::EPSILON);
+    }
+}
+
+/// Tests basic functionality of `SymmetricF64`
+mod test_symmetric_f64 {
+    use super::*;
+
+    #[test]
+    fn test_symmetric_f64_new_valid() {
+        assert!(SymmetricF64::new(1.0).is_some());
+        assert!(SymmetricF64::new(-1.0).is_some());
+        assert!(SymmetricF64::new(0.0).is_some());
+        assert!(SymmetricF64::new(0.5).is_some());
+        assert!(SymmetricF64::new(-0.25).is_some());
+    }
+
+    #[test]
+    fn test_symmetric_f64_new_invalid() {
+        assert!(SymmetricF64::new(1.001).is_none());
+        assert!(SymmetricF64::new(-1.001).is_none());
+        assert!(SymmetricF64::new(f64::NAN).is_none());
+        assert!(SymmetricF64::new(f64::INFINITY).is_none());
+        assert!(SymmetricF64::new(f64::NEG_INFINITY).is_none());
+    }
+
+    #[test]
+    fn test_symmetric_f64_get() {
+        let val = SymmetricF64::new(-0.5).unwrap();
+        assert!((val.get() - (-0.5)).abs() < f64::EPSILON);
+    }
+}
+
+/// Symmetric arithmetic operations tests
+mod test_symmetric_arithmetic_operations {
+    use super::*;
+
+    #[test]
+    fn test_symmetric_f32_add() {
+        let a = SymmetricF32::new(0.5).unwrap();
+        let b = SymmetricF32::new(0.3).unwrap();
+        let sum = a + b;
+        assert_eq!(sum.get(), 0.8);
+    }
+
+    #[test]
+    fn test_symmetric_f64_add() {
+        let a = SymmetricF64::new(-0.5).unwrap();
+        let b = SymmetricF64::new(0.3).unwrap();
+        let sum = a + b;
+        assert_eq!(sum.get(), -0.2);
+    }
+
+    #[test]
+    fn test_symmetric_f32_sub() {
+        let a = SymmetricF32::new(0.8).unwrap();
+        let b = SymmetricF32::new(0.3).unwrap();
+        let diff = a - b;
+        assert_eq!(diff.get(), 0.5);
+    }
+
+    #[test]
+    fn test_symmetric_f64_sub() {
+        let a = SymmetricF64::new(-0.2).unwrap();
+        let b = SymmetricF64::new(0.3).unwrap();
+        let diff = a - b;
+        assert_eq!(diff.get(), -0.5);
+    }
+
+    #[test]
+    fn test_symmetric_f32_mul() {
+        let a = SymmetricF32::new(0.5).unwrap();
+        let b = SymmetricF32::new(0.4).unwrap();
+        let product = a * b;
+        assert_eq!(product.get(), 0.2);
+    }
+
+    #[test]
+    fn test_symmetric_f64_mul() {
+        let a = SymmetricF64::new(-0.5).unwrap();
+        let b = SymmetricF64::new(0.6).unwrap();
+        let product = a * b;
+        assert_eq!(product.get(), -0.3);
+    }
+
+    #[test]
+    fn test_symmetric_f32_div() {
+        let a = SymmetricF32::new(0.5).unwrap();
+        let b = SymmetricF32::new(1.0).unwrap();
+        let quotient = a / b;
+        assert_eq!(quotient.get(), 0.5);
+    }
+
+    #[test]
+    fn test_symmetric_f64_div() {
+        let a = SymmetricF64::new(-0.5).unwrap();
+        let b = SymmetricF64::new(1.0).unwrap();
+        let quotient = a / b;
+        assert_eq!(quotient.get(), -0.5);
+    }
+
+    #[test]
+    fn test_symmetric_arithmetic_overflow() {
+        let a = SymmetricF32::new(0.8).unwrap();
+        let b = SymmetricF32::new(0.5).unwrap();
+        let result = std::panic::catch_unwind(|| {
+            let _ = a + b;
+        });
+        assert!(result.is_err());
+    }
+}
+
+/// Symmetric comparison operations tests
+mod test_symmetric_comparison_operations {
+    use super::*;
+
+    #[test]
+    fn test_symmetric_f32_comparison() {
+        let a = SymmetricF32::new(-0.5).unwrap();
+        let b = SymmetricF32::new(0.5).unwrap();
+        let c = SymmetricF32::new(0.5).unwrap();
+
+        assert!(a < b);
+        assert!(b > a);
+        assert!(a <= b);
+        assert!(b >= a);
+        assert_eq!(b, c);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_symmetric_f64_comparison() {
+        let a = SymmetricF64::new(-1.0).unwrap();
+        let b = SymmetricF64::new(0.0).unwrap();
+        let c = SymmetricF64::new(1.0).unwrap();
+
+        assert!(a < b);
+        assert!(b < c);
+        assert!(a <= b);
+        assert!(b <= c);
+        assert!(c > a);
+        assert!(c >= b);
+    }
+}
+
+/// Symmetric negation tests (reflexive property)
+mod test_symmetric_negation {
+    use super::*;
+
+    #[test]
+    fn test_symmetric_f32_negation() {
+        let val = SymmetricF32::new(0.75).unwrap();
+        let neg_val: SymmetricF32 = -val;
+        assert_eq!(neg_val.get(), -0.75);
+    }
+
+    #[test]
+    fn test_symmetric_f64_negation() {
+        let val = SymmetricF64::new(-0.5).unwrap();
+        let neg_val: SymmetricF64 = -val;
+        assert_eq!(neg_val.get(), 0.5);
+    }
+
+    #[test]
+    fn test_symmetric_double_negation_f32() {
+        let original = SymmetricF32::new(0.75).unwrap();
+        let neg1: SymmetricF32 = -original;
+        let neg2: SymmetricF32 = -neg1;
+        assert_eq!(neg2.get(), 0.75);
+    }
+
+    #[test]
+    fn test_symmetric_double_negation_f64() {
+        let original = SymmetricF64::new(-0.5).unwrap();
+        let neg1: SymmetricF64 = -original;
+        let neg2: SymmetricF64 = -neg1;
+        assert_eq!(neg2.get(), -0.5);
+    }
+
+    #[test]
+    fn test_symmetric_boundary_negation() {
+        let max = SymmetricF32::new(1.0).unwrap();
+        let neg_max: SymmetricF32 = -max;
+        assert_eq!(neg_max.get(), -1.0);
+
+        let min = SymmetricF32::new(-1.0).unwrap();
+        let neg_min: SymmetricF32 = -min;
+        assert_eq!(neg_min.get(), 1.0);
+    }
+}
+
+/// Symmetric `new_const` tests
+mod test_symmetric_new_const {
+    use super::*;
+
+    #[test]
+    fn test_symmetric_f32_new_const() {
+        const VAL: SymmetricF32 = SymmetricF32::new_const(0.5);
+        assert_eq!(VAL.get(), 0.5);
+    }
+
+    #[test]
+    fn test_symmetric_f64_new_const() {
+        const VAL: SymmetricF64 = SymmetricF64::new_const(-0.75);
+        assert_eq!(VAL.get(), -0.75);
+    }
+
+    #[test]
+    fn test_symmetric_boundary_const() {
+        const MIN: SymmetricF32 = SymmetricF32::new_const(-1.0);
+        const MAX: SymmetricF32 = SymmetricF32::new_const(1.0);
+        const ZERO: SymmetricF32 = SymmetricF32::new_const(0.0);
+
+        assert_eq!(MIN.get(), -1.0);
+        assert_eq!(MAX.get(), 1.0);
+        assert_eq!(ZERO.get(), 0.0);
+    }
+}
+
+/// Symmetric optional types tests
+mod test_symmetric_optional_types {
+    use super::*;
+
+    #[test]
+    fn test_opt_symmetric_f32() {
+        let opt_val: OptSymmetricF32 = Some(SymmetricF32::new(0.5).unwrap());
+        assert!(opt_val.is_some());
+
+        let opt_none: OptSymmetricF32 = None;
+        assert!(opt_none.is_none());
+    }
+
+    #[test]
+    fn test_opt_symmetric_f64() {
+        let opt_val: OptSymmetricF64 = Some(SymmetricF64::new(-0.5).unwrap());
+        assert!(opt_val.is_some());
+
+        let opt_none: OptSymmetricF64 = None;
+        assert!(opt_none.is_none());
+    }
+}
