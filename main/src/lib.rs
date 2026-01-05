@@ -12,6 +12,7 @@
 //! - `NonZeroNegativeF32` and `NonZeroNegativeF64`: Non-zero negative floating-point numbers (< 0, finite)
 //! - `NormalizedF32` and `NormalizedF64`: Normalized floating-point numbers (0.0 <= value <= 1.0, finite)
 //! - `NegativeNormalizedF32` and `NegativeNormalizedF64`: Negative normalized floating-point numbers (-1.0 <= value <= 0.0, finite)
+//! - `SymmetricF32` and `SymmetricF64`: Symmetric floating-point numbers (-1.0 <= value <= 1.0, finite)
 //!
 //! ## Composable Constraints
 //!
@@ -234,6 +235,31 @@
 //! let invalid = NegativeNormalizedF32::new(-1.5); // ✗ None (< -1.0)
 //! ```
 //!
+//! ## `Symmetric` Constraint
+//!
+//! The `Symmetric` types require finite values in [-1.0, 1.0]:
+//!
+//! ```
+//! use strict_num_extended::SymmetricF32;
+//!
+//! let valid = SymmetricF32::new(0.75);   // ✓ Some(value)
+//! let valid = SymmetricF32::new(-0.5);   // ✓ Some(value)
+//! let valid = SymmetricF32::new(1.0);    // ✓ Some(value)
+//! let valid = SymmetricF32::new(-1.0);   // ✓ Some(value)
+//! let invalid = SymmetricF32::new(1.5);  // ✗ None (> 1.0)
+//! let invalid = SymmetricF32::new(-1.5); // ✗ None (< -1.0)
+//! ```
+//!
+//! Note: The `Symmetric` type is reflexive under negation (negating a `Symmetric` returns `Symmetric`):
+//!
+//! ```
+//! use strict_num_extended::SymmetricF64;
+//!
+//! let val = SymmetricF64::new(0.75).unwrap();
+//! let neg_val: SymmetricF64 = -val;  // Still SymmetricF64
+//! assert_eq!(neg_val.get(), -0.75);
+//! ```
+//!
 //! ## Combined Constraints
 //!
 //! Combined types enforce multiple constraints simultaneously:
@@ -286,4 +312,5 @@ strict_num_extended_macros::generate_finite_float_types!([
     (NegativeNormalized, [">= -1.0", "<= 0.0"]),
     (NonZeroPositive, ["> 0.0"]),
     (NonZeroNegative, ["< 0.0"]),
+    (Symmetric, [">= -1.0", "<= 1.0"]),
 ]);
