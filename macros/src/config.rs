@@ -530,6 +530,21 @@ fn compute_sub_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
     (output_sign, output_excludes_zero, is_safe)
 }
 
+/// Helper to compute the maximum absolute value from bounds
+const fn max_abs_value(bounds: Bounds) -> f64 {
+    let lower_abs = if let Some(v) = bounds.lower {
+        v.abs()
+    } else {
+        0.0
+    };
+    let upper_abs = if let Some(v) = bounds.upper {
+        v.abs()
+    } else {
+        0.0
+    };
+    lower_abs.max(upper_abs)
+}
+
 /// Compute output properties for multiplication.
 const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
     // Multiplication is safe if both operands are bounded (result stays bounded)
@@ -612,17 +627,48 @@ fn find_matching_constraint(
 
     // If we found exact matches
     if !matches.is_empty() {
-        // For multiplication with same bounds, prefer bounded types to preserve the range
+        // For multiplication, compute the actual result bounds and match them
         if matches!(op, ArithmeticOp::Mul) && operands_have_same_bounds {
-            let operand_lower = lhs.bounds.lower;
-            let operand_upper = lhs.bounds.upper;
+            // Compute result bounds for bounded multiplication
+            // |a| * |b| gives the max absolute value
+            let max_abs_lhs = max_abs_value(lhs.bounds);
+            let max_abs_rhs = max_abs_value(rhs.bounds);
+            let max_abs_result = max_abs_lhs * max_abs_rhs;
 
-            // First, try to find a bounded type with the same bounds
+            // Determine sign of result
+            let result_lower;
+            let result_upper;
+            match (lhs.sign, rhs.sign) {
+                // Both positive or both negative → positive result [0, max]
+                (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
+                    result_lower = Some(0.0);
+                    result_upper = Some(max_abs_result);
+                }
+                // Different signs → negative result [-max, 0]
+                (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
+                    result_lower = Some(-max_abs_result);
+                    result_upper = Some(0.0);
+                }
+                // Any sign → symmetric bounds [-max, max]
+                _ => {
+                    result_lower = Some(-max_abs_result);
+                    result_upper = Some(max_abs_result);
+                }
+            }
+
+            // First, try to find a bounded type with the computed result bounds
             for c in &matches {
                 if c.bounds.is_bounded()
-                    && c.bounds.lower == operand_lower
-                    && c.bounds.upper == operand_upper
+                    && c.bounds.lower == result_lower
+                    && c.bounds.upper == result_upper
                 {
+                    return c.name.clone();
+                }
+            }
+
+            // If exact bounds match not found, prefer bounded types over unbounded
+            for c in &matches {
+                if c.bounds.is_bounded() {
                     return c.name.clone();
                 }
             }
