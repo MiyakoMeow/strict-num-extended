@@ -74,12 +74,6 @@ pub struct TypeConfig {
 pub struct ConstraintDef {
     /// Constraint name.
     pub name: Ident,
-    /// Constraint documentation.
-    #[allow(dead_code)]
-    pub doc: String,
-    /// Validation expression.
-    #[allow(dead_code)]
-    pub validate: String,
     /// Name of the constraint type after negation (e.g., Positive -> Negative).
     pub neg_constraint_name: Option<Ident>,
     /// Raw conditions before adding `is_finite()` check (used for negation calculation).
@@ -150,21 +144,12 @@ impl Parse for TypeConfig {
                 }
             }
 
-            // Automatically add is_finite check, then combine all conditions (AND logic)
-            let finite_check = "value.is_finite()";
-            let mut all_conditions = vec![finite_check.to_string()];
-            all_conditions.extend(conditions.clone());
-            let validate_expr = all_conditions.join(" && ");
-
             // Parse sign and bounds from conditions
             let (sign, bounds, excludes_zero) = parse_type_properties(&conditions);
 
             // Generate constraint definition
-            let doc = generate_auto_doc(&type_name, &conditions);
             constraints.push(ConstraintDef {
                 name: type_name.clone(),
-                doc,
-                validate: validate_expr.clone(),
                 neg_constraint_name: None, // Will be calculated later
                 raw_conditions: conditions,
                 sign,
@@ -224,26 +209,6 @@ impl Parse for TypeConfig {
 /// Normalize validation condition string by automatically adding `value` prefix
 fn normalize_condition(condition: &str) -> String {
     format!("value {}", condition.trim())
-}
-
-/// Automatically generate documentation
-fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {
-    let name_str = type_name.to_string();
-
-    let base_desc = match name_str.as_str() {
-        "Fin" => "Finite floating-point value",
-        "Positive" => "Positive floating-point value (> 0, finite)",
-        "Negative" => "Negative floating-point value (< 0, finite)",
-        "NonZero" => "Non-zero floating-point value",
-        "Normalized" => "Normalized floating-point value (0.0 <= value <= 1.0)",
-        "NegativeNormalized" => "Negative normalized floating-point value (-1.0 <= value <= 0.0)",
-        "NonZeroPositive" => "Non-zero positive floating-point value (> 0, finite)",
-        "NonZeroNegative" => "Non-zero negative floating-point value (< 0, finite)",
-        _ => &format!("Finite floating-point value: {}", name_str),
-    };
-
-    let conditions_str = conditions.join(" && ");
-    format!("{}\n\nValidation: {}", base_desc, conditions_str)
 }
 
 // ============================================================================
