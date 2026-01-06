@@ -5,7 +5,7 @@
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 
-use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
+use crate::config::{ArithmeticOp, ArithmeticResult, ConstraintDef, TypeConfig};
 
 // ============================================================================
 // Helper functions
@@ -14,6 +14,102 @@ use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
 /// Generates type alias identifier for type and floating-point type
 fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
+}
+
+/// Dynamically builds validation expression based on constraint definition
+fn build_validation_expr(constraint_def: &ConstraintDef, float_type: &Ident) -> TokenStream2 {
+    let mut checks = Vec::new();
+
+    // 1. Base check: is_finite()
+    checks.push(quote! { value.is_finite() });
+
+    // 2. Boundary checks
+    if let Some(lower) = constraint_def.bounds.lower {
+        let lower_check = build_bound_check(lower, true, constraint_def.excludes_zero, float_type);
+        checks.push(lower_check);
+    }
+
+    if let Some(upper) = constraint_def.bounds.upper {
+        let upper_check = build_bound_check(upper, false, constraint_def.excludes_zero, float_type);
+        checks.push(upper_check);
+    }
+
+    // 3. Zero exclusion check (if not covered by bounds)
+    if constraint_def.excludes_zero && needs_explicit_zero_check(constraint_def) {
+        checks.push(quote! { value != 0.0 });
+    }
+
+    // Combine all checks with &&
+    quote! {
+        #(#checks)&&*
+    }
+}
+
+/// Builds a single boundary check expression
+fn build_bound_check(
+    bound: f64,
+    is_lower: bool,
+    excludes_zero: bool,
+    float_type: &Ident,
+) -> TokenStream2 {
+    let is_f32 = *float_type == "f32";
+
+    // Determine whether to use strict comparison and whether to substitute with MIN_POSITIVE
+    let (use_strict, use_min_positive) = match (is_lower, excludes_zero, bound == 0.0) {
+        // Lower bound, excludes zero, bound is zero -> use MIN_POSITIVE with >=
+        (true, true, true) => (false, true),
+        // Upper bound, excludes zero, bound is zero -> use MIN_POSITIVE with <=
+        (false, true, true) => (false, true),
+        // Otherwise use non-strict comparison without substitution
+        _ => (false, false),
+    };
+
+    // Special handling for MIN_POSITIVE substitution
+    let bound_value = if use_min_positive {
+        // Use MIN_POSITIVE instead of 0.0 for strict comparison
+        if is_f32 {
+            quote! { (f32::MIN_POSITIVE as f64) }
+        } else {
+            quote! { f64::MIN_POSITIVE }
+        }
+    } else if is_f32 {
+        // f32 needs conversion to f64
+        quote! { (#bound as f64) }
+    } else {
+        quote! { #bound }
+    };
+
+    // f32 needs to convert value to f64 for comparison
+    let value_expr = if is_f32 {
+        quote! { (value as f64) }
+    } else {
+        quote! { value }
+    };
+
+    // Generate the appropriate comparison expression
+    if is_lower {
+        if use_strict {
+            quote! { #value_expr > #bound_value }
+        } else {
+            quote! { #value_expr >= #bound_value }
+        }
+    } else if use_strict {
+        quote! { #value_expr < #bound_value }
+    } else {
+        quote! { #value_expr <= #bound_value }
+    }
+}
+
+/// Checks if an explicit zero check is needed
+fn needs_explicit_zero_check(constraint_def: &ConstraintDef) -> bool {
+    // If bounds already exclude zero through strict comparison (> or <), no need for explicit check
+    let lower_excludes_zero =
+        constraint_def.bounds.lower == Some(0.0) && constraint_def.excludes_zero;
+    let upper_excludes_zero =
+        constraint_def.bounds.upper == Some(0.0) && constraint_def.excludes_zero;
+
+    // Need explicit check if bounds don't cover zero exclusion
+    !lower_excludes_zero && !upper_excludes_zero
 }
 
 // ============================================================================
@@ -509,7 +605,6 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
 
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
-        let type_name_str = type_name.to_string();
         let constraint_def = config
             .constraints
             .iter()
@@ -517,78 +612,10 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
             .expect("Constraint not found");
 
         for float_type in &type_def.float_types {
-            let float_type_str = float_type.to_string();
             let type_alias = make_type_alias(type_name, float_type);
 
-            // Determine boundary validation expression based on type
-            let validate_expr = match (type_name_str.as_str(), float_type_str.as_str()) {
-                ("Fin", _) => quote! { value.is_finite() },
-
-                ("Positive", "f32") => quote! {
-                    value.is_finite() && (value as f64) >= (0.0f64)
-                },
-                ("Positive", "f64") => quote! {
-                    value.is_finite() && value >= 0.0
-                },
-
-                ("Negative", "f32") => quote! {
-                    value.is_finite() && (value as f64) <= (0.0f64)
-                },
-                ("Negative", "f64") => quote! {
-                    value.is_finite() && value <= 0.0
-                },
-
-                // NonZero: != 0, same for f32 and f64
-                ("NonZero", _) => quote! {
-                    value.is_finite() && value != 0.0
-                },
-
-                ("NonZeroPositive", "f32") => quote! {
-                    value.is_finite() && (value as f64) >= (f32::MIN_POSITIVE as f64)
-                },
-                ("NonZeroPositive", "f64") => quote! {
-                    value.is_finite() && value >= f64::MIN_POSITIVE
-                },
-
-                ("NonZeroNegative", "f32") => quote! {
-                    value.is_finite() && (value as f64) <= -(f32::MIN_POSITIVE as f64)
-                },
-                ("NonZeroNegative", "f64") => quote! {
-                    value.is_finite() && value <= -f64::MIN_POSITIVE
-                },
-
-                // Normalized: [0, 1], unified f64 comparison for f32 and f64
-                ("Normalized", _) => quote! {
-                    value.is_finite()
-                        && (value as f64) >= 0.0
-                        && (value as f64) <= 1.0
-                },
-
-                // NegativeNormalized: [-1, 0], unified f64 comparison for f32 and f64
-                ("NegativeNormalized", _) => quote! {
-                    value.is_finite()
-                        && (value as f64) >= -1.0
-                        && (value as f64) <= 0.0
-                },
-
-                // Symmetric: [-1, 1], unified f64 comparison for f32 and f64
-                ("Symmetric", _) => quote! {
-                    value.is_finite()
-                        && (value as f64) >= -1.0
-                        && (value as f64) <= 1.0
-                },
-
-                _ => {
-                    // Default case: use bounds field
-                    let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
-                    let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
-                    quote! {
-                        value.is_finite()
-                            && (value as f64) >= (#min as f64)
-                            && (value as f64) <= (#max as f64)
-                    }
-                }
-            };
+            // Dynamically generate validation expression using constraint definition
+            let validate_expr = build_validation_expr(constraint_def, float_type);
 
             impls.push(quote! {
                 impl #type_alias {
