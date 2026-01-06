@@ -12,7 +12,6 @@ mod config;
 mod convert;
 mod finite_float;
 mod generator;
-mod traits;
 mod types;
 
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls, generate_option_arithmetic_impls};
@@ -20,8 +19,36 @@ use comparison::generate_comparison_traits;
 use config::TypeConfig;
 use convert::{generate_as_f64_methods, generate_try_into_f32_methods};
 use finite_float::generate_finite_float_struct;
-use traits::generate_float_base_trait;
 use types::{generate_new_const_methods, generate_type_aliases};
+
+/// Generates common definitions (Bounded struct and constants)
+fn generate_common_definitions() -> proc_macro2::TokenStream {
+    quote! {
+        use std::marker::PhantomData;
+        use std::ops::{Add, Sub, Mul, Div, Neg};
+
+        // ========== f64 boundary bit representation constants ==========
+        const F64_MIN_BITS: i64 = f64::MIN.to_bits() as i64;
+        const F64_MAX_BITS: i64 = f64::MAX.to_bits() as i64;
+        const ZERO_BITS: i64 = 0.0f64.to_bits() as i64;
+        // Use minimum positive normal number instead of EPSILON (to avoid excluding very small positive numbers)
+        const F64_MIN_POSITIVE_BITS: i64 = f64::MIN_POSITIVE.to_bits() as i64;
+        const F64_NEG_MIN_POSITIVE_BITS: i64 = (-f64::MIN_POSITIVE).to_bits() as i64;
+        const ONE_BITS: i64 = 1.0f64.to_bits() as i64;
+        const NEG_ONE_BITS: i64 = (-1.0f64).to_bits() as i64;
+
+        // ========== f32 boundary bit representation constants (stored as f64) ==========
+        const F32_MIN_BITS: i64 = (f32::MIN as f64).to_bits() as i64;
+        const F32_MAX_BITS: i64 = (f32::MAX as f64).to_bits() as i64;
+        // Use minimum positive normal number instead of EPSILON
+        const F32_MIN_POSITIVE_BITS: i64 = (f32::MIN_POSITIVE as f64).to_bits() as i64;
+        const F32_NEG_MIN_POSITIVE_BITS: i64 = ((-f32::MIN_POSITIVE) as f64).to_bits() as i64;
+
+        /// Boundary marker type (using i64 to encode f64 boundaries)
+        #[derive(Debug, Clone, Copy)]
+        pub struct Bounded<const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool = false>;
+    }
+}
 
 /// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
@@ -30,7 +57,7 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
 
     // Collect all code to be generated
     let mut all_code = vec![
-        generate_float_base_trait(),
+        generate_common_definitions(),
         generate_finite_float_struct(),
         generate_comparison_traits(),
     ];

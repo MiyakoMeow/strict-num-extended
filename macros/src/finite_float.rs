@@ -15,7 +15,7 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
         impl<T, const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool>
             FiniteFloat<T, Bounded<MIN_BITS, MAX_BITS, EXCLUDE_ZERO>>
         where
-            T: FloatBase,
+            T: Copy + Into<f64>,
         {
             /// Decodes boundary constants from bit representation
             const MIN: f64 = f64::from_bits(MIN_BITS as u64);
@@ -35,14 +35,14 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             /// Returns `None` if the value does not satisfy the constraint.
             #[must_use]
             pub fn new(value: T) -> Option<Self> {
-                let val_f64 = value.as_f64();
+                let val_f64: f64 = value.into();
 
-                let in_bounds = value.is_finite()
+                let in_bounds = val_f64.is_finite()
                     && val_f64 >= Self::MIN
                     && val_f64 <= Self::MAX;
 
                 let not_zero = if EXCLUDE_ZERO {
-                    (val_f64 as f64) != 0.0
+                    val_f64 != 0.0
                 } else {
                     true
                 };
@@ -105,7 +105,7 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             #[expect(clippy::result_unit_err)]
             pub fn try_from<U>(value: U) -> Result<Self, ()>
             where
-                U: FloatBase,
+                U: Copy + Into<f64>,
                 T: From<U>,
             {
                 Self::new(T::from(value)).ok_or(())
