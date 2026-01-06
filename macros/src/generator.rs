@@ -461,7 +461,6 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
 
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
-        let type_name_str = type_name.to_string();
         let constraint_def = config
             .constraints
             .iter()
@@ -469,117 +468,14 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
             .expect("Constraint not found");
 
         for float_type in &type_def.float_types {
-            let float_type_str = float_type.to_string();
             let alias_name = make_type_alias(type_name, float_type);
 
-            // Determine boundary constants based on type name and floating-point type
-            let (min_bits, max_bits, exclude_zero) =
-                match (type_name_str.as_str(), float_type_str.as_str()) {
-                    // Fin: unbounded, does not exclude zero
-                    ("Fin", "f32") => (
-                        quote! { F32_MIN_BITS },
-                        quote! { F32_MAX_BITS },
-                        quote! { false },
-                    ),
-                    ("Fin", "f64") => (
-                        quote! { F64_MIN_BITS },
-                        quote! { F64_MAX_BITS },
-                        quote! { false },
-                    ),
-
-                    // Positive: >= 0, does not exclude zero
-                    ("Positive", "f32") => (
-                        quote! { ZERO_BITS },
-                        quote! { F32_MAX_BITS },
-                        quote! { false },
-                    ),
-                    ("Positive", "f64") => (
-                        quote! { ZERO_BITS },
-                        quote! { F64_MAX_BITS },
-                        quote! { false },
-                    ),
-
-                    // Negative: <= 0, does not exclude zero
-                    ("Negative", "f32") => (
-                        quote! { F32_MIN_BITS },
-                        quote! { ZERO_BITS },
-                        quote! { false },
-                    ),
-                    ("Negative", "f64") => (
-                        quote! { F64_MIN_BITS },
-                        quote! { ZERO_BITS },
-                        quote! { false },
-                    ),
-
-                    // NonZero: != 0, uses unbounded boundaries + excludes zero
-                    ("NonZero", "f32") => (
-                        quote! { F32_MIN_BITS },
-                        quote! { F32_MAX_BITS },
-                        quote! { true },
-                    ),
-                    ("NonZero", "f64") => (
-                        quote! { F64_MIN_BITS },
-                        quote! { F64_MAX_BITS },
-                        quote! { true },
-                    ),
-
-                    // NonZeroPositive: >= MIN_POSITIVE (> 0), boundary already excludes zero
-                    ("NonZeroPositive", "f32") => (
-                        quote! { F32_MIN_POSITIVE_BITS },
-                        quote! { F32_MAX_BITS },
-                        quote! { false },
-                    ),
-                    ("NonZeroPositive", "f64") => (
-                        quote! { F64_MIN_POSITIVE_BITS },
-                        quote! { F64_MAX_BITS },
-                        quote! { false },
-                    ),
-
-                    // NonZeroNegative: <= -MIN_POSITIVE (< 0), boundary already excludes zero
-                    ("NonZeroNegative", "f32") => (
-                        quote! { F32_MIN_BITS },
-                        quote! { F32_NEG_MIN_POSITIVE_BITS },
-                        quote! { false },
-                    ),
-                    ("NonZeroNegative", "f64") => (
-                        quote! { F64_MIN_BITS },
-                        quote! { F64_NEG_MIN_POSITIVE_BITS },
-                        quote! { false },
-                    ),
-
-                    // Normalized: [0, 1], does not exclude zero (same for f32 and f64)
-                    ("Normalized", _) => {
-                        (quote! { ZERO_BITS }, quote! { ONE_BITS }, quote! { false })
-                    }
-
-                    // NegativeNormalized: [-1, 0], does not exclude zero (same for f32 and f64)
-                    ("NegativeNormalized", _) => (
-                        quote! { NEG_ONE_BITS },
-                        quote! { ZERO_BITS },
-                        quote! { false },
-                    ),
-
-                    // Symmetric: [-1, 1], does not exclude zero (same for f32 and f64)
-                    ("Symmetric", _) => (
-                        quote! { NEG_ONE_BITS },
-                        quote! { ONE_BITS },
-                        quote! { false },
-                    ),
-
-                    // Other types: calculated from bounds field
-                    _ => {
-                        let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
-                        let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
-                        let min_expr = quote! { (#min as f64).to_bits() as i64 };
-                        let max_expr = quote! { (#max as f64).to_bits() as i64 };
-                        let exclude_zero = if constraint_def.excludes_zero {
-                            quote! { true }
-                        } else {
-                            quote! { false }
-                        };
-                        (min_expr, max_expr, exclude_zero)
-                    }
-                };
+            // Calculate boundary constants from constraint bounds
+            let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
+            let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
+            let min_bits = min.to_bits() as i64;
+            let max_bits = max.to_bits() as i64;
+            let exclude_zero = constraint_def.excludes_zero;
 
             aliases.push(quote! {
                 #[doc = concat!(
