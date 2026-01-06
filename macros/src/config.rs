@@ -74,10 +74,6 @@ pub struct TypeConfig {
 pub struct ConstraintDef {
     /// Constraint name.
     pub name: Ident,
-    /// Constraint documentation.
-    pub doc: String,
-    /// Validation expression.
-    pub validate: String,
     /// Name of the constraint type after negation (e.g., Positive -> Negative).
     pub neg_constraint_name: Option<Ident>,
     /// Raw conditions before adding `is_finite()` check (used for negation calculation).
@@ -148,21 +144,12 @@ impl Parse for TypeConfig {
                 }
             }
 
-            // Automatically add is_finite check, then combine all conditions (AND logic)
-            let finite_check = "value.is_finite()";
-            let mut all_conditions = vec![finite_check.to_string()];
-            all_conditions.extend(conditions.clone());
-            let validate_expr = all_conditions.join(" && ");
-
             // Parse sign and bounds from conditions
             let (sign, bounds, excludes_zero) = parse_type_properties(&conditions);
 
             // Generate constraint definition
-            let doc = generate_auto_doc(&type_name, &conditions);
             constraints.push(ConstraintDef {
                 name: type_name.clone(),
-                doc,
-                validate: validate_expr.clone(),
                 neg_constraint_name: None, // Will be calculated later
                 raw_conditions: conditions,
                 sign,
@@ -222,26 +209,6 @@ impl Parse for TypeConfig {
 /// Normalize validation condition string by automatically adding `value` prefix
 fn normalize_condition(condition: &str) -> String {
     format!("value {}", condition.trim())
-}
-
-/// Automatically generate documentation
-fn generate_auto_doc(type_name: &Ident, conditions: &[String]) -> String {
-    let name_str = type_name.to_string();
-
-    let base_desc = match name_str.as_str() {
-        "Fin" => "Finite floating-point value",
-        "Positive" => "Positive floating-point value (> 0, finite)",
-        "Negative" => "Negative floating-point value (< 0, finite)",
-        "NonZero" => "Non-zero floating-point value",
-        "Normalized" => "Normalized floating-point value (0.0 <= value <= 1.0)",
-        "NegativeNormalized" => "Negative normalized floating-point value (-1.0 <= value <= 0.0)",
-        "NonZeroPositive" => "Non-zero positive floating-point value (> 0, finite)",
-        "NonZeroNegative" => "Non-zero negative floating-point value (< 0, finite)",
-        _ => &format!("Finite floating-point value: {}", name_str),
-    };
-
-    let conditions_str = conditions.join(" && ");
-    format!("{}\n\nValidation: {}", base_desc, conditions_str)
 }
 
 // ============================================================================
@@ -418,6 +385,53 @@ fn parse_float_value(s: &str) -> f64 {
 // Arithmetic operation inference
 // ============================================================================
 
+/// Checks if all boundary operation results are finite.
+///
+/// Performs actual operations on the boundary values of lhs and rhs,
+/// checking if all possible extreme value combinations produce finite results.
+fn bounds_op_is_finite(lhs: &Bounds, rhs: &Bounds, op: impl Fn(f64, f64) -> f64) -> bool {
+    let l_min = lhs.lower.unwrap_or(f64::MIN);
+    let l_max = lhs.upper.unwrap_or(f64::MAX);
+    let r_min = rhs.lower.unwrap_or(f64::MIN);
+    let r_max = rhs.upper.unwrap_or(f64::MAX);
+
+    // Compute all possible extreme value combinations
+    let results = [
+        op(l_min, r_min),
+        op(l_min, r_max),
+        op(l_max, r_min),
+        op(l_max, r_max),
+    ];
+
+    results.iter().all(|r| r.is_finite())
+}
+
+/// Checks if all boundary division results are finite.
+///
+/// Division requires special handling: if the divisor excludes zero,
+/// use the minimum positive number as the divisor's lower bound.
+fn bounds_div_is_finite(lhs: &Bounds, rhs: &Bounds, rhs_excludes_zero: bool) -> bool {
+    let l_min = lhs.lower.unwrap_or(f64::MIN);
+    let l_max = lhs.upper.unwrap_or(f64::MAX);
+
+    // For divisor, if it excludes zero, avoid using 0 as the boundary value
+    let r_min = if rhs_excludes_zero && rhs.lower == Some(0.0) {
+        f64::MIN_POSITIVE
+    } else {
+        rhs.lower.unwrap_or(f64::MIN)
+    };
+    let r_max = if rhs_excludes_zero && rhs.upper == Some(0.0) {
+        -f64::MIN_POSITIVE
+    } else {
+        rhs.upper.unwrap_or(f64::MAX)
+    };
+
+    // Compute all possible extreme value combinations
+    let results = [l_min / r_min, l_min / r_max, l_max / r_min, l_max / r_max];
+
+    results.iter().all(|r| r.is_finite())
+}
+
 /// Compute arithmetic results for all constraint combinations.
 fn compute_all_arithmetic_results(
     constraints: &[ConstraintDef],
@@ -474,12 +488,13 @@ fn compute_arithmetic_result(
 
 /// Compute output properties for addition.
 fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Safe if signs are different (effectively bounded subtraction)
-    // Positive + Negative and Negative + Positive cannot overflow
-    let is_safe = matches!(
+    // Safe when signs differ (Positive + Negative or Negative + Positive)
+    // and all boundary operation results are finite
+    let signs_differ = matches!(
         (lhs.sign, rhs.sign),
         (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive)
     );
+    let is_safe = signs_differ && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a + b);
 
     // Sign rules for addition:
     // Positive + Positive = Positive
@@ -500,9 +515,10 @@ fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
 
 /// Compute output properties for subtraction.
 fn compute_sub_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Safe when both operands have the same sign (no overflow possible)
-    // Positive - Positive and Negative - Negative cannot overflow
-    let is_safe = lhs.sign == rhs.sign && lhs.sign != Sign::Any;
+    // Safe when signs are the same (Positive - Positive or Negative - Negative)
+    // and all boundary operation results are finite
+    let signs_same = lhs.sign == rhs.sign && lhs.sign != Sign::Any;
+    let is_safe = signs_same && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a - b);
 
     // a - b: negate rhs sign
     let rhs_negated_sign = match rhs.sign {
@@ -545,10 +561,51 @@ const fn max_abs_value(bounds: Bounds) -> f64 {
     lower_abs.max(upper_abs)
 }
 
+/// Compute multiplication result bounds based on operand signs and bounds.
+fn compute_mul_result_bounds(
+    lhs: &ConstraintDef,
+    rhs: &ConstraintDef,
+) -> (Option<f64>, Option<f64>) {
+    let max_abs_lhs = max_abs_value(lhs.bounds);
+    let max_abs_rhs = max_abs_value(rhs.bounds);
+    let max_abs_result = max_abs_lhs * max_abs_rhs;
+
+    match (lhs.sign, rhs.sign) {
+        // Both positive or both negative → positive result [0, max]
+        (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
+            (Some(0.0), Some(max_abs_result))
+        }
+        // Different signs → negative result [-max, 0]
+        (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
+            (Some(-max_abs_result), Some(0.0))
+        }
+        // Any sign → symmetric bounds [-max, max]
+        _ => (Some(-max_abs_result), Some(max_abs_result)),
+    }
+}
+
+/// Filter constraints by sign and `excludes_zero` properties.
+fn filter_constraints_by_properties(
+    constraints: &[ConstraintDef],
+    sign: Sign,
+    excludes_zero: bool,
+) -> Vec<&ConstraintDef> {
+    constraints
+        .iter()
+        .filter(|c| c.sign == sign && c.excludes_zero == excludes_zero)
+        .collect()
+}
+
+/// Filter constraints by sign only.
+fn filter_constraints_by_sign(constraints: &[ConstraintDef], sign: Sign) -> Vec<&ConstraintDef> {
+    constraints.iter().filter(|c| c.sign == sign).collect()
+}
+
 /// Compute output properties for multiplication.
-const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Multiplication is safe if both operands are bounded (result stays bounded)
-    let is_safe = lhs.bounds.is_bounded() && rhs.bounds.is_bounded();
+fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
+    // Safe when both operands are bounded and all boundary operation results are finite
+    let both_bounded = lhs.bounds.is_bounded() && rhs.bounds.is_bounded();
+    let is_safe = both_bounded && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a * b);
 
     // Sign rules for multiplication:
     // Positive × Positive = Positive
@@ -568,25 +625,18 @@ const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Si
 }
 
 /// Compute output properties for division.
-const fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Division is safe if dividend (lhs) is bounded within [-1.0, 1.0] and divisor (rhs) is non-zero.
-    // This prevents overflow/underflow because:
-    // - Max positive result: 1.0 / smallest_positive → finite
-    // - Min negative result: -1.0 / smallest_negative → finite
-    // Examples of safe operations:
-    // - NormalizedF64 / NonZeroF64 → safe (result is bounded)
-    // - SymmetricF64 / PositiveF64 → safe (result is bounded)
-    // - 1.0 / f64::MIN → safe (≈ -5.56e-319, finite)
-    //
-    // Examples of unsafe operations:
-    // - PositiveF64 / PositiveF64 → unsafe (1e308 / 1e-308 may overflow)
-    // - NormalizedF64 / FinF64 → unsafe (FinF64 includes 0.0)
-    let is_safe = if let (Some(lower), Some(upper)) = (lhs.bounds.lower, lhs.bounds.upper) {
-        // Check if lhs is bounded within [-1.0, 1.0] and rhs is non-zero
-        lower >= -1.0 && upper <= 1.0 && rhs.excludes_zero
+fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
+    // Safe when dividend is in [-1.0, 1.0], divisor is non-zero,
+    // and all boundary operation results are finite
+    let lhs_in_unit_range = if let (Some(lower), Some(upper)) = (lhs.bounds.lower, lhs.bounds.upper)
+    {
+        lower >= -1.0 && upper <= 1.0
     } else {
         false
     };
+    let is_safe = lhs_in_unit_range
+        && rhs.excludes_zero
+        && bounds_div_is_finite(&lhs.bounds, &rhs.bounds, rhs.excludes_zero);
 
     // Sign rules for division (same as multiplication):
     let output_sign = match (lhs.sign, rhs.sign) {
@@ -616,14 +666,8 @@ fn find_matching_constraint(
         && lhs.bounds.lower == rhs.bounds.lower
         && lhs.bounds.upper == rhs.bounds.upper;
 
-    // Collect all matching constraints
-    let mut matches = Vec::new();
-
-    for c in constraints {
-        if c.sign == sign && c.excludes_zero == excludes_zero {
-            matches.push(c);
-        }
-    }
+    // Collect all matching constraints (sign + excludes_zero)
+    let matches = filter_constraints_by_properties(constraints, sign, excludes_zero);
 
     // If we found exact matches
     if !matches.is_empty() {
@@ -632,31 +676,7 @@ fn find_matching_constraint(
             // Check if both operands are bounded (even if bounds are different)
             if lhs.bounds.is_bounded() && rhs.bounds.is_bounded() {
                 // Compute result bounds for bounded multiplication
-                // |a| * |b| gives the max absolute value
-                let max_abs_lhs = max_abs_value(lhs.bounds);
-                let max_abs_rhs = max_abs_value(rhs.bounds);
-                let max_abs_result = max_abs_lhs * max_abs_rhs;
-
-                // Determine sign of result
-                let result_lower;
-                let result_upper;
-                match (lhs.sign, rhs.sign) {
-                    // Both positive or both negative → positive result [0, max]
-                    (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
-                        result_lower = Some(0.0);
-                        result_upper = Some(max_abs_result);
-                    }
-                    // Different signs → negative result [-max, 0]
-                    (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
-                        result_lower = Some(-max_abs_result);
-                        result_upper = Some(0.0);
-                    }
-                    // Any sign → symmetric bounds [-max, max]
-                    _ => {
-                        result_lower = Some(-max_abs_result);
-                        result_upper = Some(max_abs_result);
-                    }
-                }
+                let (result_lower, result_upper) = compute_mul_result_bounds(lhs, rhs);
 
                 // First, try to find a bounded type with the computed result bounds
                 for c in &matches {
@@ -693,13 +713,7 @@ fn find_matching_constraint(
     }
 
     // No exact match, try relaxed match on sign only
-    let mut sign_matches = Vec::new();
-
-    for c in constraints {
-        if c.sign == sign {
-            sign_matches.push(c);
-        }
-    }
+    let sign_matches = filter_constraints_by_sign(constraints, sign);
 
     if !sign_matches.is_empty() {
         // When operands have same bounds, prefer bounded types that match those bounds

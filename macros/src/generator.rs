@@ -4,9 +4,8 @@
 
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
-use syn::Expr;
 
-use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
+use crate::config::{ArithmeticOp, ArithmeticResult, ConstraintDef, TypeConfig};
 
 // ============================================================================
 // Helper functions
@@ -17,142 +16,198 @@ fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
 }
 
-/// Parses constraint validation expression
+/// Iterate over all constraint types and float types, generating code for each combination.
 ///
-/// # Panics
-/// Panics if the expression is invalid
-fn parse_validate_expr(validate_str: &str, constraint_name: &str) -> Expr {
-    syn::parse_str(validate_str).unwrap_or_else(|e| {
-        panic!(
-            "Invalid validate expression for constraint '{}': {}\nExpression: {}",
-            constraint_name, e, validate_str
-        );
-    })
+/// This function encapsulates the common pattern of iterating through all constraint types
+/// and their associated float types, providing the constraint definition and type names
+/// to a generator function.
+///
+/// # Arguments
+///
+/// * `config` - Type configuration containing constraint definitions
+/// * `generator` - Function that generates code for each (`type_name`, `float_type`, `constraint_def`) combination
+///
+/// # Returns
+///
+/// A vector of generated token streams
+fn for_all_constraint_float_types<F>(config: &TypeConfig, mut generator: F) -> Vec<TokenStream2>
+where
+    F: FnMut(&Ident, &Ident, &ConstraintDef) -> TokenStream2,
+{
+    let mut results = Vec::new();
+
+    for type_def in &config.constraint_types {
+        let type_name = &type_def.type_name;
+        let constraint_def = config
+            .constraints
+            .iter()
+            .find(|c| c.name == type_def.constraint_name)
+            .expect("Constraint not found");
+
+        for float_type in &type_def.float_types {
+            results.push(generator(type_name, float_type, constraint_def));
+        }
+    }
+
+    results
+}
+
+/// Dynamically builds validation expression based on constraint definition
+fn build_validation_expr(constraint_def: &ConstraintDef, float_type: &Ident) -> TokenStream2 {
+    let mut checks = Vec::new();
+
+    // 1. Base check: is_finite()
+    checks.push(quote! { value.is_finite() });
+
+    // 2. Boundary checks
+    if let Some(lower) = constraint_def.bounds.lower {
+        let lower_check = build_bound_check(lower, true, constraint_def.excludes_zero, float_type);
+        checks.push(lower_check);
+    }
+
+    if let Some(upper) = constraint_def.bounds.upper {
+        let upper_check = build_bound_check(upper, false, constraint_def.excludes_zero, float_type);
+        checks.push(upper_check);
+    }
+
+    // 3. Zero exclusion check (if not covered by bounds)
+    if constraint_def.excludes_zero && needs_explicit_zero_check(constraint_def) {
+        checks.push(quote! { value != 0.0 });
+    }
+
+    // Combine all checks with &&
+    quote! {
+        #(#checks)&&*
+    }
+}
+
+/// Builds a single boundary check expression
+fn build_bound_check(
+    bound: f64,
+    is_lower: bool,
+    excludes_zero: bool,
+    float_type: &Ident,
+) -> TokenStream2 {
+    let is_f32 = *float_type == "f32";
+
+    // Determine whether to use strict comparison and whether to substitute with MIN_POSITIVE
+    let (use_strict, use_min_positive) = match (is_lower, excludes_zero, bound == 0.0) {
+        // Either bound, excludes zero, bound is zero -> use MIN_POSITIVE
+        (_, true, true) => (false, true),
+        // Otherwise use non-strict comparison without substitution
+        _ => (false, false),
+    };
+
+    // Special handling for MIN_POSITIVE substitution
+    let bound_value = if use_min_positive {
+        // Use MIN_POSITIVE instead of 0.0 for strict comparison
+        if is_f32 {
+            quote! { (f32::MIN_POSITIVE as f64) }
+        } else {
+            quote! { f64::MIN_POSITIVE }
+        }
+    } else if is_f32 {
+        // f32 needs conversion to f64
+        quote! { (#bound as f64) }
+    } else {
+        quote! { #bound }
+    };
+
+    // f32 needs to convert value to f64 for comparison
+    let value_expr = if is_f32 {
+        quote! { (value as f64) }
+    } else {
+        quote! { value }
+    };
+
+    // Generate the appropriate comparison expression
+    if is_lower {
+        if use_strict {
+            quote! { #value_expr > #bound_value }
+        } else {
+            quote! { #value_expr >= #bound_value }
+        }
+    } else if use_strict {
+        quote! { #value_expr < #bound_value }
+    } else {
+        quote! { #value_expr <= #bound_value }
+    }
+}
+
+/// Checks if an explicit zero check is needed
+fn needs_explicit_zero_check(constraint_def: &ConstraintDef) -> bool {
+    // If bounds already exclude zero through strict comparison (> or <), no need for explicit check
+    let lower_excludes_zero =
+        constraint_def.bounds.lower == Some(0.0) && constraint_def.excludes_zero;
+    let upper_excludes_zero =
+        constraint_def.bounds.upper == Some(0.0) && constraint_def.excludes_zero;
+
+    // Need explicit check if bounds don't cover zero exclusion
+    !lower_excludes_zero && !upper_excludes_zero
 }
 
 // ============================================================================
 // Code generation functions
 // ============================================================================
 
-/// Generates Constraint trait.
-pub fn generate_constraint_trait() -> TokenStream2 {
+/// Generates `FloatBase` trait and constants.
+pub fn generate_float_base_trait() -> TokenStream2 {
     quote! {
-        /// Constraint type marker trait
-        pub trait Constraint {
-            /// Base type (f32 or f64)
-            type Base;
-
-            /// Validates whether a value satisfies the constraint
-            ///
-            /// Returns `true` if the value satisfies the constraint, `false` otherwise.
-            fn validate(value: Self::Base) -> bool;
+        /// Base trait for floating-point types, provides type conversion and validation methods
+        pub trait FloatBase: Copy {
+            /// Convert to f64 for boundary checking
+            fn as_f64(self) -> f64;
+            /// Check if the value is finite (not NaN, not infinity)
+            fn is_finite(self) -> bool;
         }
-    }
-}
 
-/// Generates constraint marker types.
-pub fn generate_constraint_markers(config: &TypeConfig) -> TokenStream2 {
-    let mut markers = Vec::new();
-    let mut impls = Vec::new();
-
-    for constraint in &config.constraints {
-        let name = &constraint.name;
-        let doc = &constraint.doc;
-
-        // Parse validation expression
-        let validate = parse_validate_expr(&constraint.validate, &constraint.name.to_string());
-
-        // Generate marker types
-        markers.push(quote! {
-            #[doc = #doc]
-            #[derive(Debug, Clone, Copy)]
-            pub struct #name<F = ()> {
-                _marker: std::marker::PhantomData<F>,
+        impl FloatBase for f32 {
+            #[inline]
+            fn as_f64(self) -> f64 {
+                self as f64
             }
-        });
 
-        // Generate f32 implementation
-        impls.push(quote! {
-            impl Constraint for #name<f32> {
-                type Base = f32;
-
-                fn validate(value: Self::Base) -> bool {
-                    #validate
-                }
-            }
-        });
-
-        // Generate f64 implementation
-        impls.push(quote! {
-            impl Constraint for #name<f64> {
-                type Base = f64;
-
-                fn validate(value: Self::Base) -> bool {
-                    #validate
-                }
-            }
-        });
-    }
-
-    // Generate tuple combination constraint implementations
-    let tuple_impls = generate_tuple_constraints();
-
-    quote! {
-        // Constraint marker types
-        #(#markers)*
-
-        // Constraint trait implementations
-        #(#impls)*
-
-        // Tuple combination constraints
-        #tuple_impls
-    }
-}
-
-/// Generates tuple combination constraints.
-pub fn generate_tuple_constraints() -> TokenStream2 {
-    quote! {
-        /// Single-element tuple (C1,)
-        impl<T, C1> Constraint for (C1,)
-        where
-            T: Copy,
-            C1: Constraint<Base = T>,
-        {
-            type Base = T;
-
-            fn validate(value: Self::Base) -> bool {
-                C1::validate(value)
+            #[inline]
+            fn is_finite(self) -> bool {
+                self.is_finite()
             }
         }
 
-        /// Two-element tuple (C1, C2)
-        impl<T, C1, C2> Constraint for (C1, C2)
-        where
-            T: Copy,
-            C1: Constraint<Base = T>,
-            C2: Constraint<Base = T>,
-        {
-            type Base = T;
+        impl FloatBase for f64 {
+            #[inline]
+            fn as_f64(self) -> f64 {
+                self
+            }
 
-            fn validate(value: Self::Base) -> bool {
-                C1::validate(value) && C2::validate(value)
+            #[inline]
+            fn is_finite(self) -> bool {
+                self.is_finite()
             }
         }
 
-        /// Three-element tuple (C1, C2, C3)
-        impl<T, C1, C2, C3> Constraint for (C1, C2, C3)
-        where
-            T: Copy,
-            C1: Constraint<Base = T>,
-            C2: Constraint<Base = T>,
-            C3: Constraint<Base = T>,
-        {
-            type Base = T;
+        use std::marker::PhantomData;
+        use std::ops::{Add, Sub, Mul, Div, Neg};
 
-            fn validate(value: Self::Base) -> bool {
-                C1::validate(value) && C2::validate(value) && C3::validate(value)
-            }
-        }
+        // ========== f64 boundary bit representation constants ==========
+        const F64_MIN_BITS: i64 = f64::MIN.to_bits() as i64;
+        const F64_MAX_BITS: i64 = f64::MAX.to_bits() as i64;
+        const ZERO_BITS: i64 = 0.0f64.to_bits() as i64;
+        // Use minimum positive normal number instead of EPSILON (to avoid excluding very small positive numbers)
+        const F64_MIN_POSITIVE_BITS: i64 = f64::MIN_POSITIVE.to_bits() as i64;
+        const F64_NEG_MIN_POSITIVE_BITS: i64 = (-f64::MIN_POSITIVE).to_bits() as i64;
+        const ONE_BITS: i64 = 1.0f64.to_bits() as i64;
+        const NEG_ONE_BITS: i64 = (-1.0f64).to_bits() as i64;
+
+        // ========== f32 boundary bit representation constants (stored as f64) ==========
+        const F32_MIN_BITS: i64 = (f32::MIN as f64).to_bits() as i64;
+        const F32_MAX_BITS: i64 = (f32::MAX as f64).to_bits() as i64;
+        // Use minimum positive normal number instead of EPSILON
+        const F32_MIN_POSITIVE_BITS: i64 = (f32::MIN_POSITIVE as f64).to_bits() as i64;
+        const F32_NEG_MIN_POSITIVE_BITS: i64 = ((-f32::MIN_POSITIVE) as f64).to_bits() as i64;
+
+        /// Boundary marker type (using i64 to encode f64 boundaries)
+        #[derive(Debug, Clone, Copy)]
+        pub struct Bounded<const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool = false>;
     }
 }
 
@@ -161,12 +216,20 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
     quote! {
         /// Generic finite floating-point structure
         #[derive(Clone, Copy)]
-        pub struct FiniteFloat<T, V> {
+        pub struct FiniteFloat<T, B> {
             value: T,
-            phantom: std::marker::PhantomData<V>,
+            _marker: PhantomData<B>,
         }
 
-        impl<T: std::fmt::Display + Copy, V: Constraint<Base = T>> FiniteFloat<T, V> {
+        impl<T, const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool>
+            FiniteFloat<T, Bounded<MIN_BITS, MAX_BITS, EXCLUDE_ZERO>>
+        where
+            T: FloatBase,
+        {
+            /// Decodes boundary constants from bit representation
+            const MIN: f64 = f64::from_bits(MIN_BITS as u64);
+            const MAX: f64 = f64::from_bits(MAX_BITS as u64);
+
             /// Creates a new finite floating-point number
             ///
             /// # Example
@@ -181,10 +244,26 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
             /// Returns `None` if the value does not satisfy the constraint.
             #[must_use]
             pub fn new(value: T) -> Option<Self> {
-                V::validate(value).then_some(Self {
-                    value,
-                    phantom: std::marker::PhantomData,
-                })
+                let val_f64 = value.as_f64();
+
+                let in_bounds = value.is_finite()
+                    && val_f64 >= Self::MIN
+                    && val_f64 <= Self::MAX;
+
+                let not_zero = if EXCLUDE_ZERO {
+                    (val_f64 as f64) != 0.0
+                } else {
+                    true
+                };
+
+                if in_bounds && not_zero {
+                    Some(Self {
+                        value,
+                        _marker: PhantomData,
+                    })
+                } else {
+                    None
+                }
             }
 
             /// Unsafely creates a finite floating-point number (no validation)
@@ -197,7 +276,7 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
             pub const unsafe fn new_unchecked(value: T) -> Self {
                 Self {
                     value,
-                    phantom: std::marker::PhantomData,
+                    _marker: PhantomData,
                 }
             }
 
@@ -235,9 +314,8 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
             #[expect(clippy::result_unit_err)]
             pub fn try_from<U>(value: U) -> Result<Self, ()>
             where
-                U: std::fmt::Display + Copy,
+                U: FloatBase,
                 T: From<U>,
-                V: Constraint<Base = T>,
             {
                 Self::new(T::from(value)).ok_or(())
             }
@@ -250,18 +328,17 @@ pub fn generate_comparison_traits() -> TokenStream2 {
     quote! {
         use std::cmp::Ordering;
         use std::fmt;
-        use std::ops::{Add, Sub, Mul, Div, Neg};
 
         // Comparison operation implementations
-        impl<T: PartialEq, V> PartialEq for FiniteFloat<T, V> {
+        impl<T: PartialEq, B> PartialEq for FiniteFloat<T, B> {
             fn eq(&self, other: &Self) -> bool {
                 self.value == other.value
             }
         }
 
-        impl<T: PartialEq, V> Eq for FiniteFloat<T, V> {}
+        impl<T: PartialEq, B> Eq for FiniteFloat<T, B> {}
 
-        impl<T: PartialOrd, V> Ord for FiniteFloat<T, V> {
+        impl<T: PartialOrd, B> Ord for FiniteFloat<T, B> {
             fn cmp(&self, other: &Self) -> Ordering {
                 self.value
                     .partial_cmp(&other.value)
@@ -269,20 +346,20 @@ pub fn generate_comparison_traits() -> TokenStream2 {
             }
         }
 
-        impl<T: PartialOrd, V> PartialOrd for FiniteFloat<T, V> {
+        impl<T: PartialOrd, B> PartialOrd for FiniteFloat<T, B> {
             fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
                 Some(self.cmp(other))
             }
         }
 
         // Formatting implementations
-        impl<T: fmt::Display, V> fmt::Display for FiniteFloat<T, V> {
+        impl<T: fmt::Display, B> fmt::Display for FiniteFloat<T, B> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.value)
             }
         }
 
-        impl<T: fmt::Debug, V> fmt::Debug for FiniteFloat<T, V> {
+        impl<T: fmt::Debug, B> fmt::Debug for FiniteFloat<T, B> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "FiniteFloat({:?})", self.value)
             }
@@ -509,33 +586,39 @@ pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
 
 /// Generates type aliases.
 pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
-    let mut aliases = Vec::new();
-    let mut option_aliases = Vec::new();
-
-    for type_def in &config.constraint_types {
-        let type_name = &type_def.type_name;
-        let constraint_name = &type_def.constraint_name;
-
-        for float_type in &type_def.float_types {
-            // Generate single constraint type alias
+    // Generate regular type aliases
+    let aliases = for_all_constraint_float_types(
+        config,
+        |type_name, float_type, constraint_def| {
             let alias_name = make_type_alias(type_name, float_type);
 
-            aliases.push(quote! {
+            // Calculate boundary constants from constraint bounds
+            let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
+            let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
+            let min_bits = min.to_bits() as i64;
+            let max_bits = max.to_bits() as i64;
+            let exclude_zero = constraint_def.excludes_zero;
+
+            quote! {
                 #[doc = concat!(
                     stringify!(#type_name), " finite ", stringify!(#float_type), " value"
                 )]
-                pub type #alias_name = FiniteFloat<#float_type, #constraint_name<#float_type>>;
-            });
+                pub type #alias_name = FiniteFloat<#float_type, Bounded<#min_bits, #max_bits, #exclude_zero>>;
+            }
+        },
+    );
 
-            // Generate Option type alias
+    // Generate Option type aliases
+    let option_aliases =
+        for_all_constraint_float_types(config, |type_name, float_type, _constraint_def| {
+            let alias_name = make_type_alias(type_name, float_type);
             let opt_alias = format_ident!("Opt{}", alias_name);
 
-            option_aliases.push(quote! {
+            quote! {
                 #[doc = concat!("`", stringify!(#alias_name), "` Option version")]
                 pub type #opt_alias = Option<#alias_name>;
-            });
-        }
-    }
+            }
+        });
 
     quote! {
         // Type aliases
@@ -548,46 +631,31 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
 
 /// Generates `new_const` methods.
 pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
-    let mut impls = Vec::new();
+    let impls = for_all_constraint_float_types(config, |type_name, float_type, constraint_def| {
+        let type_alias = make_type_alias(type_name, float_type);
 
-    for type_def in &config.constraint_types {
-        // Generate for single constraint types
-        let type_name = &type_def.type_name;
-        let float_types = &type_def.float_types;
-        let constraint_name = &type_def.constraint_name;
+        // Dynamically generate validation expression using constraint definition
+        let validate_expr = build_validation_expr(constraint_def, float_type);
 
-        let constraint_def = config
-            .constraints
-            .iter()
-            .find(|c| &c.name == constraint_name)
-            .expect("Constraint definition not found");
-
-        let validate =
-            parse_validate_expr(&constraint_def.validate, &constraint_def.name.to_string());
-
-        for float_type in float_types {
-            let type_alias = make_type_alias(type_name, float_type);
-
-            impls.push(quote! {
-                impl #type_alias {
-                    /// Creates a value at compile time
-                    ///
-                    /// # Panics
-                    ///
-                    /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
-                    #[inline]
-                    #[must_use]
-                    pub const fn new_const(value: #float_type) -> Self {
-                        if #validate {
-                            unsafe { Self::new_unchecked(value) }
-                        } else {
-                            panic!("Value does not satisfy the constraint");
-                        }
+        quote! {
+            impl #type_alias {
+                /// Creates a value at compile time
+                ///
+                /// # Panics
+                ///
+                /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
+                #[inline]
+                #[must_use]
+                pub const fn new_const(value: #float_type) -> Self {
+                    if #validate_expr {
+                        unsafe { Self::new_unchecked(value) }
+                    } else {
+                        panic!("Value does not satisfy the constraint");
                     }
                 }
-            });
+            }
         }
-    }
+    });
 
     quote! {
         #(#impls)*
