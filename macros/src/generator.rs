@@ -23,11 +23,11 @@ fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
 /// Generates `FloatBase` trait and constants.
 pub fn generate_float_base_trait() -> TokenStream2 {
     quote! {
-        /// 浮点数基础 trait，提供类型转换和验证方法
+        /// Base trait for floating-point types, provides type conversion and validation methods
         pub trait FloatBase: Copy {
-            /// 转换为 f64 用于边界检查
+            /// Convert to f64 for boundary checking
             fn as_f64(self) -> f64;
-            /// 检查是否为有限值（非 NaN、非无穷大）
+            /// Check if the value is finite (not NaN, not infinity)
             fn is_finite(self) -> bool;
         }
 
@@ -58,24 +58,24 @@ pub fn generate_float_base_trait() -> TokenStream2 {
         use std::marker::PhantomData;
         use std::ops::{Add, Sub, Mul, Div, Neg};
 
-        // ========== f64 边界的位表示常量 ==========
+        // ========== f64 boundary bit representation constants ==========
         const F64_MIN_BITS: i64 = f64::MIN.to_bits() as i64;
         const F64_MAX_BITS: i64 = f64::MAX.to_bits() as i64;
         const ZERO_BITS: i64 = 0.0f64.to_bits() as i64;
-        // 使用最小正规化正数代替 EPSILON（避免排除过小的正数）
+        // Use minimum positive normal number instead of EPSILON (to avoid excluding very small positive numbers)
         const F64_MIN_POSITIVE_BITS: i64 = f64::MIN_POSITIVE.to_bits() as i64;
         const F64_NEG_MIN_POSITIVE_BITS: i64 = (-f64::MIN_POSITIVE).to_bits() as i64;
         const ONE_BITS: i64 = 1.0f64.to_bits() as i64;
         const NEG_ONE_BITS: i64 = (-1.0f64).to_bits() as i64;
 
-        // ========== f32 边界的位表示常量（转换为 f64 存储） ==========
+        // ========== f32 boundary bit representation constants (stored as f64) ==========
         const F32_MIN_BITS: i64 = (f32::MIN as f64).to_bits() as i64;
         const F32_MAX_BITS: i64 = (f32::MAX as f64).to_bits() as i64;
-        // 使用最小正规化正数代替 EPSILON
+        // Use minimum positive normal number instead of EPSILON
         const F32_MIN_POSITIVE_BITS: i64 = (f32::MIN_POSITIVE as f64).to_bits() as i64;
         const F32_NEG_MIN_POSITIVE_BITS: i64 = ((-f32::MIN_POSITIVE) as f64).to_bits() as i64;
 
-        /// 边界标记类型（使用 i64 编码 f64 边界）
+        /// Boundary marker type (using i64 to encode f64 boundaries)
         #[derive(Debug, Clone, Copy)]
         pub struct Bounded<const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool = false>;
     }
@@ -96,7 +96,7 @@ pub fn generate_finite_float_struct() -> TokenStream2 {
         where
             T: FloatBase,
         {
-            /// 从位表示解码边界常量
+            /// Decodes boundary constants from bit representation
             const MIN: f64 = f64::from_bits(MIN_BITS as u64);
             const MAX: f64 = f64::from_bits(MAX_BITS as u64);
 
@@ -472,10 +472,10 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
             let float_type_str = float_type.to_string();
             let alias_name = make_type_alias(type_name, float_type);
 
-            // 根据类型名称和浮点类型确定边界常量
+            // Determine boundary constants based on type name and floating-point type
             let (min_bits, max_bits, exclude_zero) =
                 match (type_name_str.as_str(), float_type_str.as_str()) {
-                    // Fin: 无界，不排除零
+                    // Fin: unbounded, does not exclude zero
                     ("Fin", "f32") => (
                         quote! { F32_MIN_BITS },
                         quote! { F32_MAX_BITS },
@@ -487,7 +487,7 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { false },
                     ),
 
-                    // Positive: >= 0，不排除零
+                    // Positive: >= 0, does not exclude zero
                     ("Positive", "f32") => (
                         quote! { ZERO_BITS },
                         quote! { F32_MAX_BITS },
@@ -499,7 +499,7 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { false },
                     ),
 
-                    // Negative: <= 0，不排除零
+                    // Negative: <= 0, does not exclude zero
                     ("Negative", "f32") => (
                         quote! { F32_MIN_BITS },
                         quote! { ZERO_BITS },
@@ -511,7 +511,7 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { false },
                     ),
 
-                    // NonZero: != 0，使用无界边界 + 排除零
+                    // NonZero: != 0, uses unbounded boundaries + excludes zero
                     ("NonZero", "f32") => (
                         quote! { F32_MIN_BITS },
                         quote! { F32_MAX_BITS },
@@ -523,7 +523,7 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { true },
                     ),
 
-                    // NonZeroPositive: >= MIN_POSITIVE (> 0)，边界已排除零
+                    // NonZeroPositive: >= MIN_POSITIVE (> 0), boundary already excludes zero
                     ("NonZeroPositive", "f32") => (
                         quote! { F32_MIN_POSITIVE_BITS },
                         quote! { F32_MAX_BITS },
@@ -535,7 +535,7 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { false },
                     ),
 
-                    // NonZeroNegative: <= -MIN_POSITIVE (< 0)，边界已排除零
+                    // NonZeroNegative: <= -MIN_POSITIVE (< 0), boundary already excludes zero
                     ("NonZeroNegative", "f32") => (
                         quote! { F32_MIN_BITS },
                         quote! { F32_NEG_MIN_POSITIVE_BITS },
@@ -547,26 +547,26 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
                         quote! { false },
                     ),
 
-                    // Normalized: [0, 1]，不排除零（f32 和 f64 相同）
+                    // Normalized: [0, 1], does not exclude zero (same for f32 and f64)
                     ("Normalized", _) => {
                         (quote! { ZERO_BITS }, quote! { ONE_BITS }, quote! { false })
                     }
 
-                    // NegativeNormalized: [-1, 0]，不排除零（f32 和 f64 相同）
+                    // NegativeNormalized: [-1, 0], does not exclude zero (same for f32 and f64)
                     ("NegativeNormalized", _) => (
                         quote! { NEG_ONE_BITS },
                         quote! { ZERO_BITS },
                         quote! { false },
                     ),
 
-                    // Symmetric: [-1, 1]，不排除零（f32 和 f64 相同）
+                    // Symmetric: [-1, 1], does not exclude zero (same for f32 and f64)
                     ("Symmetric", _) => (
                         quote! { NEG_ONE_BITS },
                         quote! { ONE_BITS },
                         quote! { false },
                     ),
 
-                    // 其他类型：根据 bounds 字段计算
+                    // Other types: calculated from bounds field
                     _ => {
                         let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
                         let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
@@ -624,7 +624,7 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
             let float_type_str = float_type.to_string();
             let type_alias = make_type_alias(type_name, float_type);
 
-            // 根据类型确定边界验证表达式
+            // Determine boundary validation expression based on type
             let validate_expr = match (type_name_str.as_str(), float_type_str.as_str()) {
                 ("Fin", _) => quote! { value.is_finite() },
 
@@ -642,7 +642,7 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                     value.is_finite() && value <= 0.0
                 },
 
-                // NonZero: != 0，f32 和 f64 相同
+                // NonZero: != 0, same for f32 and f64
                 ("NonZero", _) => quote! {
                     value.is_finite() && value != 0.0
                 },
@@ -661,21 +661,21 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                     value.is_finite() && value <= -f64::MIN_POSITIVE
                 },
 
-                // Normalized: [0, 1]，f32 和 f64 统一使用 f64 比较
+                // Normalized: [0, 1], unified f64 comparison for f32 and f64
                 ("Normalized", _) => quote! {
                     value.is_finite()
                         && (value as f64) >= 0.0
                         && (value as f64) <= 1.0
                 },
 
-                // NegativeNormalized: [-1, 0]，f32 和 f64 统一使用 f64 比较
+                // NegativeNormalized: [-1, 0], unified f64 comparison for f32 and f64
                 ("NegativeNormalized", _) => quote! {
                     value.is_finite()
                         && (value as f64) >= -1.0
                         && (value as f64) <= 0.0
                 },
 
-                // Symmetric: [-1, 1]，f32 和 f64 统一使用 f64 比较
+                // Symmetric: [-1, 1], unified f64 comparison for f32 and f64
                 ("Symmetric", _) => quote! {
                     value.is_finite()
                         && (value as f64) >= -1.0
@@ -683,7 +683,7 @@ pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
                 },
 
                 _ => {
-                    // 默认情况：使用 bounds 字段
+                    // Default case: use bounds field
                     let min = constraint_def.bounds.lower.unwrap_or(f64::MIN);
                     let max = constraint_def.bounds.upper.unwrap_or(f64::MAX);
                     quote! {
