@@ -3,7 +3,7 @@
 //! This module tests all functionality of finite floating-point types.
 
 // Strict floating-point comparisons, unwrap usage, and variable shadowing in test code are justified
-#![allow(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
+#![allow(clippy::unwrap_used, clippy::shadow_unrelated)]
 
 use strict_num_extended::*;
 
@@ -1234,7 +1234,7 @@ mod test_symmetric_new_const {
     }
 }
 
-/// Tests for FloatError variants
+/// Tests for `FloatError` variants
 mod test_float_error {
     use super::*;
 

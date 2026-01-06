@@ -1,2 +1,9 @@
 allow-unwrap-in-tests = true
 allow-expect-in-tests = true
+
+# Allow floating-point comparisons - they are intentional for:
+# - Division by zero checks in generated code
+# - Boundary validation in constraint parsing
+# - Test assertions for demonstration purposes
+allow-dbg-in-tests = true
+disallowed-methods = []

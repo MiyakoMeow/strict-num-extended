@@ -3,16 +3,16 @@
 //! Tests for type-safe arithmetic operations between different constraint types.
 
 // Strict floating-point comparisons, unwrap usage, and variable shadowing in test code are justified
-#![allow(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
+#![allow(clippy::unwrap_used, clippy::shadow_unrelated)]
 
 use strict_num_extended::*;
 
 /// Unified macro for testing arithmetic operations
 ///
 /// Supports multiple calling formats:
-/// - Basic: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, expected)
-/// - Option LHS: `test_arith!(name`, Option<TypeA>, Some(a), op, `TypeB`, b, Result<ResultType, FloatError>, Ok(expected))
-/// - Error result: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, Err)`
+/// - Basic: `test_arith!(name, TypeA, a, op, TypeB, b, ResultType, expected)`
+/// - Option LHS: `test_arith!(name, Option<TypeA>, Some(a), op, TypeB, b, Result<ResultType, FloatError>, Ok(expected))`
+/// - Error result: `test_arith!(name, TypeA, a, op, TypeB, b, ResultType, Err)`
 #[macro_export]
 macro_rules! test_arith {
     // Option LHS with Ok result

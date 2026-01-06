@@ -1,5 +1,7 @@
 //! F32/F64 类型转换测试
 
+#![allow(clippy::unwrap_used, clippy::shadow_unrelated)]
+
 use strict_num_extended::{FloatError, *};
 
 // ========== try_into_f32 测试 ==========
@@ -7,7 +9,7 @@ use strict_num_extended::{FloatError, *};
 #[test]
 fn test_try_into_f32_precision_loss() {
     // 测试精度损失检测
-    let value_f64 = FinF64::new_const(1.234567890123456789);
+    let value_f64 = FinF64::new_const(1.234_567_890_123_456_7);
     let result: Result<FinF32, FloatError> = value_f64.try_into_f32();
     assert!(result.is_err(), "Should fail due to precision loss");
 }
@@ -24,20 +26,25 @@ fn test_try_into_f32_range_overflow() {
 fn test_try_into_f32_constraint_violation() {
     // 测试约束违规（PositiveF64 -> PositiveF32）
     let positive_f64 = PositiveF64::new_const(2.0);
-    let result: Result<PositiveF32, FloatError> = positive_f64.try_into_f32();
-    assert!(result.is_ok(), "Should succeed with valid positive value");
+    let positive_result: Result<PositiveF32, FloatError> = positive_f64.try_into_f32();
+    assert!(
+        positive_result.is_ok(),
+        "Should succeed with valid positive value"
+    );
 
     // 测试转换后的约束
     let normalized_f64 = NormalizedF64::new_const(0.5);
-    let result: Result<NormalizedF32, FloatError> = normalized_f64.try_into_f32();
-    assert!(result.is_ok(), "Should succeed with normalized value");
+    let normalized_result: Result<NormalizedF32, FloatError> = normalized_f64.try_into_f32();
+    assert!(
+        normalized_result.is_ok(),
+        "Should succeed with normalized value"
+    );
 
     // 测试超出约束范围的值
     let large_f64 = PositiveF64::new_const(1000.0);
-    let result: Result<PositiveF32, FloatError> = large_f64.try_into_f32();
+    let large_result: Result<PositiveF32, FloatError> = large_f64.try_into_f32();
     // 这可能成功或失败，取决于 1000.0 是否在 F32 范围内且满足 PositiveF32 约束
-    if result.is_ok() {
-        let f32_val = result.unwrap();
+    if let Ok(f32_val) = large_result {
         assert!(f32_val.get() > 0.0, "Should maintain positive constraint");
     }
 }
@@ -68,44 +75,44 @@ fn test_try_into_f32_const_context() {
 fn test_try_into_f32_different_constraints() {
     // 测试不同约束类型的转换
     let positive = PositiveF64::new_const(10.0);
-    let result: Result<PositiveF32, FloatError> = positive.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), 10.0);
+    let pos_result: Result<PositiveF32, FloatError> = positive.try_into_f32();
+    assert!(pos_result.is_ok());
+    assert_eq!(pos_result.unwrap().get(), 10.0);
 
     let negative = NegativeF64::new_const(-10.0);
-    let result: Result<NegativeF32, FloatError> = negative.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), -10.0);
+    let neg_result: Result<NegativeF32, FloatError> = negative.try_into_f32();
+    assert!(neg_result.is_ok());
+    assert_eq!(neg_result.unwrap().get(), -10.0);
 
     let nonzero = NonZeroF64::new_const(5.0);
-    let result: Result<NonZeroF32, FloatError> = nonzero.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), 5.0);
+    let nz_result: Result<NonZeroF32, FloatError> = nonzero.try_into_f32();
+    assert!(nz_result.is_ok());
+    assert_eq!(nz_result.unwrap().get(), 5.0);
 
     let symmetric = SymmetricF64::new_const(0.5);
-    let result: Result<SymmetricF32, FloatError> = symmetric.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), 0.5);
+    let sym_result: Result<SymmetricF32, FloatError> = symmetric.try_into_f32();
+    assert!(sym_result.is_ok());
+    assert_eq!(sym_result.unwrap().get(), 0.5);
 
     let normalized = NormalizedF64::new_const(0.75);
-    let result: Result<NormalizedF32, FloatError> = normalized.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), 0.75);
+    let norm_result: Result<NormalizedF32, FloatError> = normalized.try_into_f32();
+    assert!(norm_result.is_ok());
+    assert_eq!(norm_result.unwrap().get(), 0.75);
 
     let neg_normalized = NegativeNormalizedF64::new_const(-0.5);
-    let result: Result<NegativeNormalizedF32, FloatError> = neg_normalized.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), -0.5);
+    let neg_norm_result: Result<NegativeNormalizedF32, FloatError> = neg_normalized.try_into_f32();
+    assert!(neg_norm_result.is_ok());
+    assert_eq!(neg_norm_result.unwrap().get(), -0.5);
 
     let nonzero_pos = NonZeroPositiveF64::new_const(1.0);
-    let result: Result<NonZeroPositiveF32, FloatError> = nonzero_pos.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), 1.0);
+    let nz_pos_result: Result<NonZeroPositiveF32, FloatError> = nonzero_pos.try_into_f32();
+    assert!(nz_pos_result.is_ok());
+    assert_eq!(nz_pos_result.unwrap().get(), 1.0);
 
     let nonzero_neg = NonZeroNegativeF64::new_const(-1.0);
-    let result: Result<NonZeroNegativeF32, FloatError> = nonzero_neg.try_into_f32();
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap().get(), -1.0);
+    let nz_neg_result: Result<NonZeroNegativeF32, FloatError> = nonzero_neg.try_into_f32();
+    assert!(nz_neg_result.is_ok());
+    assert_eq!(nz_neg_result.unwrap().get(), -1.0);
 }
 
 // ========== as_f64 测试 ==========
@@ -171,6 +178,7 @@ fn test_as_f64_precision_preservation() {
 }
 
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_roundtrip_conversion() {
     // 测试往返转换：F32 -> F64 -> F32
     let original_f32 = FinF32::new_const(3.14159);
