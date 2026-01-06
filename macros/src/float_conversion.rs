@@ -1,4 +1,4 @@
-//! F32/F64 类型转换方法生成器模块
+//! F32/F64 conversion method generator module
 
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
@@ -11,15 +11,15 @@ pub fn generate_try_into_f32_methods(config: &TypeConfig) -> proc_macro2::TokenS
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _constraint_def| {
         let type_alias = make_type_alias(type_name, float_type);
 
-        // 只有 F64 类型才需要 try_into_f32
+        // Only F64 types need try_into_f32
         if *float_type != "f64" {
             return quote! {};
         }
 
-        // 生成对应的 F32 类型名称
+        // Generate the corresponding F32 type name
         let f32_type_alias = make_type_alias(type_name, &format_ident!("f32"));
 
-        // 为 F64 类型生成转换逻辑（直接使用 as 和 is_finite，避开 trait 限制）
+        // Generate conversion logic for F64 types (use as and is_finite directly to bypass trait limitations)
         quote! {
             impl #type_alias {
                 /// Attempts to convert to the corresponding F32 type
@@ -62,15 +62,15 @@ pub fn generate_as_f64_methods(config: &TypeConfig) -> proc_macro2::TokenStream 
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _constraint_def| {
         let type_alias = make_type_alias(type_name, float_type);
 
-        // 只有 F32 类型才需要 as_f64
+        // Only F32 types need as_f64
         if *float_type != "f32" {
             return quote! {};
         }
 
-        // 生成对应的 F64 类型名称
+        // Generate the corresponding F64 type name
         let f64_type_alias = make_type_alias(type_name, &format_ident!("f64"));
 
-        // 为 F32 类型生成转换逻辑
+        // Generate conversion logic for F32 types
         quote! {
             impl #type_alias {
                 /// Converts to the corresponding F64 type
@@ -95,7 +95,7 @@ pub fn generate_as_f64_methods(config: &TypeConfig) -> proc_macro2::TokenStream 
     }
 }
 
-/// Generates type alias identifier for type and floating-point type
+/// Generates type alias identifier for a type and floating-point type
 fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
 }
