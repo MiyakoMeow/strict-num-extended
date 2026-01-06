@@ -26,21 +26,36 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             /// # Example
             ///
             /// ```
-            /// use strict_num_extended::FinF32;
+            /// use strict_num_extended::{FinF32, FloatError};
             ///
-            /// let finite = FinF32::new(3.14);
-            /// assert_eq!(finite.unwrap().get(), 3.14);
+            /// let finite = FinF32::new(3.14)?;
+            /// assert_eq!(finite.get(), 3.14);
+            /// # Ok::<(), FloatError>(())
             /// ```
             ///
-            /// Returns `None` if the value does not satisfy the constraint.
+            /// # Errors
+            ///
+            /// Returns `Err(FloatError)` if the value does not satisfy the constraint.
             #[must_use]
-            pub fn new(value: T) -> Option<Self> {
+            pub fn new(value: T) -> Result<Self, FloatError> {
                 let val_f64: f64 = value.into();
 
-                let in_bounds = val_f64.is_finite()
-                    && val_f64 >= Self::MIN
-                    && val_f64 <= Self::MAX;
+                // Check for NaN
+                if val_f64.is_nan() {
+                    return Err(FloatError::NaN);
+                }
 
+                // Check for positive infinity
+                if val_f64.is_infinite() && val_f64 > 0.0 {
+                    return Err(FloatError::PosInf);
+                }
+
+                // Check for negative infinity
+                if val_f64.is_infinite() && val_f64 < 0.0 {
+                    return Err(FloatError::NegInf);
+                }
+
+                let in_bounds = val_f64 >= Self::MIN && val_f64 <= Self::MAX;
                 let not_zero = if EXCLUDE_ZERO {
                     val_f64 != 0.0
                 } else {
@@ -48,12 +63,12 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
                 };
 
                 if in_bounds && not_zero {
-                    Some(Self {
+                    Ok(Self {
                         value,
                         _marker: PhantomData,
                     })
                 } else {
-                    None
+                    Err(FloatError::OutOfRange)
                 }
             }
 
@@ -91,24 +106,24 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             /// # Example
             ///
             /// ```
-            /// use strict_num_extended::FinF32;
+            /// use strict_num_extended::{FinF32, FloatError};
             ///
             /// let value = 3.14f32;
-            /// let finite_32 = FinF32::try_from(value);
-            /// assert!(finite_32.is_ok());
+            /// let finite_32 = FinF32::try_from(value)?;
+            /// assert!(finite_32.get() == 3.14f32);
+            /// # Ok::<(), FloatError>(())
             /// ```
             ///
             /// # Errors
             ///
-            /// Returns `Err(())` if the converted value does not satisfy the constraint.
+            /// Returns `Err(FloatError)` if the converted value does not satisfy the constraint.
             #[must_use = "Return value may contain an error and should not be ignored"]
-            #[expect(clippy::result_unit_err)]
-            pub fn try_from<U>(value: U) -> Result<Self, ()>
+            pub fn try_from<U>(value: U) -> Result<Self, FloatError>
             where
                 U: Copy + Into<f64>,
                 T: From<U>,
             {
-                Self::new(T::from(value)).ok_or(())
+                Self::new(T::from(value))
             }
         }
     }

@@ -107,12 +107,12 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
                 // Division: always check for zero
                 quote! {
                     impl #trait_ident<#rhs_alias> for #lhs_alias {
-                        type Output = Option<#output_alias>;
+                        type Output = Result<#output_alias, FloatError>;
 
                         fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
                             let rhs_val = rhs.get();
                             if rhs_val == 0.0 {
-                                return None;
+                                return Err(FloatError::DivisionByZero);
                             }
                             let result = self.get() / rhs_val;
                             #output_alias::new(result)
@@ -120,10 +120,10 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
                     }
                 }
             } else {
-                // Potentially failing operation: return Option
+                // Potentially failing operation: return Result
                 quote! {
                     impl #trait_ident<#rhs_alias> for #lhs_alias {
-                        type Output = Option<#output_alias>;
+                        type Output = Result<#output_alias, FloatError>;
 
                         fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
                             let result = self.get() #op_symbol rhs.get();
@@ -139,7 +139,7 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
 /// Generates arithmetic operations for Option types.
 ///
 /// Due to orphan rules, we can only implement:
-/// - `Lhs op Option<Rhs>` -> Option<Output>
+/// - `Lhs op Option<Rhs>` -> Option<Output> or Result<Option<Output>, `FloatError`>
 ///
 /// For `Option<Lhs> op Rhs` and `Option<Lhs> op Option<Rhs>`, users need to use
 /// `.map()` or pattern matching since we can't implement traits for `Option<T>`.
@@ -154,27 +154,38 @@ pub fn generate_option_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
     generate_arithmetic_for_ops(
         config,
         &ops,
-        |lhs_alias,
-         rhs_alias,
-         output_alias,
-         trait_ident,
-         method_ident,
-         _op_symbol,
-         _result,
-         _op| {
-            // Lhs op Option<Rhs> -> Option<Output>
-            // This is allowed because Lhs is a local type
-            quote! {
-                impl #trait_ident<Option<#rhs_alias>> for #lhs_alias {
-                    type Output = Option<#output_alias>;
+        |lhs_alias, rhs_alias, output_alias, trait_ident, method_ident, _op_symbol, result, _op| {
+            // Check if the operation is safe (returns direct value) or fallible (returns Result)
+            if result.is_safe {
+                // Safe operation: returns direct type, so Option operation returns Option<Output>
+                quote! {
+                    impl #trait_ident<Option<#rhs_alias>> for #lhs_alias {
+                        type Output = Option<#output_alias>;
 
-                    fn #method_ident(self, rhs: Option<#rhs_alias>) -> Self::Output {
-                        match rhs {
-                            Some(b) => {
-                                let inner_result = self.#method_ident(b);
-                                inner_result.into()
+                        fn #method_ident(self, rhs: Option<#rhs_alias>) -> Self::Output {
+                            match rhs {
+                                Some(b) => {
+                                    let inner_result = self.#method_ident(b);
+                                    Some(inner_result)
+                                }
+                                None => None,
                             }
-                            None => None,
+                        }
+                    }
+                }
+            } else {
+                // Fallible operation: returns Result, so Option operation returns Result<Option<Output>, FloatError>
+                quote! {
+                    impl #trait_ident<Option<#rhs_alias>> for #lhs_alias {
+                        type Output = Result<Option<#output_alias>, FloatError>;
+
+                        fn #method_ident(self, rhs: Option<#rhs_alias>) -> Self::Output {
+                            match rhs {
+                                Some(b) => {
+                                    self.#method_ident(b).map(Some)
+                                }
+                                None => Ok(None),
+                            }
                         }
                     }
                 }

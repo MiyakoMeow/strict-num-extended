@@ -35,24 +35,9 @@ pub fn generate_type_aliases(config: &TypeConfig) -> proc_macro2::TokenStream {
         },
     );
 
-    // Generate Option type aliases
-    let option_aliases =
-        for_all_constraint_float_types(config, |type_name, float_type, _constraint_def| {
-            let alias_name = make_type_alias(type_name, float_type);
-            let opt_alias = format_ident!("Opt{}", alias_name);
-
-            quote! {
-                #[doc = concat!("`", stringify!(#alias_name), "` Option version")]
-                pub type #opt_alias = Option<#alias_name>;
-            }
-        });
-
     quote! {
         // Type aliases
         #(#aliases)*
-
-        // Option type aliases
-        #(#option_aliases)*
     }
 }
 

@@ -50,6 +50,40 @@ fn generate_common_definitions() -> proc_macro2::TokenStream {
     }
 }
 
+/// Generates the `FloatError` type and its trait implementations
+fn generate_error_type() -> proc_macro2::TokenStream {
+    quote! {
+        /// Errors that can occur when creating or operating on finite floats
+        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        pub enum FloatError {
+            /// Value is NaN (Not a Number)
+            NaN,
+            /// Value is positive infinity
+            PosInf,
+            /// Value is negative infinity
+            NegInf,
+            /// Value is outside the valid range for this type
+            OutOfRange,
+            /// Division by zero
+            DivisionByZero,
+        }
+
+        impl std::fmt::Display for FloatError {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    FloatError::NaN => write!(f, "value is NaN (Not a Number)"),
+                    FloatError::PosInf => write!(f, "value is positive infinity"),
+                    FloatError::NegInf => write!(f, "value is negative infinity"),
+                    FloatError::OutOfRange => write!(f, "value is outside the valid range for this type"),
+                    FloatError::DivisionByZero => write!(f, "division by zero"),
+                }
+            }
+        }
+
+        impl std::error::Error for FloatError {}
+    }
+}
+
 /// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
 pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
@@ -58,6 +92,7 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     // Collect all code to be generated
     let mut all_code = vec![
         generate_common_definitions(),
+        generate_error_type(),
         generate_finite_float_struct(),
         generate_comparison_traits(),
     ];

@@ -1,6 +1,6 @@
 //! F32/F64 类型转换测试
 
-use strict_num_extended::*;
+use strict_num_extended::{FloatError, *};
 
 // ========== try_into_f32 测试 ==========
 
@@ -8,7 +8,7 @@ use strict_num_extended::*;
 fn test_try_into_f32_precision_loss() {
     // 测试精度损失检测
     let value_f64 = FinF64::new_const(1.234567890123456789);
-    let result: Result<FinF32, ()> = value_f64.try_into_f32();
+    let result: Result<FinF32, FloatError> = value_f64.try_into_f32();
     assert!(result.is_err(), "Should fail due to precision loss");
 }
 
@@ -16,7 +16,7 @@ fn test_try_into_f32_precision_loss() {
 fn test_try_into_f32_range_overflow() {
     // 测试范围溢出检测
     let value_f64 = FinF64::new_const(1e40);
-    let result: Result<FinF32, ()> = value_f64.try_into_f32();
+    let result: Result<FinF32, FloatError> = value_f64.try_into_f32();
     assert!(result.is_err(), "Should fail due to F32 range overflow");
 }
 
@@ -24,17 +24,17 @@ fn test_try_into_f32_range_overflow() {
 fn test_try_into_f32_constraint_violation() {
     // 测试约束违规（PositiveF64 -> PositiveF32）
     let positive_f64 = PositiveF64::new_const(2.0);
-    let result: Result<PositiveF32, ()> = positive_f64.try_into_f32();
+    let result: Result<PositiveF32, FloatError> = positive_f64.try_into_f32();
     assert!(result.is_ok(), "Should succeed with valid positive value");
 
     // 测试转换后的约束
     let normalized_f64 = NormalizedF64::new_const(0.5);
-    let result: Result<NormalizedF32, ()> = normalized_f64.try_into_f32();
+    let result: Result<NormalizedF32, FloatError> = normalized_f64.try_into_f32();
     assert!(result.is_ok(), "Should succeed with normalized value");
 
     // 测试超出约束范围的值
     let large_f64 = PositiveF64::new_const(1000.0);
-    let result: Result<PositiveF32, ()> = large_f64.try_into_f32();
+    let result: Result<PositiveF32, FloatError> = large_f64.try_into_f32();
     // 这可能成功或失败，取决于 1000.0 是否在 F32 范围内且满足 PositiveF32 约束
     if result.is_ok() {
         let f32_val = result.unwrap();
@@ -46,7 +46,7 @@ fn test_try_into_f32_constraint_violation() {
 fn test_try_into_f32_normal_conversion() {
     // 测试正常转换（使用精确可表示的值）
     let value_f64 = FinF64::new_const(3.0);
-    let result: Result<FinF32, ()> = value_f64.try_into_f32();
+    let result: Result<FinF32, FloatError> = value_f64.try_into_f32();
     assert!(result.is_ok(), "Should succeed for F32-representable value");
 
     let f32_value = result.unwrap();
@@ -57,7 +57,7 @@ fn test_try_into_f32_normal_conversion() {
 fn test_try_into_f32_const_context() {
     // 测试 const 上下文
     const VALUE_F64: FinF64 = FinF64::new_const(2.0);
-    const VALUE_F32: Result<FinF32, ()> = VALUE_F64.try_into_f32();
+    const VALUE_F32: Result<FinF32, FloatError> = VALUE_F64.try_into_f32();
 
     assert!(VALUE_F32.is_ok(), "Const conversion should succeed");
     let f32_val = VALUE_F32.unwrap();
@@ -68,42 +68,42 @@ fn test_try_into_f32_const_context() {
 fn test_try_into_f32_different_constraints() {
     // 测试不同约束类型的转换
     let positive = PositiveF64::new_const(10.0);
-    let result: Result<PositiveF32, ()> = positive.try_into_f32();
+    let result: Result<PositiveF32, FloatError> = positive.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), 10.0);
 
     let negative = NegativeF64::new_const(-10.0);
-    let result: Result<NegativeF32, ()> = negative.try_into_f32();
+    let result: Result<NegativeF32, FloatError> = negative.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), -10.0);
 
     let nonzero = NonZeroF64::new_const(5.0);
-    let result: Result<NonZeroF32, ()> = nonzero.try_into_f32();
+    let result: Result<NonZeroF32, FloatError> = nonzero.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), 5.0);
 
     let symmetric = SymmetricF64::new_const(0.5);
-    let result: Result<SymmetricF32, ()> = symmetric.try_into_f32();
+    let result: Result<SymmetricF32, FloatError> = symmetric.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), 0.5);
 
     let normalized = NormalizedF64::new_const(0.75);
-    let result: Result<NormalizedF32, ()> = normalized.try_into_f32();
+    let result: Result<NormalizedF32, FloatError> = normalized.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), 0.75);
 
     let neg_normalized = NegativeNormalizedF64::new_const(-0.5);
-    let result: Result<NegativeNormalizedF32, ()> = neg_normalized.try_into_f32();
+    let result: Result<NegativeNormalizedF32, FloatError> = neg_normalized.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), -0.5);
 
     let nonzero_pos = NonZeroPositiveF64::new_const(1.0);
-    let result: Result<NonZeroPositiveF32, ()> = nonzero_pos.try_into_f32();
+    let result: Result<NonZeroPositiveF32, FloatError> = nonzero_pos.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), 1.0);
 
     let nonzero_neg = NonZeroNegativeF64::new_const(-1.0);
-    let result: Result<NonZeroNegativeF32, ()> = nonzero_neg.try_into_f32();
+    let result: Result<NonZeroNegativeF32, FloatError> = nonzero_neg.try_into_f32();
     assert!(result.is_ok());
     assert_eq!(result.unwrap().get(), -1.0);
 }
@@ -175,7 +175,7 @@ fn test_roundtrip_conversion() {
     // 测试往返转换：F32 -> F64 -> F32
     let original_f32 = FinF32::new_const(3.14159);
     let f64_val: FinF64 = original_f32.as_f64();
-    let back_to_f32: Result<FinF32, ()> = f64_val.try_into_f32();
+    let back_to_f32: Result<FinF32, FloatError> = f64_val.try_into_f32();
 
     assert!(
         back_to_f32.is_ok(),
@@ -194,8 +194,8 @@ fn test_combined_conversion_with_arithmetic() {
     let b_f64 = PositiveF64::new_const(20.0);
 
     // 转换为 F32 进行计算
-    let a_f32: Result<PositiveF32, ()> = a_f64.try_into_f32();
-    let b_f32: Result<PositiveF32, ()> = b_f64.try_into_f32();
+    let a_f32: Result<PositiveF32, FloatError> = a_f64.try_into_f32();
+    let b_f32: Result<PositiveF32, FloatError> = b_f64.try_into_f32();
 
     assert!(a_f32.is_ok() && b_f32.is_ok());
 
@@ -215,7 +215,7 @@ mod test_construction {
     fn test_construction_with_conversion() {
         // 测试在常量上下文中使用转换
         const F64_VAL: PositiveF64 = PositiveF64::new_const(42.0);
-        const F32_VAL: Result<PositiveF32, ()> = F64_VAL.try_into_f32();
+        const F32_VAL: Result<PositiveF32, FloatError> = F64_VAL.try_into_f32();
 
         assert!(F32_VAL.is_ok());
         assert_eq!(F32_VAL.unwrap().get(), 42.0);

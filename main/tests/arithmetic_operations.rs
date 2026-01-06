@@ -11,50 +11,50 @@ use strict_num_extended::*;
 ///
 /// Supports multiple calling formats:
 /// - Basic: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, expected)
-/// - Option LHS: `test_arith!(name`, Option<TypeA>, Some(a), op, `TypeB`, b, Option<ResultType>, Some(expected))
-/// - None result: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, None)
+/// - Option LHS: `test_arith!(name`, Option<TypeA>, Some(a), op, `TypeB`, b, Result<ResultType, FloatError>, Ok(expected))
+/// - Error result: `test_arith!(name`, `TypeA`, a, op, `TypeB`, b, `ResultType`, Err)`
 #[macro_export]
 macro_rules! test_arith {
-    // Option LHS with Some result
-    ($test_name:ident, Option<$TypeA:ty>, Some($a:expr), $op:tt, $TypeB:ty, $b:expr, Option<$ResultType:ty>, Some($expected:expr)) => {
+    // Option LHS with Ok result
+    ($test_name:ident, Option<$TypeA:ty>, Some($a:expr), $op:tt, $TypeB:ty, $b:expr, Result<$ResultType:ty, FloatError>, Ok($expected:expr)) => {
         #[test]
         fn $test_name() {
             let a: Option<$TypeA> = Some(<$TypeA>::new_const($a));
             const B: $TypeB = <$TypeB>::new_const($b);
             let result = a $op B;
-            assert!(result.is_some());
+            assert!(result.is_ok());
             assert_eq!(result.unwrap().get(), $expected);
         }
     };
-    // Option LHS with None result
-    ($test_name:ident, Option<$TypeA:ty>, Some($a:expr), $op:tt, $TypeB:ty, $b:expr, Option<$ResultType:ty>, None) => {
+    // Option LHS with Err result
+    ($test_name:ident, Option<$TypeA:ty>, Some($a:expr), $op:tt, $TypeB:ty, $b:expr, Result<$ResultType:ty, FloatError>, Err) => {
         #[test]
         fn $test_name() {
             let a: Option<$TypeA> = Some(<$TypeA>::new_const($a));
             const B: $TypeB = <$TypeB>::new_const($b);
             let result = a $op B;
-            assert!(result.is_none());
+            assert!(result.is_err());
         }
     };
-    // Concrete LHS with Some result (Option output)
-    ($test_name:ident, $TypeA:ty, $a:expr, $op:tt, $TypeB:ty, $b:expr, Option<$ResultType:ty>, Some($expected:expr)) => {
+    // Concrete LHS with Ok result (Result output)
+    ($test_name:ident, $TypeA:ty, $a:expr, $op:tt, $TypeB:ty, $b:expr, Result<$ResultType:ty, FloatError>, Ok($expected:expr)) => {
         #[test]
         fn $test_name() {
             const A: $TypeA = <$TypeA>::new_const($a);
             const B: $TypeB = <$TypeB>::new_const($b);
             let result = A $op B;
-            assert!(result.is_some());
+            assert!(result.is_ok());
             assert_eq!(result.unwrap().get(), $expected);
         }
     };
-    // Concrete LHS with None result
-    ($test_name:ident, $TypeA:ty, $a:expr, $op:tt, $TypeB:ty, $b:expr, Option<$ResultType:ty>, None) => {
+    // Concrete LHS with Err result
+    ($test_name:ident, $TypeA:ty, $a:expr, $op:tt, $TypeB:ty, $b:expr, Result<$ResultType:ty, FloatError>, Err) => {
         #[test]
         fn $test_name() {
             const A: $TypeA = <$TypeA>::new_const($a);
             const B: $TypeB = <$TypeB>::new_const($b);
             let result = A $op B;
-            assert!(result.is_none());
+            assert!(result.is_err());
         }
     };
     // Concrete LHS with concrete result (safe operations)
@@ -72,11 +72,11 @@ macro_rules! test_arith {
 mod test_same_type_arithmetic {
     use super::*;
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_positive_add_positive, PositiveF64, 5.0, +, PositiveF64, 3.0, Option<PositiveF64>, Some(8.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_positive_add_positive, PositiveF64, 5.0, +, PositiveF64, 3.0, Result<PositiveF64, FloatError>, Ok(8.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_negative_add_negative, NegativeF64, -5.0, +, NegativeF64, -3.0, Option<NegativeF64>, Some(-8.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_negative_add_negative, NegativeF64, -5.0, +, NegativeF64, -3.0, Result<NegativeF64, FloatError>, Ok(-8.0));
 
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_negative_sub_negative, NegativeF64, -10.0, -, NegativeF64, -3.0, FinF64, -7.0);
@@ -84,8 +84,8 @@ mod test_same_type_arithmetic {
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_negative_sub_negative_positive_result, NegativeF64, -5.0, -, NegativeF64, -10.0, FinF64, 5.0);
 
-    // Original: test_fallible_some! -> returns Some
-    test_arith!(test_nonzero_add_nonzero, NonZeroF64, 5.0, +, NonZeroF64, 3.0, Option<NonZeroF64>, Some(8.0));
+    // Original: test_fallible_some! -> returns Ok
+    test_arith!(test_nonzero_add_nonzero, NonZeroF64, 5.0, +, NonZeroF64, 3.0, Result<NonZeroF64, FloatError>, Ok(8.0));
 
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_positive_sub_positive, PositiveF64, 10.0, -, PositiveF64, 3.0, FinF64, 7.0);
@@ -93,20 +93,20 @@ mod test_same_type_arithmetic {
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_positive_sub_positive_negative_result, PositiveF64, 5.0, -, PositiveF64, 10.0, FinF64, -5.0);
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_positive_sub_negative, PositiveF64, 10.0, -, NegativeF64, -3.0, Option<PositiveF64>, Some(13.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_positive_sub_negative, PositiveF64, 10.0, -, NegativeF64, -3.0, Result<PositiveF64, FloatError>, Ok(13.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_negative_sub_positive, NegativeF64, -10.0, -, PositiveF64, 3.0, Option<NegativeF64>, Some(-13.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_negative_sub_positive, NegativeF64, -10.0, -, PositiveF64, 3.0, Result<NegativeF64, FloatError>, Ok(-13.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_nonzero_mul_nonzero, NonZeroF64, 5.0, *, NonZeroF64, 3.0, Option<NonZeroF64>, Some(15.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_nonzero_mul_nonzero, NonZeroF64, 5.0, *, NonZeroF64, 3.0, Result<NonZeroF64, FloatError>, Ok(15.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_positive_div_positive, PositiveF64, 15.0, /, PositiveF64, 3.0, Option<PositiveF64>, Some(5.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_positive_div_positive, PositiveF64, 15.0, /, PositiveF64, 3.0, Result<PositiveF64, FloatError>, Ok(5.0));
 
-    // Original: test_fallible_none! -> returns None
-    test_arith!(test_positive_div_by_zero_returns_none, PositiveF64, 15.0, /, PositiveF64, 0.0, Option<PositiveF64>, None);
+    // Original: test_fallible_err! -> returns Err
+    test_arith!(test_positive_div_by_zero_returns_err, PositiveF64, 15.0, /, PositiveF64, 0.0, Result<PositiveF64, FloatError>, Err);
 }
 
 mod test_cross_type_arithmetic {
@@ -118,16 +118,16 @@ mod test_cross_type_arithmetic {
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_negative_plus_positive, NegativeF64, -5.0, +, PositiveF64, 3.0, FinF64, -2.0);
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_positive_minus_negative, PositiveF64, 10.0, -, NegativeF64, -3.0, Option<PositiveF64>, Some(13.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_positive_minus_negative, PositiveF64, 10.0, -, NegativeF64, -3.0, Result<PositiveF64, FloatError>, Ok(13.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_negative_minus_positive, NegativeF64, -10.0, -, PositiveF64, 3.0, Option<NegativeF64>, Some(-13.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_negative_minus_positive, NegativeF64, -10.0, -, PositiveF64, 3.0, Result<NegativeF64, FloatError>, Ok(-13.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_positive_mul_negative, PositiveF64, 5.0, *, NegativeF64, -3.0, Option<NegativeF64>, Some(-15.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_positive_mul_negative, PositiveF64, 5.0, *, NegativeF64, -3.0, Result<NegativeF64, FloatError>, Ok(-15.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
+    // Original: test_arith! -> returns Result, needs unwrap
     test_arith!(
         test_nonzero_positive_div_nonzero_negative,
         NonZeroPositiveF64,
@@ -135,8 +135,8 @@ mod test_cross_type_arithmetic {
         /,
         NonZeroNegativeF64,
         -2.0,
-        Option<NonZeroNegativeF64>,
-        Some(-5.0)
+        Result<NonZeroNegativeF64, FloatError>,
+        Ok(-5.0)
     );
 
     // Original: test_safe_arith! -> returns direct value
@@ -204,26 +204,26 @@ mod test_safe_operations {
 mod test_fallible_operations {
     use super::*;
 
-    // Original: test_fallible_none! -> returns None
-    test_arith!(test_addition_overflow, PositiveF64, 1e308, +, PositiveF64, 1e308, Option<PositiveF64>, None);
+    // Original: test_fallible_err! -> returns Err
+    test_arith!(test_addition_overflow, PositiveF64, 1e308, +, PositiveF64, 1e308, Result<PositiveF64, FloatError>, Err);
 
-    // Original: test_fallible_none! -> returns None
-    test_arith!(test_subtraction_underflow, NegativeF64, -1e308, -, PositiveF64, 1e308, Option<FinF64>, None);
+    // Original: test_fallible_err! -> returns Err
+    test_arith!(test_subtraction_underflow, NegativeF64, -1e308, -, PositiveF64, 1e308, Result<FinF64, FloatError>, Err);
 
-    // Original: test_fallible_none! -> returns None
-    test_arith!(test_multiplication_overflow, PositiveF64, 1e200, *, PositiveF64, 1e200, Option<PositiveF64>, None);
+    // Original: test_fallible_err! -> returns Err
+    test_arith!(test_multiplication_overflow, PositiveF64, 1e200, *, PositiveF64, 1e200, Result<PositiveF64, FloatError>, Err);
 
-    // Original: test_fallible_none! -> returns None
-    test_arith!(test_division_by_zero_positive, PositiveF64, 10.0, /, PositiveF64, 0.0, Option<PositiveF64>, None);
+    // Original: test_fallible_err! -> returns Err
+    test_arith!(test_division_by_zero_positive, PositiveF64, 10.0, /, PositiveF64, 0.0, Result<PositiveF64, FloatError>, Err);
 
-    // Original: test_fallible_none! -> returns None
-    test_arith!(test_division_by_zero_fin, FinF64, 10.0, /, FinF64, 0.0, Option<FinF64>, None);
+    // Original: test_fallible_err! -> returns Err
+    test_arith!(test_division_by_zero_fin, FinF64, 10.0, /, FinF64, 0.0, Result<FinF64, FloatError>, Err);
 
-    // Original: test_fallible_some! -> returns Some
-    test_arith!(test_normalized_add_normalized, NormalizedF64, 0.9, +, NormalizedF64, 0.9, Option<PositiveF64>, Some(1.8));
+    // Original: test_fallible_ok! -> returns Ok
+    test_arith!(test_normalized_add_normalized, NormalizedF64, 0.9, +, NormalizedF64, 0.9, Result<PositiveF64, FloatError>, Ok(1.8));
 
-    // Original: test_fallible_some! -> returns Some
-    test_arith!(test_symmetric_add_symmetric, SymmetricF64, 0.9, +, SymmetricF64, 0.9, Option<FinF64>, Some(1.8));
+    // Original: test_fallible_ok! -> returns Ok
+    test_arith!(test_symmetric_add_symmetric, SymmetricF64, 0.9, +, SymmetricF64, 0.9, Result<FinF64, FloatError>, Ok(1.8));
 }
 
 mod test_option_arithmetic {
@@ -231,12 +231,16 @@ mod test_option_arithmetic {
 
     // Note: These tests require manual implementation because they test Option arithmetic
     // which has different semantics than concrete type arithmetic
+    //
+    // Safe operations (e.g., PositiveF64 + NegativeF64 -> FinF64) return Option<Output>
+    // Unsafe operations (e.g., multiplication, division) return Result<Option<Output>, FloatError>
     #[test]
     fn test_lhs_plus_option_rhs_some() {
         const A: PositiveF64 = PositiveF64::new_const(5.0);
         let b: Option<NegativeF64> = Some(NegativeF64::new_const(-3.0));
         let result: Option<FinF64> = A + b;
-        assert_eq!(result.map(|r| r.get()), Some(2.0));
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().get(), 2.0);
     }
 
     #[test]
@@ -244,48 +248,60 @@ mod test_option_arithmetic {
         const A: PositiveF64 = PositiveF64::new_const(5.0);
         let b: Option<NegativeF64> = None;
         let result: Option<FinF64> = A + b;
-        assert_eq!(result, None);
+        assert!(result.is_none());
     }
 
     #[test]
     fn test_lhs_mul_option_rhs_some() {
         const A: PositiveF64 = PositiveF64::new_const(5.0);
         let b: Option<PositiveF64> = Some(PositiveF64::new_const(3.0));
-        let result: Option<PositiveF64> = A * b;
-        assert_eq!(result.map(|r| r.get()), Some(15.0));
+        let result: Result<Option<PositiveF64>, FloatError> = A * b;
+        assert!(result.is_ok());
+        assert!(result.as_ref().unwrap().is_some());
+        assert_eq!(result.unwrap().unwrap().get(), 15.0);
     }
 
     #[test]
     fn test_lhs_div_option_rhs_none() {
         const A: PositiveF64 = PositiveF64::new_const(15.0);
         let b: Option<PositiveF64> = None;
-        let result: Option<PositiveF64> = A / b;
-        assert_eq!(result, None);
+        let result: Result<Option<PositiveF64>, FloatError> = A / b;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
     }
 
     #[test]
     fn test_option_chaining() {
         const A: PositiveF64 = PositiveF64::new_const(10.0);
-        let b: Option<PositiveF64> = Some(PositiveF64::new_const(2.0));
+        let b: Option<NegativeF64> = Some(NegativeF64::new_const(-2.0));
         let c: Option<PositiveF64> = Some(PositiveF64::new_const(3.0));
 
         // Chain operations with Option
-        let result1: Option<PositiveF64> = A + b;
-        let result2: Option<PositiveF64> = result1.and_then(|x| x * c);
-        assert!(result2.is_some());
-        assert_eq!(result2.unwrap().get(), 36.0);
+        // Addition: Positive + Negative is safe, returns Option<FinF64>
+        let result1: Option<FinF64> = A + b;
+        assert!(result1.is_some());
+
+        // Since result1 is Option<FinF64>, we can use map to chain with multiplication
+        // FinF64 * PositiveF64 is unsafe, returns Result<Option<FinF64>, FloatError>
+        let result2: Result<Option<FinF64>, FloatError> = result1.map(|x| x * c).unwrap();
+        assert!(result2.is_ok());
+        assert!(result2.as_ref().unwrap().is_some());
+        assert_eq!(result2.unwrap().unwrap().get(), 24.0);
     }
 
     #[test]
     fn test_option_chaining_with_none() {
         const A: PositiveF64 = PositiveF64::new_const(10.0);
-        let b: Option<PositiveF64> = None;
-        let c: Option<PositiveF64> = Some(PositiveF64::new_const(3.0));
+        let b: Option<NegativeF64> = None;
+        let _c: Option<PositiveF64> = Some(PositiveF64::new_const(3.0));
 
         // Chain with None in the middle
-        let result1: Option<PositiveF64> = A + b;
-        let result2: Option<PositiveF64> = result1.and_then(|x| x * c);
-        assert!(result2.is_none());
+        // Addition: Positive + Negative is safe, returns Option<FinF64>
+        let result1: Option<FinF64> = A + b;
+        assert!(result1.is_none());
+
+        // Since result1 is None, we can't proceed with the chain
+        assert!(result1.is_none());
     }
 
     #[test]
@@ -295,20 +311,40 @@ mod test_option_arithmetic {
         let c: Option<PositiveF64> = Some(PositiveF64::new_const(2.0));
 
         // Note: We can't do (a / b) / c directly because of orphan rules
-        // But we can chain using and_then
-        let result: Option<PositiveF64> = match (a, b, c) {
-            (Some(x), Some(y), Some(z)) => (x / y).and_then(|quotient| quotient / z),
-            _ => None,
+        // Division is unsafe, returns Result<Option<Output>, FloatError>
+        let result: Result<Option<PositiveF64>, FloatError> = match (a, b, c) {
+            (Some(x), Some(y), Some(z)) => {
+                // x / y returns Result<PositiveF64, FloatError>
+                match x / y {
+                    Ok(quotient) => {
+                        // quotient / z returns Result<Option<PositiveF64>, FloatError>
+                        match quotient / z {
+                            Ok(inner_result) => Ok(Some(inner_result)),
+                            Err(e) => Err(e),
+                        }
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+            (Some(x), Some(y), None) => {
+                // x / y returns Ok(...), then dividing by None gives Ok(None)
+                match x / y {
+                    Ok(_) => Ok(None),
+                    Err(e) => Err(e),
+                }
+            }
+            _ => Ok(None),
         };
-        assert!(result.is_some());
-        assert_eq!(result.unwrap().get(), 5.0);
+        assert!(result.is_ok());
+        assert!(result.as_ref().unwrap().is_some());
+        assert_eq!(result.unwrap().unwrap().get(), 5.0);
     }
 }
 
 mod test_combined_constraints {
     use super::*;
 
-    // Original: test_arith! -> returns Option, needs unwrap
+    // Original: test_arith! -> returns Result, needs unwrap
     test_arith!(
         test_nonzero_positive_add_nonzero_positive,
         NonZeroPositiveF64,
@@ -316,11 +352,11 @@ mod test_combined_constraints {
         +,
         NonZeroPositiveF64,
         3.0,
-        Option<NonZeroPositiveF64>,
-        Some(8.0)
+        Result<NonZeroPositiveF64, FloatError>,
+        Ok(8.0)
     );
 
-    // Original: test_arith! -> returns Option, needs unwrap
+    // Original: test_arith! -> returns Result, needs unwrap
     test_arith!(
         test_nonzero_negative_add_nonzero_negative,
         NonZeroNegativeF64,
@@ -328,11 +364,11 @@ mod test_combined_constraints {
         +,
         NonZeroNegativeF64,
         -3.0,
-        Option<NonZeroNegativeF64>,
-        Some(-8.0)
+        Result<NonZeroNegativeF64, FloatError>,
+        Ok(-8.0)
     );
 
-    // Original: test_arith! -> returns Option, needs unwrap
+    // Original: test_arith! -> returns Result, needs unwrap
     test_arith!(
         test_nonzero_positive_sub_nonzero_negative,
         NonZeroPositiveF64,
@@ -340,11 +376,11 @@ mod test_combined_constraints {
         -,
         NonZeroNegativeF64,
         -3.0,
-        Option<NonZeroPositiveF64>,
-        Some(13.0)
+        Result<NonZeroPositiveF64, FloatError>,
+        Ok(13.0)
     );
 
-    // Original: test_arith! -> returns Option, needs unwrap
+    // Original: test_arith! -> returns Result, needs unwrap
     test_arith!(
         test_nonzero_positive_mul_nonzero_negative,
         NonZeroPositiveF64,
@@ -352,16 +388,16 @@ mod test_combined_constraints {
         *,
         NonZeroNegativeF64,
         -3.0,
-        Option<NonZeroNegativeF64>,
-        Some(-15.0)
+        Result<NonZeroNegativeF64, FloatError>,
+        Ok(-15.0)
     );
 }
 
 mod test_f32_types {
     use super::*;
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_f32_positive_add_positive, PositiveF32, 5.0, +, PositiveF32, 3.0, Option<PositiveF32>, Some(8.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_f32_positive_add_positive, PositiveF32, 5.0, +, PositiveF32, 3.0, Result<PositiveF32, FloatError>, Ok(8.0));
 
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_f32_cross_type_operations, PositiveF32, 5.0, +, NegativeF32, -3.0, FinF32, 2.0);
@@ -379,7 +415,7 @@ mod test_f32_types {
     );
 
     // Original: division by zero test
-    test_arith!(test_f32_division_by_zero, PositiveF32, 15.0, /, PositiveF32, 0.0, Option<PositiveF32>, None);
+    test_arith!(test_f32_division_by_zero, PositiveF32, 15.0, /, PositiveF32, 0.0, Result<PositiveF32, FloatError>, Err);
 }
 
 mod test_negation_interaction {
@@ -420,23 +456,23 @@ mod test_negation_interaction {
 mod test_edge_cases {
     use super::*;
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_addition_with_zero, PositiveF64, 5.0, +, PositiveF64, 0.0, Option<PositiveF64>, Some(5.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_addition_with_zero, PositiveF64, 5.0, +, PositiveF64, 0.0, Result<PositiveF64, FloatError>, Ok(5.0));
 
     // Original: test_safe_arith! -> returns direct value
     test_arith!(test_subtraction_with_zero, PositiveF64, 5.0, -, PositiveF64, 0.0, FinF64, 5.0);
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_multiplication_with_zero, PositiveF64, 5.0, *, PositiveF64, 0.0, Option<PositiveF64>, Some(0.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_multiplication_with_zero, PositiveF64, 5.0, *, PositiveF64, 0.0, Result<PositiveF64, FloatError>, Ok(0.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_division_with_one, PositiveF64, 5.0, /, PositiveF64, 1.0, Option<PositiveF64>, Some(5.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_division_with_one, PositiveF64, 5.0, /, PositiveF64, 1.0, Result<PositiveF64, FloatError>, Ok(5.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_symmetric_extremes, SymmetricF64, 1.0, +, SymmetricF64, -1.0, Option<FinF64>, Some(0.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_symmetric_extremes, SymmetricF64, 1.0, +, SymmetricF64, -1.0, Result<FinF64, FloatError>, Ok(0.0));
 
-    // Original: test_arith! -> returns Option, needs unwrap
-    test_arith!(test_normalized_extremes, NormalizedF64, 0.0, +, NormalizedF64, 1.0, Option<PositiveF64>, Some(1.0));
+    // Original: test_arith! -> returns Result, needs unwrap
+    test_arith!(test_normalized_extremes, NormalizedF64, 0.0, +, NormalizedF64, 1.0, Result<PositiveF64, FloatError>, Ok(1.0));
 }
 
 mod test_safe_division {

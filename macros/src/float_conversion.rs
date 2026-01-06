@@ -26,23 +26,23 @@ pub fn generate_try_into_f32_methods(config: &TypeConfig) -> proc_macro2::TokenS
                 ///
                 /// # Errors
                 ///
-                /// Returns `Err(())` if:
+                /// Returns `Err(FloatError)` if:
                 /// - The value is outside F32 range
                 /// - Precision would be lost in the conversion
                 /// - The converted value does not satisfy the target constraint
                 #[must_use = "Return value may contain an error and should not be ignored"]
-                pub const fn try_into_f32(self) -> Result<#f32_type_alias, ()> {
+                pub const fn try_into_f32(self) -> Result<#f32_type_alias, FloatError> {
                     let value_f64 = self.value;
                     let value_f32 = value_f64 as f32;
 
                     // Check range: F32 is finite if within representable range
                     if !value_f32.is_finite() {
-                        return Err(());
+                        return Err(FloatError::OutOfRange);
                     }
 
                     // Check precision: round-trip conversion should preserve value
                     if value_f32 as f64 != value_f64 {
-                        return Err(());
+                        return Err(FloatError::OutOfRange);
                     }
 
                     // Use new_const to validate constraints - it is const and handles validation
