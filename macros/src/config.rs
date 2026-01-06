@@ -385,16 +385,17 @@ fn parse_float_value(s: &str) -> f64 {
 // Arithmetic operation inference
 // ============================================================================
 
-/// 检查边界运算结果是否都是有限的
+/// Checks if all boundary operation results are finite.
 ///
-/// 对 lhs 和 rhs 的边界值进行实际运算，检查所有可能的极值组合是否都产生有限结果。
+/// Performs actual operations on the boundary values of lhs and rhs,
+/// checking if all possible extreme value combinations produce finite results.
 fn bounds_op_is_finite(lhs: &Bounds, rhs: &Bounds, op: impl Fn(f64, f64) -> f64) -> bool {
     let l_min = lhs.lower.unwrap_or(f64::MIN);
     let l_max = lhs.upper.unwrap_or(f64::MAX);
     let r_min = rhs.lower.unwrap_or(f64::MIN);
     let r_max = rhs.upper.unwrap_or(f64::MAX);
 
-    // 计算所有可能的极值组合
+    // Compute all possible extreme value combinations
     let results = [
         op(l_min, r_min),
         op(l_min, r_max),
@@ -405,14 +406,15 @@ fn bounds_op_is_finite(lhs: &Bounds, rhs: &Bounds, op: impl Fn(f64, f64) -> f64)
     results.iter().all(|r| r.is_finite())
 }
 
-/// 检查除法边界运算结果是否都是有限的
+/// Checks if all boundary division results are finite.
 ///
-/// 除法需要特殊处理：如果除数排除零，则使用最小正数作为除数下界
+/// Division requires special handling: if the divisor excludes zero,
+/// use the minimum positive number as the divisor's lower bound.
 fn bounds_div_is_finite(lhs: &Bounds, rhs: &Bounds, rhs_excludes_zero: bool) -> bool {
     let l_min = lhs.lower.unwrap_or(f64::MIN);
     let l_max = lhs.upper.unwrap_or(f64::MAX);
 
-    // 对于除数，如果排除零，则避免使用 0 作为边界值
+    // For divisor, if it excludes zero, avoid using 0 as the boundary value
     let r_min = if rhs_excludes_zero && rhs.lower == Some(0.0) {
         f64::MIN_POSITIVE
     } else {
@@ -424,7 +426,7 @@ fn bounds_div_is_finite(lhs: &Bounds, rhs: &Bounds, rhs_excludes_zero: bool) -> 
         rhs.upper.unwrap_or(f64::MAX)
     };
 
-    // 计算所有可能的极值组合
+    // Compute all possible extreme value combinations
     let results = [l_min / r_min, l_min / r_max, l_max / r_min, l_max / r_max];
 
     results.iter().all(|r| r.is_finite())
@@ -486,8 +488,8 @@ fn compute_arithmetic_result(
 
 /// Compute output properties for addition.
 fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // 安全条件：符号不同（Positive + Negative 或 Negative + Positive）
-    // 且边界运算结果都是有限的
+    // Safe when signs differ (Positive + Negative or Negative + Positive)
+    // and all boundary operation results are finite
     let signs_differ = matches!(
         (lhs.sign, rhs.sign),
         (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive)
@@ -513,8 +515,8 @@ fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
 
 /// Compute output properties for subtraction.
 fn compute_sub_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // 安全条件：符号相同（Positive - Positive 或 Negative - Negative）
-    // 且边界运算结果都是有限的
+    // Safe when signs are the same (Positive - Positive or Negative - Negative)
+    // and all boundary operation results are finite
     let signs_same = lhs.sign == rhs.sign && lhs.sign != Sign::Any;
     let is_safe = signs_same && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a - b);
 
@@ -561,7 +563,7 @@ const fn max_abs_value(bounds: Bounds) -> f64 {
 
 /// Compute output properties for multiplication.
 fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // 安全条件：两个操作数都有界，且边界运算结果都是有限的
+    // Safe when both operands are bounded and all boundary operation results are finite
     let both_bounded = lhs.bounds.is_bounded() && rhs.bounds.is_bounded();
     let is_safe = both_bounded && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a * b);
 
@@ -584,7 +586,8 @@ fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
 
 /// Compute output properties for division.
 fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // 安全条件：被除数在 [-1.0, 1.0] 范围内，除数非零，且边界运算结果都是有限的
+    // Safe when dividend is in [-1.0, 1.0], divisor is non-zero,
+    // and all boundary operation results are finite
     let lhs_in_unit_range = if let (Some(lower), Some(upper)) = (lhs.bounds.lower, lhs.bounds.upper)
     {
         lower >= -1.0 && upper <= 1.0
