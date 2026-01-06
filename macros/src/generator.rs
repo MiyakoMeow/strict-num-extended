@@ -16,6 +16,42 @@ fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
 }
 
+/// Iterate over all constraint types and float types, generating code for each combination.
+///
+/// This function encapsulates the common pattern of iterating through all constraint types
+/// and their associated float types, providing the constraint definition and type names
+/// to a generator function.
+///
+/// # Arguments
+///
+/// * `config` - Type configuration containing constraint definitions
+/// * `generator` - Function that generates code for each (`type_name`, `float_type`, `constraint_def`) combination
+///
+/// # Returns
+///
+/// A vector of generated token streams
+fn for_all_constraint_float_types<F>(config: &TypeConfig, mut generator: F) -> Vec<TokenStream2>
+where
+    F: FnMut(&Ident, &Ident, &ConstraintDef) -> TokenStream2,
+{
+    let mut results = Vec::new();
+
+    for type_def in &config.constraint_types {
+        let type_name = &type_def.type_name;
+        let constraint_def = config
+            .constraints
+            .iter()
+            .find(|c| c.name == type_def.constraint_name)
+            .expect("Constraint not found");
+
+        for float_type in &type_def.float_types {
+            results.push(generator(type_name, float_type, constraint_def));
+        }
+    }
+
+    results
+}
+
 /// Dynamically builds validation expression based on constraint definition
 fn build_validation_expr(constraint_def: &ConstraintDef, float_type: &Ident) -> TokenStream2 {
     let mut checks = Vec::new();
@@ -56,10 +92,8 @@ fn build_bound_check(
 
     // Determine whether to use strict comparison and whether to substitute with MIN_POSITIVE
     let (use_strict, use_min_positive) = match (is_lower, excludes_zero, bound == 0.0) {
-        // Lower bound, excludes zero, bound is zero -> use MIN_POSITIVE with >=
-        (true, true, true) => (false, true),
-        // Upper bound, excludes zero, bound is zero -> use MIN_POSITIVE with <=
-        (false, true, true) => (false, true),
+        // Either bound, excludes zero, bound is zero -> use MIN_POSITIVE
+        (_, true, true) => (false, true),
         // Otherwise use non-strict comparison without substitution
         _ => (false, false),
     };
@@ -552,18 +586,10 @@ pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
 
 /// Generates type aliases.
 pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
-    let mut aliases = Vec::new();
-    let mut option_aliases = Vec::new();
-
-    for type_def in &config.constraint_types {
-        let type_name = &type_def.type_name;
-        let constraint_def = config
-            .constraints
-            .iter()
-            .find(|c| c.name == type_def.constraint_name)
-            .expect("Constraint not found");
-
-        for float_type in &type_def.float_types {
+    // Generate regular type aliases
+    let aliases = for_all_constraint_float_types(
+        config,
+        |type_name, float_type, constraint_def| {
             let alias_name = make_type_alias(type_name, float_type);
 
             // Calculate boundary constants from constraint bounds
@@ -573,22 +599,26 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
             let max_bits = max.to_bits() as i64;
             let exclude_zero = constraint_def.excludes_zero;
 
-            aliases.push(quote! {
+            quote! {
                 #[doc = concat!(
                     stringify!(#type_name), " finite ", stringify!(#float_type), " value"
                 )]
                 pub type #alias_name = FiniteFloat<#float_type, Bounded<#min_bits, #max_bits, #exclude_zero>>;
-            });
+            }
+        },
+    );
 
-            // Generate Option type alias
+    // Generate Option type aliases
+    let option_aliases =
+        for_all_constraint_float_types(config, |type_name, float_type, _constraint_def| {
+            let alias_name = make_type_alias(type_name, float_type);
             let opt_alias = format_ident!("Opt{}", alias_name);
 
-            option_aliases.push(quote! {
+            quote! {
                 #[doc = concat!("`", stringify!(#alias_name), "` Option version")]
                 pub type #opt_alias = Option<#alias_name>;
-            });
-        }
-    }
+            }
+        });
 
     quote! {
         // Type aliases
@@ -601,42 +631,31 @@ pub fn generate_type_aliases(config: &TypeConfig) -> TokenStream2 {
 
 /// Generates `new_const` methods.
 pub fn generate_new_const_methods(config: &TypeConfig) -> TokenStream2 {
-    let mut impls = Vec::new();
+    let impls = for_all_constraint_float_types(config, |type_name, float_type, constraint_def| {
+        let type_alias = make_type_alias(type_name, float_type);
 
-    for type_def in &config.constraint_types {
-        let type_name = &type_def.type_name;
-        let constraint_def = config
-            .constraints
-            .iter()
-            .find(|c| c.name == type_def.constraint_name)
-            .expect("Constraint not found");
+        // Dynamically generate validation expression using constraint definition
+        let validate_expr = build_validation_expr(constraint_def, float_type);
 
-        for float_type in &type_def.float_types {
-            let type_alias = make_type_alias(type_name, float_type);
-
-            // Dynamically generate validation expression using constraint definition
-            let validate_expr = build_validation_expr(constraint_def, float_type);
-
-            impls.push(quote! {
-                impl #type_alias {
-                    /// Creates a value at compile time
-                    ///
-                    /// # Panics
-                    ///
-                    /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
-                    #[inline]
-                    #[must_use]
-                    pub const fn new_const(value: #float_type) -> Self {
-                        if #validate_expr {
-                            unsafe { Self::new_unchecked(value) }
-                        } else {
-                            panic!("Value does not satisfy the constraint");
-                        }
+        quote! {
+            impl #type_alias {
+                /// Creates a value at compile time
+                ///
+                /// # Panics
+                ///
+                /// Will [`panic`] at compile time or runtime if the value does not satisfy the constraint.
+                #[inline]
+                #[must_use]
+                pub const fn new_const(value: #float_type) -> Self {
+                    if #validate_expr {
+                        unsafe { Self::new_unchecked(value) }
+                    } else {
+                        panic!("Value does not satisfy the constraint");
                     }
                 }
-            });
+            }
         }
-    }
+    });
 
     quote! {
         #(#impls)*
