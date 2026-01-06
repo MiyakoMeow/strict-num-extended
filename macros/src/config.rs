@@ -385,6 +385,51 @@ fn parse_float_value(s: &str) -> f64 {
 // Arithmetic operation inference
 // ============================================================================
 
+/// 检查边界运算结果是否都是有限的
+///
+/// 对 lhs 和 rhs 的边界值进行实际运算，检查所有可能的极值组合是否都产生有限结果。
+fn bounds_op_is_finite(lhs: &Bounds, rhs: &Bounds, op: impl Fn(f64, f64) -> f64) -> bool {
+    let l_min = lhs.lower.unwrap_or(f64::MIN);
+    let l_max = lhs.upper.unwrap_or(f64::MAX);
+    let r_min = rhs.lower.unwrap_or(f64::MIN);
+    let r_max = rhs.upper.unwrap_or(f64::MAX);
+
+    // 计算所有可能的极值组合
+    let results = [
+        op(l_min, r_min),
+        op(l_min, r_max),
+        op(l_max, r_min),
+        op(l_max, r_max),
+    ];
+
+    results.iter().all(|r| r.is_finite())
+}
+
+/// 检查除法边界运算结果是否都是有限的
+///
+/// 除法需要特殊处理：如果除数排除零，则使用最小正数作为除数下界
+fn bounds_div_is_finite(lhs: &Bounds, rhs: &Bounds, rhs_excludes_zero: bool) -> bool {
+    let l_min = lhs.lower.unwrap_or(f64::MIN);
+    let l_max = lhs.upper.unwrap_or(f64::MAX);
+
+    // 对于除数，如果排除零，则避免使用 0 作为边界值
+    let r_min = if rhs_excludes_zero && rhs.lower == Some(0.0) {
+        f64::MIN_POSITIVE
+    } else {
+        rhs.lower.unwrap_or(f64::MIN)
+    };
+    let r_max = if rhs_excludes_zero && rhs.upper == Some(0.0) {
+        -f64::MIN_POSITIVE
+    } else {
+        rhs.upper.unwrap_or(f64::MAX)
+    };
+
+    // 计算所有可能的极值组合
+    let results = [l_min / r_min, l_min / r_max, l_max / r_min, l_max / r_max];
+
+    results.iter().all(|r| r.is_finite())
+}
+
 /// Compute arithmetic results for all constraint combinations.
 fn compute_all_arithmetic_results(
     constraints: &[ConstraintDef],
@@ -441,12 +486,13 @@ fn compute_arithmetic_result(
 
 /// Compute output properties for addition.
 fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Safe if signs are different (effectively bounded subtraction)
-    // Positive + Negative and Negative + Positive cannot overflow
-    let is_safe = matches!(
+    // 安全条件：符号不同（Positive + Negative 或 Negative + Positive）
+    // 且边界运算结果都是有限的
+    let signs_differ = matches!(
         (lhs.sign, rhs.sign),
         (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive)
     );
+    let is_safe = signs_differ && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a + b);
 
     // Sign rules for addition:
     // Positive + Positive = Positive
@@ -467,9 +513,10 @@ fn compute_add_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bo
 
 /// Compute output properties for subtraction.
 fn compute_sub_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Safe when both operands have the same sign (no overflow possible)
-    // Positive - Positive and Negative - Negative cannot overflow
-    let is_safe = lhs.sign == rhs.sign && lhs.sign != Sign::Any;
+    // 安全条件：符号相同（Positive - Positive 或 Negative - Negative）
+    // 且边界运算结果都是有限的
+    let signs_same = lhs.sign == rhs.sign && lhs.sign != Sign::Any;
+    let is_safe = signs_same && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a - b);
 
     // a - b: negate rhs sign
     let rhs_negated_sign = match rhs.sign {
@@ -513,9 +560,10 @@ const fn max_abs_value(bounds: Bounds) -> f64 {
 }
 
 /// Compute output properties for multiplication.
-const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Multiplication is safe if both operands are bounded (result stays bounded)
-    let is_safe = lhs.bounds.is_bounded() && rhs.bounds.is_bounded();
+fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
+    // 安全条件：两个操作数都有界，且边界运算结果都是有限的
+    let both_bounded = lhs.bounds.is_bounded() && rhs.bounds.is_bounded();
+    let is_safe = both_bounded && bounds_op_is_finite(&lhs.bounds, &rhs.bounds, |a, b| a * b);
 
     // Sign rules for multiplication:
     // Positive × Positive = Positive
@@ -535,25 +583,17 @@ const fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Si
 }
 
 /// Compute output properties for division.
-const fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
-    // Division is safe if dividend (lhs) is bounded within [-1.0, 1.0] and divisor (rhs) is non-zero.
-    // This prevents overflow/underflow because:
-    // - Max positive result: 1.0 / smallest_positive → finite
-    // - Min negative result: -1.0 / smallest_negative → finite
-    // Examples of safe operations:
-    // - NormalizedF64 / NonZeroF64 → safe (result is bounded)
-    // - SymmetricF64 / PositiveF64 → safe (result is bounded)
-    // - 1.0 / f64::MIN → safe (≈ -5.56e-319, finite)
-    //
-    // Examples of unsafe operations:
-    // - PositiveF64 / PositiveF64 → unsafe (1e308 / 1e-308 may overflow)
-    // - NormalizedF64 / FinF64 → unsafe (FinF64 includes 0.0)
-    let is_safe = if let (Some(lower), Some(upper)) = (lhs.bounds.lower, lhs.bounds.upper) {
-        // Check if lhs is bounded within [-1.0, 1.0] and rhs is non-zero
-        lower >= -1.0 && upper <= 1.0 && rhs.excludes_zero
+fn compute_div_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
+    // 安全条件：被除数在 [-1.0, 1.0] 范围内，除数非零，且边界运算结果都是有限的
+    let lhs_in_unit_range = if let (Some(lower), Some(upper)) = (lhs.bounds.lower, lhs.bounds.upper)
+    {
+        lower >= -1.0 && upper <= 1.0
     } else {
         false
     };
+    let is_safe = lhs_in_unit_range
+        && rhs.excludes_zero
+        && bounds_div_is_finite(&lhs.bounds, &rhs.bounds, rhs.excludes_zero);
 
     // Sign rules for division (same as multiplication):
     let output_sign = match (lhs.sign, rhs.sign) {
