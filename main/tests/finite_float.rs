@@ -3,7 +3,7 @@
 //! This module tests all functionality of finite floating-point types.
 
 // Strict floating-point comparisons, unwrap usage, and variable shadowing in test code are justified
-#![allow(clippy::float_cmp, clippy::unwrap_used, clippy::shadow_unrelated)]
+#![allow(clippy::unwrap_used, clippy::shadow_unrelated)]
 
 use strict_num_extended::*;
 
@@ -83,19 +83,19 @@ mod test_finf32 {
 
     #[test]
     fn test_finf32_new_valid() {
-        assert!(FinF32::new(1.0).is_some());
-        assert!(FinF32::new(-1.0).is_some());
-        assert!(FinF32::new(0.0).is_some());
-        assert!(FinF32::new(f32::MAX).is_some());
-        assert!(FinF32::new(f32::MIN).is_some());
-        assert!(FinF32::new(0.00001).is_some());
+        assert!(FinF32::new(1.0).is_ok());
+        assert!(FinF32::new(-1.0).is_ok());
+        assert!(FinF32::new(0.0).is_ok());
+        assert!(FinF32::new(f32::MAX).is_ok());
+        assert!(FinF32::new(f32::MIN).is_ok());
+        assert!(FinF32::new(0.00001).is_ok());
     }
 
     #[test]
     fn test_finf32_new_invalid() {
-        assert!(FinF32::new(f32::NAN).is_none());
-        assert!(FinF32::new(f32::INFINITY).is_none());
-        assert!(FinF32::new(f32::NEG_INFINITY).is_none());
+        assert!(FinF32::new(f32::NAN).is_err());
+        assert!(FinF32::new(f32::INFINITY).is_err());
+        assert!(FinF32::new(f32::NEG_INFINITY).is_err());
     }
 
     test_get_approx!(test_finf32_get, FinF32, std::f32::consts::PI, f32);
@@ -109,18 +109,18 @@ mod test_finf64 {
 
     #[test]
     fn test_finf64_new_valid() {
-        assert!(FinF64::new(1.0).is_some());
-        assert!(FinF64::new(-1.0).is_some());
-        assert!(FinF64::new(0.0).is_some());
-        assert!(FinF64::new(f64::MAX).is_some());
-        assert!(FinF64::new(f64::MIN).is_some());
+        assert!(FinF64::new(1.0).is_ok());
+        assert!(FinF64::new(-1.0).is_ok());
+        assert!(FinF64::new(0.0).is_ok());
+        assert!(FinF64::new(f64::MAX).is_ok());
+        assert!(FinF64::new(f64::MIN).is_ok());
     }
 
     #[test]
     fn test_finf64_new_invalid() {
-        assert!(FinF64::new(f64::NAN).is_none());
-        assert!(FinF64::new(f64::INFINITY).is_none());
-        assert!(FinF64::new(f64::NEG_INFINITY).is_none());
+        assert!(FinF64::new(f64::NAN).is_err());
+        assert!(FinF64::new(f64::INFINITY).is_err());
+        assert!(FinF64::new(f64::NEG_INFINITY).is_err());
     }
 
     test_get_approx!(test_finf64_get, FinF64, std::f64::consts::PI, f64);
@@ -132,21 +132,21 @@ mod test_positivef32 {
 
     #[test]
     fn test_positivef32_new_valid() {
-        assert!(PositiveF32::new(1.0).is_some());
-        assert!(PositiveF32::new(0.0).is_some());
+        assert!(PositiveF32::new(1.0).is_ok());
+        assert!(PositiveF32::new(0.0).is_ok());
         // Positive no longer allows infinity
-        assert!(PositiveF32::new(f32::INFINITY).is_none());
-        assert!(PositiveF32::new(f32::MAX).is_some());
+        assert!(PositiveF32::new(f32::INFINITY).is_err());
+        assert!(PositiveF32::new(f32::MAX).is_ok());
     }
 
     #[test]
     fn test_positivef32_new_invalid() {
-        assert!(PositiveF32::new(f32::NAN).is_none());
-        assert!(PositiveF32::new(-1.0).is_none());
+        assert!(PositiveF32::new(f32::NAN).is_err());
+        assert!(PositiveF32::new(-1.0).is_err());
         // Positive now uses numeric comparison (>= 0.0), accepts -0.0
-        assert!(PositiveF32::new(-0.0).is_some());
-        assert!(PositiveF32::new(f32::NEG_INFINITY).is_none());
-        assert!(PositiveF32::new(f32::INFINITY).is_none());
+        assert!(PositiveF32::new(-0.0).is_ok());
+        assert!(PositiveF32::new(f32::NEG_INFINITY).is_err());
+        assert!(PositiveF32::new(f32::INFINITY).is_err());
     }
 
     test_get!(test_positivef32_get, PositiveF32, 42.0);
@@ -158,21 +158,21 @@ mod test_positivef64 {
 
     #[test]
     fn test_positivef64_new_valid() {
-        assert!(PositiveF64::new(1.0).is_some());
-        assert!(PositiveF64::new(0.0).is_some());
+        assert!(PositiveF64::new(1.0).is_ok());
+        assert!(PositiveF64::new(0.0).is_ok());
         // Positive no longer allows infinity
-        assert!(PositiveF64::new(f64::INFINITY).is_none());
-        assert!(PositiveF64::new(f64::MAX).is_some());
+        assert!(PositiveF64::new(f64::INFINITY).is_err());
+        assert!(PositiveF64::new(f64::MAX).is_ok());
     }
 
     #[test]
     fn test_positivef64_new_invalid() {
-        assert!(PositiveF64::new(f64::NAN).is_none());
-        assert!(PositiveF64::new(-1.0).is_none());
+        assert!(PositiveF64::new(f64::NAN).is_err());
+        assert!(PositiveF64::new(-1.0).is_err());
         // Positive now uses numeric comparison (>= 0.0), accepts -0.0
-        assert!(PositiveF64::new(-0.0).is_some());
-        assert!(PositiveF64::new(f64::NEG_INFINITY).is_none());
-        assert!(PositiveF64::new(f64::INFINITY).is_none());
+        assert!(PositiveF64::new(-0.0).is_ok());
+        assert!(PositiveF64::new(f64::NEG_INFINITY).is_err());
+        assert!(PositiveF64::new(f64::INFINITY).is_err());
     }
 
     test_get!(test_positivef64_get, PositiveF64, 123.456);
@@ -292,7 +292,7 @@ mod test_conversions {
         // Try to convert from FinF32 to PositiveF32, negative value will fail
         let finite_32 = FinF32::new(-5.0).unwrap();
         let value = finite_32.get();
-        assert!(PositiveF32::new(value).is_none());
+        assert!(PositiveF32::new(value).is_err());
 
         // Positive value should succeed
         let finite_32 = FinF32::new(5.0).unwrap();
@@ -332,68 +332,6 @@ mod test_unchecked {
 
         let neg_value = unsafe { PositiveF32::new_unchecked(-1.0) };
         assert_eq!(neg_value.get(), -1.0);
-    }
-}
-
-/// Tests Optional types
-mod test_optional_types {
-    use super::*;
-
-    #[test]
-    fn test_optfinf32() {
-        let some: OptFinF32 = Some(FinF32::new(1.0).unwrap());
-        let none: OptFinF32 = None;
-
-        assert!(some.is_some());
-        assert!(none.is_none());
-    }
-
-    #[test]
-    fn test_optpositivef32() {
-        let some: OptPositiveF32 = Some(PositiveF32::new(1.0).unwrap());
-        let none: OptPositiveF32 = None;
-
-        assert!(some.is_some());
-        assert!(none.is_none());
-    }
-
-    #[test]
-    fn test_optional_arithmetic() {
-        // Test basic operations on Option types
-        let a: OptFinF32 = Some(FinF32::new(2.0).unwrap());
-        let b: OptFinF32 = Some(FinF32::new(3.0).unwrap());
-        let c: OptFinF32 = None;
-
-        assert!(a.is_some());
-        assert!(b.is_some());
-        assert!(c.is_none());
-
-        // Test extracting values from Some and performing operations
-        if let Some(fin_a) = a
-            && let Some(fin_b) = b
-        {
-            let result = (fin_a + fin_b).unwrap();
-            assert_eq!(result.get(), 5.0);
-        }
-
-        // Test interaction with None
-        if let Some(fin_a) = a {
-            assert_eq!(fin_a.get(), 2.0);
-        }
-
-        // Test None
-        assert!(c.is_none());
-    }
-
-    #[test]
-    fn test_optional_conversion() {
-        let some: OptFinF32 = Some(FinF32::new(std::f32::consts::PI).unwrap());
-        let none: OptFinF32 = None;
-
-        // OptFinF32 can be used directly as OptFinF64 (covariance)
-        // This tests how type aliases work
-        assert!(some.is_some());
-        assert!(none.is_none());
     }
 }
 
@@ -466,20 +404,20 @@ mod test_constraints {
 
     #[test]
     fn test_finf32_constraint() {
-        assert!(FinF32::new(1.0).is_some());
-        assert!(FinF32::new(f32::NAN).is_none());
-        assert!(FinF32::new(f32::INFINITY).is_none());
-        assert!(FinF32::new(f32::NEG_INFINITY).is_none());
+        assert!(FinF32::new(1.0).is_ok());
+        assert!(FinF32::new(f32::NAN).is_err());
+        assert!(FinF32::new(f32::INFINITY).is_err());
+        assert!(FinF32::new(f32::NEG_INFINITY).is_err());
     }
 
     #[test]
     fn test_positivef32_constraint() {
-        assert!(PositiveF32::new(1.0).is_some());
-        assert!(PositiveF32::new(0.0).is_some());
+        assert!(PositiveF32::new(1.0).is_ok());
+        assert!(PositiveF32::new(0.0).is_ok());
         // Positive no longer allows infinity
-        assert!(PositiveF32::new(f32::INFINITY).is_none());
-        assert!(PositiveF32::new(-1.0).is_none());
-        assert!(PositiveF32::new(f32::NAN).is_none());
+        assert!(PositiveF32::new(f32::INFINITY).is_err());
+        assert!(PositiveF32::new(-1.0).is_err());
+        assert!(PositiveF32::new(f32::NAN).is_err());
     }
 }
 
@@ -489,20 +427,20 @@ mod test_nonzerof32 {
 
     #[test]
     fn test_nonzerof32_new_valid() {
-        assert!(NonZeroF32::new(1.0).is_some());
-        assert!(NonZeroF32::new(-1.0).is_some());
-        assert!(NonZeroF32::new(f32::MAX).is_some());
-        assert!(NonZeroF32::new(f32::MIN).is_some());
-        assert!(NonZeroF32::new(0.00001).is_some());
+        assert!(NonZeroF32::new(1.0).is_ok());
+        assert!(NonZeroF32::new(-1.0).is_ok());
+        assert!(NonZeroF32::new(f32::MAX).is_ok());
+        assert!(NonZeroF32::new(f32::MIN).is_ok());
+        assert!(NonZeroF32::new(0.00001).is_ok());
     }
 
     #[test]
     fn test_nonzerof32_new_invalid() {
-        assert!(NonZeroF32::new(f32::NAN).is_none());
-        assert!(NonZeroF32::new(f32::INFINITY).is_none());
-        assert!(NonZeroF32::new(f32::NEG_INFINITY).is_none());
-        assert!(NonZeroF32::new(0.0).is_none());
-        assert!(NonZeroF32::new(-0.0).is_none());
+        assert!(NonZeroF32::new(f32::NAN).is_err());
+        assert!(NonZeroF32::new(f32::INFINITY).is_err());
+        assert!(NonZeroF32::new(f32::NEG_INFINITY).is_err());
+        assert!(NonZeroF32::new(0.0).is_err());
+        assert!(NonZeroF32::new(-0.0).is_err());
     }
 
     #[test]
@@ -518,19 +456,19 @@ mod test_nonzerof64 {
 
     #[test]
     fn test_nonzerof64_new_valid() {
-        assert!(NonZeroF64::new(1.0).is_some());
-        assert!(NonZeroF64::new(-1.0).is_some());
-        assert!(NonZeroF64::new(f64::MAX).is_some());
-        assert!(NonZeroF64::new(f64::MIN).is_some());
+        assert!(NonZeroF64::new(1.0).is_ok());
+        assert!(NonZeroF64::new(-1.0).is_ok());
+        assert!(NonZeroF64::new(f64::MAX).is_ok());
+        assert!(NonZeroF64::new(f64::MIN).is_ok());
     }
 
     #[test]
     fn test_nonzerof64_new_invalid() {
-        assert!(NonZeroF64::new(f64::NAN).is_none());
-        assert!(NonZeroF64::new(f64::INFINITY).is_none());
-        assert!(NonZeroF64::new(f64::NEG_INFINITY).is_none());
-        assert!(NonZeroF64::new(0.0).is_none());
-        assert!(NonZeroF64::new(-0.0).is_none());
+        assert!(NonZeroF64::new(f64::NAN).is_err());
+        assert!(NonZeroF64::new(f64::INFINITY).is_err());
+        assert!(NonZeroF64::new(f64::NEG_INFINITY).is_err());
+        assert!(NonZeroF64::new(0.0).is_err());
+        assert!(NonZeroF64::new(-0.0).is_err());
     }
 
     #[test]
@@ -546,19 +484,19 @@ mod test_nonzero_positivef32 {
 
     #[test]
     fn test_nonzero_positivef32_new_valid() {
-        assert!(NonZeroPositiveF32::new(1.0).is_some());
-        assert!(NonZeroPositiveF32::new(f32::MAX).is_some());
-        assert!(NonZeroPositiveF32::new(0.00001).is_some());
+        assert!(NonZeroPositiveF32::new(1.0).is_ok());
+        assert!(NonZeroPositiveF32::new(f32::MAX).is_ok());
+        assert!(NonZeroPositiveF32::new(0.00001).is_ok());
     }
 
     #[test]
     fn test_nonzero_positivef32_new_invalid() {
-        assert!(NonZeroPositiveF32::new(f32::NAN).is_none());
-        assert!(NonZeroPositiveF32::new(-1.0).is_none());
-        assert!(NonZeroPositiveF32::new(-0.0).is_none());
-        assert!(NonZeroPositiveF32::new(0.0).is_none());
-        assert!(NonZeroPositiveF32::new(f32::INFINITY).is_none());
-        assert!(NonZeroPositiveF32::new(f32::NEG_INFINITY).is_none());
+        assert!(NonZeroPositiveF32::new(f32::NAN).is_err());
+        assert!(NonZeroPositiveF32::new(-1.0).is_err());
+        assert!(NonZeroPositiveF32::new(-0.0).is_err());
+        assert!(NonZeroPositiveF32::new(0.0).is_err());
+        assert!(NonZeroPositiveF32::new(f32::INFINITY).is_err());
+        assert!(NonZeroPositiveF32::new(f32::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -574,19 +512,19 @@ mod test_nonzero_positivef64 {
 
     #[test]
     fn test_nonzero_positivef64_new_valid() {
-        assert!(NonZeroPositiveF64::new(1.0).is_some());
-        assert!(NonZeroPositiveF64::new(f64::MAX).is_some());
-        assert!(NonZeroPositiveF64::new(0.00001).is_some());
+        assert!(NonZeroPositiveF64::new(1.0).is_ok());
+        assert!(NonZeroPositiveF64::new(f64::MAX).is_ok());
+        assert!(NonZeroPositiveF64::new(0.00001).is_ok());
     }
 
     #[test]
     fn test_nonzero_positivef64_new_invalid() {
-        assert!(NonZeroPositiveF64::new(f64::NAN).is_none());
-        assert!(NonZeroPositiveF64::new(-1.0).is_none());
-        assert!(NonZeroPositiveF64::new(-0.0).is_none());
-        assert!(NonZeroPositiveF64::new(0.0).is_none());
-        assert!(NonZeroPositiveF64::new(f64::INFINITY).is_none());
-        assert!(NonZeroPositiveF64::new(f64::NEG_INFINITY).is_none());
+        assert!(NonZeroPositiveF64::new(f64::NAN).is_err());
+        assert!(NonZeroPositiveF64::new(-1.0).is_err());
+        assert!(NonZeroPositiveF64::new(-0.0).is_err());
+        assert!(NonZeroPositiveF64::new(0.0).is_err());
+        assert!(NonZeroPositiveF64::new(f64::INFINITY).is_err());
+        assert!(NonZeroPositiveF64::new(f64::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -653,53 +591,30 @@ mod test_nonzero_comparison_operations {
     }
 }
 
-/// Tests Optional types for `NonZero` types
-mod test_nonzero_optional_types {
-    use super::*;
-
-    #[test]
-    fn test_optnonzerof32() {
-        let some: OptNonZeroF32 = Some(NonZeroF32::new(1.0).unwrap());
-        let none: OptNonZeroF32 = None;
-
-        assert!(some.is_some());
-        assert!(none.is_none());
-    }
-
-    #[test]
-    fn test_optnonzero_positivef32() {
-        let some: OptNonZeroPositiveF32 = Some(NonZeroPositiveF32::new(1.0).unwrap());
-        let none: OptNonZeroPositiveF32 = None;
-
-        assert!(some.is_some());
-        assert!(none.is_none());
-    }
-}
-
 /// Tests constraint validation for `NonZero` types
 mod test_nonzero_constraints {
     use super::*;
 
     #[test]
     fn test_nonzerof32_constraint() {
-        assert!(NonZeroF32::new(1.0).is_some());
-        assert!(NonZeroF32::new(-1.0).is_some());
-        assert!(NonZeroF32::new(f32::NAN).is_none());
-        assert!(NonZeroF32::new(f32::INFINITY).is_none());
-        assert!(NonZeroF32::new(f32::NEG_INFINITY).is_none());
-        assert!(NonZeroF32::new(0.0).is_none());
-        assert!(NonZeroF32::new(-0.0).is_none());
+        assert!(NonZeroF32::new(1.0).is_ok());
+        assert!(NonZeroF32::new(-1.0).is_ok());
+        assert!(NonZeroF32::new(f32::NAN).is_err());
+        assert!(NonZeroF32::new(f32::INFINITY).is_err());
+        assert!(NonZeroF32::new(f32::NEG_INFINITY).is_err());
+        assert!(NonZeroF32::new(0.0).is_err());
+        assert!(NonZeroF32::new(-0.0).is_err());
     }
 
     #[test]
     fn test_nonzero_positivef32_constraint() {
-        assert!(NonZeroPositiveF32::new(1.0).is_some());
-        assert!(NonZeroPositiveF32::new(f32::MAX).is_some());
-        assert!(NonZeroPositiveF32::new(f32::NAN).is_none());
-        assert!(NonZeroPositiveF32::new(-1.0).is_none());
-        assert!(NonZeroPositiveF32::new(0.0).is_none());
-        assert!(NonZeroPositiveF32::new(-0.0).is_none());
-        assert!(NonZeroPositiveF32::new(f32::INFINITY).is_none());
+        assert!(NonZeroPositiveF32::new(1.0).is_ok());
+        assert!(NonZeroPositiveF32::new(f32::MAX).is_ok());
+        assert!(NonZeroPositiveF32::new(f32::NAN).is_err());
+        assert!(NonZeroPositiveF32::new(-1.0).is_err());
+        assert!(NonZeroPositiveF32::new(0.0).is_err());
+        assert!(NonZeroPositiveF32::new(-0.0).is_err());
+        assert!(NonZeroPositiveF32::new(f32::INFINITY).is_err());
     }
 }
 
@@ -709,21 +624,21 @@ mod test_negativef32 {
 
     #[test]
     fn test_negativef32_new_valid() {
-        assert!(NegativeF32::new(-1.0).is_some());
-        assert!(NegativeF32::new(f32::MIN).is_some());
+        assert!(NegativeF32::new(-1.0).is_ok());
+        assert!(NegativeF32::new(f32::MIN).is_ok());
         // Negative no longer allows infinity
-        assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
-        assert!(NegativeF32::new(-0.0).is_some());
+        assert!(NegativeF32::new(f32::NEG_INFINITY).is_err());
+        assert!(NegativeF32::new(-0.0).is_ok());
         // Negative now uses numeric comparison (<= 0.0), accepts +0.0
-        assert!(NegativeF32::new(0.0).is_some());
+        assert!(NegativeF32::new(0.0).is_ok());
     }
 
     #[test]
     fn test_negativef32_new_invalid() {
-        assert!(NegativeF32::new(f32::NAN).is_none());
-        assert!(NegativeF32::new(1.0).is_none());
-        assert!(NegativeF32::new(f32::INFINITY).is_none());
-        assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
+        assert!(NegativeF32::new(f32::NAN).is_err());
+        assert!(NegativeF32::new(1.0).is_err());
+        assert!(NegativeF32::new(f32::INFINITY).is_err());
+        assert!(NegativeF32::new(f32::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -739,21 +654,21 @@ mod test_negativef64 {
 
     #[test]
     fn test_negativef64_new_valid() {
-        assert!(NegativeF64::new(-1.0).is_some());
-        assert!(NegativeF64::new(f64::MIN).is_some());
+        assert!(NegativeF64::new(-1.0).is_ok());
+        assert!(NegativeF64::new(f64::MIN).is_ok());
         // Negative no longer allows infinity
-        assert!(NegativeF64::new(f64::NEG_INFINITY).is_none());
-        assert!(NegativeF64::new(-0.0).is_some());
+        assert!(NegativeF64::new(f64::NEG_INFINITY).is_err());
+        assert!(NegativeF64::new(-0.0).is_ok());
         // Negative now uses numeric comparison (<= 0.0), accepts +0.0
-        assert!(NegativeF64::new(0.0).is_some());
+        assert!(NegativeF64::new(0.0).is_ok());
     }
 
     #[test]
     fn test_negativef64_new_invalid() {
-        assert!(NegativeF64::new(f64::NAN).is_none());
-        assert!(NegativeF64::new(1.0).is_none());
-        assert!(NegativeF64::new(f64::INFINITY).is_none());
-        assert!(NegativeF64::new(f64::NEG_INFINITY).is_none());
+        assert!(NegativeF64::new(f64::NAN).is_err());
+        assert!(NegativeF64::new(1.0).is_err());
+        assert!(NegativeF64::new(f64::INFINITY).is_err());
+        assert!(NegativeF64::new(f64::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -769,19 +684,19 @@ mod test_nonzero_negativef32 {
 
     #[test]
     fn test_nonzero_negativef32_new_valid() {
-        assert!(NonZeroNegativeF32::new(-1.0).is_some());
-        assert!(NonZeroNegativeF32::new(f32::MIN).is_some());
-        assert!(NonZeroNegativeF32::new(-0.00001).is_some());
+        assert!(NonZeroNegativeF32::new(-1.0).is_ok());
+        assert!(NonZeroNegativeF32::new(f32::MIN).is_ok());
+        assert!(NonZeroNegativeF32::new(-0.00001).is_ok());
     }
 
     #[test]
     fn test_nonzero_negativef32_new_invalid() {
-        assert!(NonZeroNegativeF32::new(f32::NAN).is_none());
-        assert!(NonZeroNegativeF32::new(1.0).is_none());
-        assert!(NonZeroNegativeF32::new(0.0).is_none());
-        assert!(NonZeroNegativeF32::new(-0.0).is_none());
-        assert!(NonZeroNegativeF32::new(f32::INFINITY).is_none());
-        assert!(NonZeroNegativeF32::new(f32::NEG_INFINITY).is_none());
+        assert!(NonZeroNegativeF32::new(f32::NAN).is_err());
+        assert!(NonZeroNegativeF32::new(1.0).is_err());
+        assert!(NonZeroNegativeF32::new(0.0).is_err());
+        assert!(NonZeroNegativeF32::new(-0.0).is_err());
+        assert!(NonZeroNegativeF32::new(f32::INFINITY).is_err());
+        assert!(NonZeroNegativeF32::new(f32::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -797,19 +712,19 @@ mod test_nonzero_negativef64 {
 
     #[test]
     fn test_nonzero_negativef64_new_valid() {
-        assert!(NonZeroNegativeF64::new(-1.0).is_some());
-        assert!(NonZeroNegativeF64::new(f64::MIN).is_some());
-        assert!(NonZeroNegativeF64::new(-0.00001).is_some());
+        assert!(NonZeroNegativeF64::new(-1.0).is_ok());
+        assert!(NonZeroNegativeF64::new(f64::MIN).is_ok());
+        assert!(NonZeroNegativeF64::new(-0.00001).is_ok());
     }
 
     #[test]
     fn test_nonzero_negativef64_new_invalid() {
-        assert!(NonZeroNegativeF64::new(f64::NAN).is_none());
-        assert!(NonZeroNegativeF64::new(1.0).is_none());
-        assert!(NonZeroNegativeF64::new(0.0).is_none());
-        assert!(NonZeroNegativeF64::new(-0.0).is_none());
-        assert!(NonZeroNegativeF64::new(f64::INFINITY).is_none());
-        assert!(NonZeroNegativeF64::new(f64::NEG_INFINITY).is_none());
+        assert!(NonZeroNegativeF64::new(f64::NAN).is_err());
+        assert!(NonZeroNegativeF64::new(1.0).is_err());
+        assert!(NonZeroNegativeF64::new(0.0).is_err());
+        assert!(NonZeroNegativeF64::new(-0.0).is_err());
+        assert!(NonZeroNegativeF64::new(f64::INFINITY).is_err());
+        assert!(NonZeroNegativeF64::new(f64::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -961,57 +876,34 @@ mod test_negative_comparison_operations {
     }
 }
 
-/// Tests Optional types for Negative types
-mod test_negative_optional_types {
-    use super::*;
-
-    #[test]
-    fn test_optnegativef32() {
-        let some: OptNegativeF32 = Some(NegativeF32::new(-1.0).unwrap());
-        let none: OptNegativeF32 = None;
-
-        assert!(some.is_some());
-        assert!(none.is_none());
-    }
-
-    #[test]
-    fn test_optnonzero_negativef32() {
-        let some: OptNonZeroNegativeF32 = Some(NonZeroNegativeF32::new(-1.0).unwrap());
-        let none: OptNonZeroNegativeF32 = None;
-
-        assert!(some.is_some());
-        assert!(none.is_none());
-    }
-}
-
 /// Tests constraint validation for Negative types
 mod test_negative_constraints {
     use super::*;
 
     #[test]
     fn test_negativef32_constraint() {
-        assert!(NegativeF32::new(-1.0).is_some());
-        assert!(NegativeF32::new(f32::MIN).is_some());
+        assert!(NegativeF32::new(-1.0).is_ok());
+        assert!(NegativeF32::new(f32::MIN).is_ok());
         // Negative no longer allows infinity
-        assert!(NegativeF32::new(f32::NEG_INFINITY).is_none());
-        assert!(NegativeF32::new(-0.0).is_some());
+        assert!(NegativeF32::new(f32::NEG_INFINITY).is_err());
+        assert!(NegativeF32::new(-0.0).is_ok());
         // Negative now uses numeric comparison (<= 0.0), accepts +0.0
-        assert!(NegativeF32::new(0.0).is_some());
-        assert!(NegativeF32::new(f32::NAN).is_none());
-        assert!(NegativeF32::new(1.0).is_none());
-        assert!(NegativeF32::new(f32::INFINITY).is_none());
+        assert!(NegativeF32::new(0.0).is_ok());
+        assert!(NegativeF32::new(f32::NAN).is_err());
+        assert!(NegativeF32::new(1.0).is_err());
+        assert!(NegativeF32::new(f32::INFINITY).is_err());
     }
 
     #[test]
     fn test_nonzero_negativef32_constraint() {
-        assert!(NonZeroNegativeF32::new(-1.0).is_some());
-        assert!(NonZeroNegativeF32::new(f32::MIN).is_some());
-        assert!(NonZeroNegativeF32::new(f32::NAN).is_none());
-        assert!(NonZeroNegativeF32::new(1.0).is_none());
-        assert!(NonZeroNegativeF32::new(0.0).is_none());
-        assert!(NonZeroNegativeF32::new(-0.0).is_none());
-        assert!(NonZeroNegativeF32::new(f32::INFINITY).is_none());
-        assert!(NonZeroNegativeF32::new(f32::NEG_INFINITY).is_none());
+        assert!(NonZeroNegativeF32::new(-1.0).is_ok());
+        assert!(NonZeroNegativeF32::new(f32::MIN).is_ok());
+        assert!(NonZeroNegativeF32::new(f32::NAN).is_err());
+        assert!(NonZeroNegativeF32::new(1.0).is_err());
+        assert!(NonZeroNegativeF32::new(0.0).is_err());
+        assert!(NonZeroNegativeF32::new(-0.0).is_err());
+        assert!(NonZeroNegativeF32::new(f32::INFINITY).is_err());
+        assert!(NonZeroNegativeF32::new(f32::NEG_INFINITY).is_err());
     }
 }
 
@@ -1022,33 +914,33 @@ mod test_negative_normalizedf32 {
     #[test]
     fn test_negative_normalizedf32_new_valid() {
         // Boundary values
-        assert!(NegativeNormalizedF32::new(-1.0).is_some());
-        assert!(NegativeNormalizedF32::new(0.0).is_some());
-        assert!(NegativeNormalizedF32::new(-0.0).is_some());
+        assert!(NegativeNormalizedF32::new(-1.0).is_ok());
+        assert!(NegativeNormalizedF32::new(0.0).is_ok());
+        assert!(NegativeNormalizedF32::new(-0.0).is_ok());
 
         // Middle values
-        assert!(NegativeNormalizedF32::new(-0.5).is_some());
-        assert!(NegativeNormalizedF32::new(-0.75).is_some());
-        assert!(NegativeNormalizedF32::new(-0.001).is_some());
-        assert!(NegativeNormalizedF32::new(-0.999).is_some());
+        assert!(NegativeNormalizedF32::new(-0.5).is_ok());
+        assert!(NegativeNormalizedF32::new(-0.75).is_ok());
+        assert!(NegativeNormalizedF32::new(-0.001).is_ok());
+        assert!(NegativeNormalizedF32::new(-0.999).is_ok());
     }
 
     #[test]
     fn test_negative_normalizedf32_new_invalid() {
         // Below lower bound
-        assert!(NegativeNormalizedF32::new(-1.1).is_none());
-        assert!(NegativeNormalizedF32::new(-2.0).is_none());
-        assert!(NegativeNormalizedF32::new(f32::MIN).is_none());
+        assert!(NegativeNormalizedF32::new(-1.1).is_err());
+        assert!(NegativeNormalizedF32::new(-2.0).is_err());
+        assert!(NegativeNormalizedF32::new(f32::MIN).is_err());
 
         // Above upper bound
-        assert!(NegativeNormalizedF32::new(0.1).is_none());
-        assert!(NegativeNormalizedF32::new(1.0).is_none());
-        assert!(NegativeNormalizedF32::new(f32::MAX).is_none());
+        assert!(NegativeNormalizedF32::new(0.1).is_err());
+        assert!(NegativeNormalizedF32::new(1.0).is_err());
+        assert!(NegativeNormalizedF32::new(f32::MAX).is_err());
 
         // Special values
-        assert!(NegativeNormalizedF32::new(f32::NAN).is_none());
-        assert!(NegativeNormalizedF32::new(f32::INFINITY).is_none());
-        assert!(NegativeNormalizedF32::new(f32::NEG_INFINITY).is_none());
+        assert!(NegativeNormalizedF32::new(f32::NAN).is_err());
+        assert!(NegativeNormalizedF32::new(f32::INFINITY).is_err());
+        assert!(NegativeNormalizedF32::new(f32::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -1065,20 +957,20 @@ mod test_negative_normalizedf64 {
     #[test]
     fn test_negative_normalizedf64_new_valid() {
         // Boundary values
-        assert!(NegativeNormalizedF64::new(-1.0).is_some());
-        assert!(NegativeNormalizedF64::new(0.0).is_some());
+        assert!(NegativeNormalizedF64::new(-1.0).is_ok());
+        assert!(NegativeNormalizedF64::new(0.0).is_ok());
 
         // Middle values
-        assert!(NegativeNormalizedF64::new(-0.5).is_some());
-        assert!(NegativeNormalizedF64::new(-0.75).is_some());
+        assert!(NegativeNormalizedF64::new(-0.5).is_ok());
+        assert!(NegativeNormalizedF64::new(-0.75).is_ok());
     }
 
     #[test]
     fn test_negative_normalizedf64_new_invalid() {
-        assert!(NegativeNormalizedF64::new(-1.1).is_none());
-        assert!(NegativeNormalizedF64::new(0.1).is_none());
-        assert!(NegativeNormalizedF64::new(f64::NAN).is_none());
-        assert!(NegativeNormalizedF64::new(f64::INFINITY).is_none());
+        assert!(NegativeNormalizedF64::new(-1.1).is_err());
+        assert!(NegativeNormalizedF64::new(0.1).is_err());
+        assert!(NegativeNormalizedF64::new(f64::NAN).is_err());
+        assert!(NegativeNormalizedF64::new(f64::INFINITY).is_err());
     }
 
     #[test]
@@ -1094,20 +986,20 @@ mod test_symmetric_f32 {
 
     #[test]
     fn test_symmetric_f32_new_valid() {
-        assert!(SymmetricF32::new(1.0).is_some());
-        assert!(SymmetricF32::new(-1.0).is_some());
-        assert!(SymmetricF32::new(0.0).is_some());
-        assert!(SymmetricF32::new(0.75).is_some());
-        assert!(SymmetricF32::new(-0.5).is_some());
+        assert!(SymmetricF32::new(1.0).is_ok());
+        assert!(SymmetricF32::new(-1.0).is_ok());
+        assert!(SymmetricF32::new(0.0).is_ok());
+        assert!(SymmetricF32::new(0.75).is_ok());
+        assert!(SymmetricF32::new(-0.5).is_ok());
     }
 
     #[test]
     fn test_symmetric_f32_new_invalid() {
-        assert!(SymmetricF32::new(1.1).is_none());
-        assert!(SymmetricF32::new(-1.1).is_none());
-        assert!(SymmetricF32::new(f32::NAN).is_none());
-        assert!(SymmetricF32::new(f32::INFINITY).is_none());
-        assert!(SymmetricF32::new(f32::NEG_INFINITY).is_none());
+        assert!(SymmetricF32::new(1.1).is_err());
+        assert!(SymmetricF32::new(-1.1).is_err());
+        assert!(SymmetricF32::new(f32::NAN).is_err());
+        assert!(SymmetricF32::new(f32::INFINITY).is_err());
+        assert!(SymmetricF32::new(f32::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -1123,20 +1015,20 @@ mod test_symmetric_f64 {
 
     #[test]
     fn test_symmetric_f64_new_valid() {
-        assert!(SymmetricF64::new(1.0).is_some());
-        assert!(SymmetricF64::new(-1.0).is_some());
-        assert!(SymmetricF64::new(0.0).is_some());
-        assert!(SymmetricF64::new(0.5).is_some());
-        assert!(SymmetricF64::new(-0.25).is_some());
+        assert!(SymmetricF64::new(1.0).is_ok());
+        assert!(SymmetricF64::new(-1.0).is_ok());
+        assert!(SymmetricF64::new(0.0).is_ok());
+        assert!(SymmetricF64::new(0.5).is_ok());
+        assert!(SymmetricF64::new(-0.25).is_ok());
     }
 
     #[test]
     fn test_symmetric_f64_new_invalid() {
-        assert!(SymmetricF64::new(1.001).is_none());
-        assert!(SymmetricF64::new(-1.001).is_none());
-        assert!(SymmetricF64::new(f64::NAN).is_none());
-        assert!(SymmetricF64::new(f64::INFINITY).is_none());
-        assert!(SymmetricF64::new(f64::NEG_INFINITY).is_none());
+        assert!(SymmetricF64::new(1.001).is_err());
+        assert!(SymmetricF64::new(-1.001).is_err());
+        assert!(SymmetricF64::new(f64::NAN).is_err());
+        assert!(SymmetricF64::new(f64::INFINITY).is_err());
+        assert!(SymmetricF64::new(f64::NEG_INFINITY).is_err());
     }
 
     #[test]
@@ -1222,7 +1114,7 @@ mod test_symmetric_arithmetic_operations {
         // but Symmetric + Symmetric -> Option<Fin> now (not Option<Symmetric>)
         let result = a + b;
         // 0.8 + 0.5 = 1.3 which is valid Fin but outside Symmetric range
-        assert!(result.is_some());
+        assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), 1.3);
     }
 }
@@ -1342,25 +1234,90 @@ mod test_symmetric_new_const {
     }
 }
 
-/// Symmetric optional types tests
-mod test_symmetric_optional_types {
+/// Tests for `FloatError` variants
+mod test_float_error {
     use super::*;
 
     #[test]
-    fn test_opt_symmetric_f32() {
-        let opt_val: OptSymmetricF32 = Some(SymmetricF32::new(0.5).unwrap());
-        assert!(opt_val.is_some());
+    fn test_nan_error() {
+        let result = FinF32::new(f32::NAN);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::NaN)));
 
-        let opt_none: OptSymmetricF32 = None;
-        assert!(opt_none.is_none());
+        let result = FinF64::new(f64::NAN);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::NaN)));
     }
 
     #[test]
-    fn test_opt_symmetric_f64() {
-        let opt_val: OptSymmetricF64 = Some(SymmetricF64::new(-0.5).unwrap());
-        assert!(opt_val.is_some());
+    fn test_infinite_error() {
+        let result = FinF32::new(f32::INFINITY);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::PosInf)));
 
-        let opt_none: OptSymmetricF64 = None;
-        assert!(opt_none.is_none());
+        let result = FinF32::new(f32::NEG_INFINITY);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::NegInf)));
+    }
+
+    #[test]
+    fn test_positive_constraint_error() {
+        let result = PositiveF32::new(-1.0);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::OutOfRange)));
+    }
+
+    #[test]
+    fn test_nonzero_constraint_error() {
+        let result = NonZeroF32::new(0.0);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::OutOfRange)));
+    }
+
+    #[test]
+    fn test_negative_constraint_error() {
+        let result = NegativeF32::new(1.0);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::OutOfRange)));
+    }
+
+    #[test]
+    fn test_normalized_constraint_error() {
+        let result = SymmetricF32::new(2.0);
+        assert!(result.is_err());
+        assert!(matches!(result, Err(FloatError::OutOfRange)));
+    }
+
+    #[test]
+    fn test_error_display() {
+        let err = FloatError::NaN;
+        assert_eq!(format!("{}", err), "value is NaN (Not a Number)");
+
+        let err = FloatError::PosInf;
+        assert_eq!(format!("{}", err), "value is positive infinity");
+
+        let err = FloatError::NegInf;
+        assert_eq!(format!("{}", err), "value is negative infinity");
+
+        let err = FloatError::OutOfRange;
+        assert_eq!(
+            format!("{}", err),
+            "value is outside the valid range for this type"
+        );
+
+        let err = FloatError::DivisionByZero;
+        assert_eq!(format!("{}", err), "division by zero");
+    }
+
+    #[test]
+    fn test_error_debug() {
+        let err = FloatError::NaN;
+        assert!(format!("{:?}", err).contains("NaN"));
+
+        let err = FloatError::PosInf;
+        assert!(format!("{:?}", err).contains("PosInf"));
+
+        let err = FloatError::NegInf;
+        assert!(format!("{:?}", err).contains("NegInf"));
     }
 }

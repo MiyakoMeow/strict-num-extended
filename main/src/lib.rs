@@ -40,8 +40,8 @@
 //! assert_eq!(finite.get(), 3.14);
 //!
 //! // Rejected: NaN and infinity are not allowed
-//! assert!(FinF32::new(f32::NAN).is_none());
-//! assert!(FinF32::new(f32::INFINITY).is_none());
+//! assert!(FinF32::new(f32::NAN).is_err());
+//! assert!(FinF32::new(f32::INFINITY).is_err());
 //!
 //! // Positive numbers (>= 0)
 //! let positive = PositiveF32::new(42.0).unwrap();
@@ -89,52 +89,53 @@
 //! assert_ne!(a, b);
 //! ```
 //!
-//! # Option Types
+//! # Error Handling
 //!
-//! For handling potentially failing operations, `Option` versions of all types are provided:
+//! All floating-point conversions return `Result<T, FloatError>` for proper error handling:
 //!
 //! ```
-//! use strict_num_extended::{FinF32, OptFinF32, OptPositiveF32};
+//! use strict_num_extended::{FinF32, NonZeroF32};
 //!
-//! let a: OptFinF32 = Some(FinF32::new(1.0).unwrap());
-//! let b: OptFinF32 = None;
-//! assert!(a.is_some());
-//! assert!(b.is_none());
+//! let a: Result<FinF32, _> = FinF32::new(1.0);
+//! let b: Result<NonZeroF32, _> = NonZeroF32::new(0.0);
+//! assert!(a.is_ok());
+//! assert!(b.is_err());
 //! ```
 //!
 //! ## Practical Example: Safe Division
 //!
-//! Option types are particularly useful for functions that may fail:
+//! Result types are particularly useful for functions that may fail:
 //!
 //! ```
-//! use strict_num_extended::{OptFinF32, OptNonZeroF32, FinF32, NonZeroF32};
+//! use strict_num_extended::{FinF32, NonZeroF32, FloatError};
 //!
-//! fn safe_divide(a: OptFinF32, b: OptNonZeroF32) -> OptFinF32 {
+//! fn safe_divide(a: Result<FinF32, FloatError>, b: Result<NonZeroF32, FloatError>) -> Result<FinF32, FloatError> {
 //!     match (a, b) {
-//!         (Some(num), Some(denom)) => {
-//!             // Convert to f32, divide, then wrap back in FinF32
+//!         (Ok(num), Ok(denom)) => {
+//!             // Get the values, divide, then wrap back in FinF32
 //!             FinF32::new(num.get() / denom.get())
 //!         },
-//!         _ => None,
+//!         (Err(e), _) => Err(e),
+//!         (Ok(_), Err(e)) => Err(e),
 //!     }
 //! }
 //!
 //! let result = safe_divide(
-//!     Some(FinF32::new(10.0).unwrap()),
-//!     Some(NonZeroF32::new(2.0).unwrap())
+//!     FinF32::new(10.0),
+//!     NonZeroF32::new(2.0)
 //! );
-//! assert!(result.is_some());
+//! assert!(result.is_ok());
 //! assert_eq!(result.unwrap().get(), 5.0);
 //!
-//! // Division by zero is prevented - NonZeroF32 rejects 0.0
-//! let zero_denom: OptNonZeroF32 = NonZeroF32::new(0.0);
-//! assert!(zero_denom.is_none());
+//! // Division by zero is prevented - NonZeroF32 returns error for 0.0
+//! let zero_denom: Result<NonZeroF32, FloatError> = NonZeroF32::new(0.0);
+//! assert!(zero_denom.is_err());
 //!
 //! let invalid = safe_divide(
-//!     Some(FinF32::new(10.0).unwrap()),
+//!     FinF32::new(10.0),
 //!     zero_denom
 //! );
-//! assert!(invalid.is_none());
+//! assert!(invalid.is_err());
 //! ```
 //!
 //! # Compile-Time Constants
