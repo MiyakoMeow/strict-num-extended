@@ -561,6 +561,46 @@ const fn max_abs_value(bounds: Bounds) -> f64 {
     lower_abs.max(upper_abs)
 }
 
+/// Compute multiplication result bounds based on operand signs and bounds.
+fn compute_mul_result_bounds(
+    lhs: &ConstraintDef,
+    rhs: &ConstraintDef,
+) -> (Option<f64>, Option<f64>) {
+    let max_abs_lhs = max_abs_value(lhs.bounds);
+    let max_abs_rhs = max_abs_value(rhs.bounds);
+    let max_abs_result = max_abs_lhs * max_abs_rhs;
+
+    match (lhs.sign, rhs.sign) {
+        // Both positive or both negative → positive result [0, max]
+        (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
+            (Some(0.0), Some(max_abs_result))
+        }
+        // Different signs → negative result [-max, 0]
+        (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
+            (Some(-max_abs_result), Some(0.0))
+        }
+        // Any sign → symmetric bounds [-max, max]
+        _ => (Some(-max_abs_result), Some(max_abs_result)),
+    }
+}
+
+/// Filter constraints by sign and `excludes_zero` properties.
+fn filter_constraints_by_properties(
+    constraints: &[ConstraintDef],
+    sign: Sign,
+    excludes_zero: bool,
+) -> Vec<&ConstraintDef> {
+    constraints
+        .iter()
+        .filter(|c| c.sign == sign && c.excludes_zero == excludes_zero)
+        .collect()
+}
+
+/// Filter constraints by sign only.
+fn filter_constraints_by_sign(constraints: &[ConstraintDef], sign: Sign) -> Vec<&ConstraintDef> {
+    constraints.iter().filter(|c| c.sign == sign).collect()
+}
+
 /// Compute output properties for multiplication.
 fn compute_mul_properties(lhs: &ConstraintDef, rhs: &ConstraintDef) -> (Sign, bool, bool) {
     // Safe when both operands are bounded and all boundary operation results are finite
@@ -626,14 +666,8 @@ fn find_matching_constraint(
         && lhs.bounds.lower == rhs.bounds.lower
         && lhs.bounds.upper == rhs.bounds.upper;
 
-    // Collect all matching constraints
-    let mut matches = Vec::new();
-
-    for c in constraints {
-        if c.sign == sign && c.excludes_zero == excludes_zero {
-            matches.push(c);
-        }
-    }
+    // Collect all matching constraints (sign + excludes_zero)
+    let matches = filter_constraints_by_properties(constraints, sign, excludes_zero);
 
     // If we found exact matches
     if !matches.is_empty() {
@@ -642,31 +676,7 @@ fn find_matching_constraint(
             // Check if both operands are bounded (even if bounds are different)
             if lhs.bounds.is_bounded() && rhs.bounds.is_bounded() {
                 // Compute result bounds for bounded multiplication
-                // |a| * |b| gives the max absolute value
-                let max_abs_lhs = max_abs_value(lhs.bounds);
-                let max_abs_rhs = max_abs_value(rhs.bounds);
-                let max_abs_result = max_abs_lhs * max_abs_rhs;
-
-                // Determine sign of result
-                let result_lower;
-                let result_upper;
-                match (lhs.sign, rhs.sign) {
-                    // Both positive or both negative → positive result [0, max]
-                    (Sign::Positive, Sign::Positive) | (Sign::Negative, Sign::Negative) => {
-                        result_lower = Some(0.0);
-                        result_upper = Some(max_abs_result);
-                    }
-                    // Different signs → negative result [-max, 0]
-                    (Sign::Positive, Sign::Negative) | (Sign::Negative, Sign::Positive) => {
-                        result_lower = Some(-max_abs_result);
-                        result_upper = Some(0.0);
-                    }
-                    // Any sign → symmetric bounds [-max, max]
-                    _ => {
-                        result_lower = Some(-max_abs_result);
-                        result_upper = Some(max_abs_result);
-                    }
-                }
+                let (result_lower, result_upper) = compute_mul_result_bounds(lhs, rhs);
 
                 // First, try to find a bounded type with the computed result bounds
                 for c in &matches {
@@ -703,13 +713,7 @@ fn find_matching_constraint(
     }
 
     // No exact match, try relaxed match on sign only
-    let mut sign_matches = Vec::new();
-
-    for c in constraints {
-        if c.sign == sign {
-            sign_matches.push(c);
-        }
-    }
+    let sign_matches = filter_constraints_by_sign(constraints, sign);
 
     if !sign_matches.is_empty() {
         // When operands have same bounds, prefer bounded types that match those bounds
