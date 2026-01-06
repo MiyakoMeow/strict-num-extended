@@ -6,15 +6,20 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_macro_input;
 
+mod arithmetic;
+mod comparison;
 mod config;
+mod finite_float;
 mod generator;
+mod traits;
+mod types;
 
+use arithmetic::{generate_arithmetic_impls, generate_neg_impls, generate_option_arithmetic_impls};
+use comparison::generate_comparison_traits;
 use config::TypeConfig;
-use generator::{
-    generate_arithmetic_impls, generate_comparison_traits, generate_finite_float_struct,
-    generate_float_base_trait, generate_neg_impls, generate_new_const_methods,
-    generate_option_arithmetic_impls, generate_type_aliases,
-};
+use finite_float::generate_finite_float_struct;
+use traits::generate_float_base_trait;
+use types::{generate_new_const_methods, generate_type_aliases};
 
 /// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
