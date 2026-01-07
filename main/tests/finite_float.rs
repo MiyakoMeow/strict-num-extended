@@ -271,6 +271,7 @@ mod test_comparison_operations {
 /// Tests type conversions
 mod test_conversions {
     use super::*;
+    use std::convert::TryFrom;
 
     #[test]
     fn test_try_from_f32_to_f64() {

@@ -100,31 +100,6 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             pub const fn get(&self) -> T {
                 self.value
             }
-
-            /// Attempts to convert from another type
-            ///
-            /// # Example
-            ///
-            /// ```
-            /// use strict_num_extended::{FinF32, FloatError};
-            ///
-            /// let value = 3.14f32;
-            /// let finite_32 = FinF32::try_from(value)?;
-            /// assert!(finite_32.get() == 3.14f32);
-            /// # Ok::<(), FloatError>(())
-            /// ```
-            ///
-            /// # Errors
-            ///
-            /// Returns `Err(FloatError)` if the converted value does not satisfy the constraint.
-            #[must_use = "Return value may contain an error and should not be ignored"]
-            pub fn try_from<U>(value: U) -> Result<Self, FloatError>
-            where
-                U: Copy + Into<f64>,
-                T: From<U>,
-            {
-                Self::new(T::from(value))
-            }
         }
     }
 }
