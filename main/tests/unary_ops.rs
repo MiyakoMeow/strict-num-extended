@@ -478,3 +478,167 @@ fn test_signum_type_precision() {
     assert_eq!(sign_neg.get(), -1.0);
     assert_eq!(sign_fin.get(), 1.0);
 }
+
+// ============================================================================
+// sin() Operation Tests
+// ============================================================================
+
+#[test]
+fn test_sin_basic() {
+    let angle = FinF64::new(std::f64::consts::PI / 2.0).unwrap();
+    let result: SymmetricF64 = angle.sin();
+    assert_eq!(result.get(), 1.0);
+}
+
+#[test]
+fn test_sin_zero() {
+    let zero = FinF64::new(0.0).unwrap();
+    let result: SymmetricF64 = zero.sin();
+    assert_eq!(result.get(), 0.0);
+}
+
+#[test]
+fn test_sin_pi() {
+    let pi = FinF64::new(std::f64::consts::PI).unwrap();
+    let result: SymmetricF64 = pi.sin();
+    assert!((result.get() - 0.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn test_sin_various_types() {
+    let fin = FinF64::new(std::f64::consts::PI / 6.0).unwrap();
+    let pos = PositiveF64::new_const(0.0);
+    let sym = SymmetricF64::new_const(0.5);
+
+    let sin_fin: SymmetricF64 = fin.sin();
+    let sin_pos: SymmetricF64 = pos.sin();
+    let sin_sym: SymmetricF64 = sym.sin();
+
+    assert!((sin_fin.get() - 0.5).abs() < f64::EPSILON);
+    assert_eq!(sin_pos.get(), 0.0);
+    assert!((sin_sym.get() - 0.479425538604203).abs() < f64::EPSILON);
+}
+
+// ============================================================================
+// cos() Operation Tests
+// ============================================================================
+
+#[test]
+fn test_cos_basic() {
+    let angle = FinF64::new(0.0).unwrap();
+    let result: SymmetricF64 = angle.cos();
+    assert_eq!(result.get(), 1.0);
+}
+
+#[test]
+fn test_cos_pi_half() {
+    let pi_half = FinF64::new(std::f64::consts::PI / 2.0).unwrap();
+    let result: SymmetricF64 = pi_half.cos();
+    assert!((result.get() - 0.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn test_cos_pi() {
+    let pi = FinF64::new(std::f64::consts::PI).unwrap();
+    let result: SymmetricF64 = pi.cos();
+    assert!((result.get() - (-1.0)).abs() < f64::EPSILON);
+}
+
+#[test]
+fn test_cos_various_types() {
+    let fin = FinF64::new(std::f64::consts::PI / 3.0).unwrap();
+    let pos = PositiveF64::new_const(0.0);
+
+    let cos_fin: SymmetricF64 = fin.cos();
+    let cos_pos: SymmetricF64 = pos.cos();
+
+    assert!((cos_fin.get() - 0.5).abs() < f64::EPSILON);
+    assert_eq!(cos_pos.get(), 1.0);
+}
+
+// ============================================================================
+// tan() Operation Tests
+// ============================================================================
+
+#[test]
+fn test_tan_basic() {
+    let angle = FinF64::new(0.0).unwrap();
+    let result: Result<FinF64, FloatError> = angle.tan();
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().get(), 0.0);
+}
+
+#[test]
+fn test_tan_pi_four() {
+    let pi_over_4 = FinF64::new(std::f64::consts::PI / 4.0).unwrap();
+    let result: Result<FinF64, FloatError> = pi_over_4.tan();
+    assert!(result.is_ok());
+    assert!((result.unwrap().get() - 1.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn test_tan_various_types() {
+    let fin = FinF64::new(std::f64::consts::PI / 6.0).unwrap();
+    let pos = PositiveF64::new_const(0.0);
+
+    let tan_fin: Result<FinF64, FloatError> = fin.tan();
+    let tan_pos: Result<FinF64, FloatError> = pos.tan();
+
+    assert!(tan_fin.is_ok());
+    assert!(tan_pos.is_ok());
+
+    // tan(π/6) = 1/√3 ≈ 0.5773502691896257
+    let expected = 0.5773502691896257_f64;
+    assert!((tan_fin.unwrap().get() - expected).abs() < f64::EPSILON);
+    assert_eq!(tan_pos.unwrap().get(), 0.0);
+}
+
+#[test]
+fn test_tan_singular_point() {
+    // tan 在奇异点附近会产生非常大的值
+    let close_to_singular = FinF64::new((std::f64::consts::PI / 2.0) - 0.0001).unwrap();
+    let result: Result<FinF64, FloatError> = close_to_singular.tan();
+    // 非常接近奇异点，应该返回一个很大的有限值
+    assert!(result.is_ok());
+    assert!(result.unwrap().get().abs() > 1000.0);
+
+    // 使用一个值使得 tan 结果非常大但不是无穷大
+    let very_close = FinF64::new((std::f64::consts::PI / 2.0) - 1e-10).unwrap();
+    let result2: Result<FinF64, FloatError> = very_close.tan();
+    // 这可能产生无穷大，也可能产生非常大的有限值
+    // 我们只检查它不会 panic
+    let _ = result2;
+}
+
+// ============================================================================
+// Combined Tests
+// ============================================================================
+
+#[test]
+fn test_trig_identities() {
+    let angle = FinF64::new(std::f64::consts::PI / 4.0).unwrap();
+
+    let sin_val: SymmetricF64 = angle.sin();
+    let cos_val: SymmetricF64 = angle.cos();
+
+    // sin²(x) + cos²(x) = 1
+    let sum_of_squares = sin_val.get() * sin_val.get() + cos_val.get() * cos_val.get();
+    assert!((sum_of_squares - 1.0).abs() < f64::EPSILON * 10.0);
+}
+
+#[test]
+fn test_trig_with_negation() {
+    let angle = FinF64::new(std::f64::consts::PI / 6.0).unwrap();
+
+    let sin_pos: SymmetricF64 = angle.sin();
+    let sin_neg: SymmetricF64 = (-angle).sin();
+
+    // sin(-x) = -sin(x)
+    assert!((sin_pos.get() + sin_neg.get()).abs() < f64::EPSILON);
+
+    let cos_pos: SymmetricF64 = angle.cos();
+    let cos_neg: SymmetricF64 = (-angle).cos();
+
+    // cos(-x) = cos(x)
+    assert!((cos_pos.get() - cos_neg.get()).abs() < f64::EPSILON);
+}

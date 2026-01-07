@@ -219,7 +219,7 @@ mod test_division_by_zero_errors {
         let zero = PositiveF64::new(0.0).unwrap();
 
         let result = a / zero;
-        assert!(matches!(result, Err(FloatError::DivisionByZero)));
+        assert!(matches!(result, Err(FloatError::NaN)));
     }
 
     #[test]
@@ -229,7 +229,7 @@ mod test_division_by_zero_errors {
         let zero_neg = unsafe { PositiveF64::new_unchecked(-0.0) };
 
         let result = a / zero_neg;
-        assert!(matches!(result, Err(FloatError::DivisionByZero)));
+        assert!(matches!(result, Err(FloatError::NaN)));
     }
 
     #[test]
@@ -237,15 +237,12 @@ mod test_division_by_zero_errors {
         // FinF64
         let fin_a = FinF64::new(10.0).unwrap();
         let fin_zero = FinF64::new(0.0).unwrap();
-        assert!(matches!(fin_a / fin_zero, Err(FloatError::DivisionByZero)));
+        assert!(matches!(fin_a / fin_zero, Err(FloatError::NaN)));
 
         // NormalizedF64
         let norm_a = NormalizedF64::new(0.5).unwrap();
         let norm_zero = NormalizedF64::new(0.0).unwrap();
-        assert!(matches!(
-            norm_a / norm_zero,
-            Err(FloatError::DivisionByZero)
-        ));
+        assert!(matches!(norm_a / norm_zero, Err(FloatError::NaN)));
     }
 
     #[test]
@@ -489,10 +486,6 @@ mod test_error_messages {
             "value is outside the valid range for this type"
         );
         assert_eq!(
-            format!("{}", FloatError::DivisionByZero),
-            "division by zero"
-        );
-        assert_eq!(
             format!("{}", FloatError::NoneOperand),
             "right-hand side operand is None in Option arithmetic"
         );
@@ -504,7 +497,6 @@ mod test_error_messages {
         assert!(format!("{:?}", FloatError::PosInf).contains("PosInf"));
         assert!(format!("{:?}", FloatError::NegInf).contains("NegInf"));
         assert!(format!("{:?}", FloatError::OutOfRange).contains("OutOfRange"));
-        assert!(format!("{:?}", FloatError::DivisionByZero).contains("DivisionByZero"));
         assert!(format!("{:?}", FloatError::NoneOperand).contains("NoneOperand"));
     }
 }

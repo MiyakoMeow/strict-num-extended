@@ -1306,8 +1306,11 @@ mod test_float_error {
             "value is outside the valid range for this type"
         );
 
-        let err = FloatError::DivisionByZero;
-        assert_eq!(format!("{}", err), "division by zero");
+        let err = FloatError::NoneOperand;
+        assert_eq!(
+            format!("{}", err),
+            "right-hand side operand is None in Option arithmetic"
+        );
     }
 
     #[test]

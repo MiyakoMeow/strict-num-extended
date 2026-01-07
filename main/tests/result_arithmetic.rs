@@ -178,7 +178,7 @@ mod test_result_division_edge_cases {
         let b: PositiveF64 = PositiveF64::new_const(0.0);
         let result: Result<PositiveF64, FloatError> = a / b;
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
+        assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
@@ -187,7 +187,7 @@ mod test_result_division_edge_cases {
         const B: PositiveF64 = PositiveF64::new_const(0.0);
         let result: Result<PositiveF64, FloatError> = a / B;
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
+        assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
@@ -196,7 +196,7 @@ mod test_result_division_edge_cases {
         let b: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(0.0));
         let result: Result<PositiveF64, FloatError> = A / b;
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
+        assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
