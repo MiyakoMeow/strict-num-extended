@@ -12,6 +12,7 @@ mod config;
 mod finite_float;
 mod float_conversion;
 mod generator;
+mod result_arithmetic;
 mod types;
 
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls, generate_option_arithmetic_impls};
@@ -19,6 +20,7 @@ use comparison::generate_comparison_traits;
 use config::TypeConfig;
 use finite_float::generate_finite_float_struct;
 use float_conversion::{generate_as_f64_methods, generate_try_into_f32_methods};
+use result_arithmetic::generate_result_arithmetic_impls;
 use types::{generate_new_const_methods, generate_type_aliases};
 
 /// Generates common definitions (Bounded struct and constants)
@@ -109,8 +111,14 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     // Generate arithmetic operations for Option types
     all_code.push(generate_option_arithmetic_impls(&config));
 
+    // Generate arithmetic operations for Result types
+    all_code.push(generate_result_arithmetic_impls(&config));
+
     // Generate negation operations
     all_code.push(generate_neg_impls(&config));
+
+    // Generate negation operations for Result types
+    // all_code.push(generate_result_neg_impls(&config));
 
     // Generate F32/F64 conversion methods (try_into_f32 for F64 types, as_f64 for F32 types)
     all_code.push(generate_try_into_f32_methods(&config));
