@@ -98,7 +98,10 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
 
                         fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
                             let result = self.get() #op_symbol rhs.get();
-                            // SAFETY: The operation is proven safe by type constraints
+                            // SAFETY: The arithmetic configuration has proven at compile time that
+                            // for this specific combination of lhs_type and rhs_type, the result
+                            // is guaranteed to satisfy output_type's constraints. The validation
+                            // would be redundant since the type system already guarantees safety.
                             unsafe { #output_alias::new_unchecked(result) }
                         }
                     }
