@@ -10,8 +10,16 @@ keywords.workspace = true
 categories.workspace = true
 readme.workspace = true
 
+[features]
+default = []
+serde = ["dep:serde", "strict-num-extended-macros/serde"]
+
 [dependencies]
 strict-num-extended-macros = { workspace = true }
+serde = { workspace = true, optional = true, features = ["derive"] }
+
+[dev-dependencies]
+serde_json = { workspace = true }
 
 [lints]
 workspace = true

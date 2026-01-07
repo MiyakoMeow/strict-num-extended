@@ -31,7 +31,11 @@ jobs:
         run: cargo build --verbose
       - name: Format Check
         run: cargo fmt --check
-      - name: "Clippy Check"
+      - name: Clippy Check
         run: cargo clippy --all-targets --verbose -- -D warnings
+      - name: Clippy Check (--all-features)
+        run: cargo clippy --all-targets --all-features --verbose -- -D warnings
       - name: Test crate
-        run: cargo test --verbose --all-features
+        run: cargo test --all-targets --verbose
+      - name: Test crate (--all-features)
+        run: cargo test --all-targets --all-features --verbose

@@ -58,6 +58,7 @@ fn generate_common_definitions() -> proc_macro2::TokenStream {
 
         /// Boundary marker type (using i64 to encode f64 boundaries)
         #[derive(Debug, Clone, Copy)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct Bounded<const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool = false>;
     }
 }
@@ -67,6 +68,7 @@ fn generate_error_type() -> proc_macro2::TokenStream {
     quote! {
         /// Errors that can occur when creating or operating on finite floats
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub enum FloatError {
             /// Value is NaN (Not a Number)
             NaN,

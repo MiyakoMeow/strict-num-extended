@@ -12,6 +12,29 @@
 //! - `NegativeNormalizedF32` and `NegativeNormalizedF64`: Negative normalized floating-point numbers (-1.0 <= value <= 0.0, finite)
 //! - `SymmetricF32` and `SymmetricF64`: Symmetric floating-point numbers (-1.0 <= value <= 1.0, finite)
 //!
+//! ## Feature Flags
+//!
+//! ### `serde` (optional)
+//!
+//! When the `serde` feature is enabled, all types implement `serde::Serialize` and
+//! `serde::Deserialize` traits:
+//!
+//! ```toml
+//! [dependencies]
+//! strict-num-extended = { version = "0.3", features = ["serde"] }
+//! ```
+//!
+//! Example usage with serde:
+//!
+//! ```ignore
+//! use strict_num_extended::FinF32;
+//! use serde_json;
+//!
+//! let value = FinF32::new(3.14).unwrap();
+//! let json = serde_json::to_string(&value).unwrap();
+//! let deserialized: FinF32 = serde_json::from_str(&json).unwrap();
+//! ```
+//!
 //! ## Type Safety
 //!
 //! This library provides type safety through both compile-time and runtime guarantees:

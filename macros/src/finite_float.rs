@@ -6,6 +6,7 @@ use quote::quote;
 pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
     quote! {
         /// Generic finite floating-point structure
+        #[repr(transparent)]
         #[derive(Clone, Copy)]
         pub struct FiniteFloat<T, B> {
             value: T,
@@ -99,6 +100,47 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             #[must_use]
             pub const fn get(&self) -> T {
                 self.value
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de, T, const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool>
+            serde::Deserialize<'de> for FiniteFloat<T, Bounded<MIN_BITS, MAX_BITS, EXCLUDE_ZERO>>
+        where
+            T: Copy + Into<f64> + serde::Deserialize<'de>,
+        {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                // First deserialize the raw value
+                let value = T::deserialize(deserializer)?;
+
+                // Then validate using the new() method
+                Self::new(value).map_err(|e| {
+                    use serde::de::Error;
+                    match e {
+                        FloatError::NaN => D::Error::custom("value is NaN"),
+                        FloatError::PosInf => D::Error::custom("value is positive infinity"),
+                        FloatError::NegInf => D::Error::custom("value is negative infinity"),
+                        FloatError::OutOfRange => D::Error::custom("value is out of range"),
+                        FloatError::NoneOperand => D::Error::custom("none operand"),
+                    }
+                })
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<T, const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool> serde::Serialize
+            for FiniteFloat<T, Bounded<MIN_BITS, MAX_BITS, EXCLUDE_ZERO>>
+        where
+            T: serde::Serialize,
+        {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                self.value.serialize(serializer)
             }
         }
     }

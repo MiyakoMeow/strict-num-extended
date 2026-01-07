@@ -13,6 +13,10 @@ readme = "README.md"
 [lib]
 proc-macro = true
 
+[features]
+default = []
+serde = []
+
 [dependencies]
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
