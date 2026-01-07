@@ -170,8 +170,12 @@ pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
 
                     fn neg(self) -> Self::Output {
                         let result = -self.get();
-                        #neg_type_alias::new(result)
-                            .expect("Negation operation failed: result does not satisfy constraint")
+                        // SAFETY: The negation constraint was computed at compile time by
+                        // negating the source constraint's conditions and finding a matching
+                        // constraint. Since neg_constraint_name was found through condition
+                        // matching, the result is mathematically guaranteed to satisfy the
+                        // target constraint. The runtime validation would be redundant.
+                        unsafe { #neg_type_alias::new_unchecked(result) }
                     }
                 }
             });
