@@ -3,13 +3,32 @@
 //! Contains helper functions and re-exports all code generation functionality.
 
 use proc_macro2::{Ident, TokenStream as TokenStream2};
-use quote::quote;
+use quote::{format_ident, quote};
 
 use crate::config::{ConstraintDef, TypeConfig};
 
 // ============================================================================
 // Helper functions (shared by multiple modules)
 // ============================================================================
+
+/// 根据类型名和浮点类型生成类型别名标识符
+///
+/// # 示例
+///
+/// - `make_type_alias("Positive", "f32")` → `PositiveF32`
+/// - `make_type_alias("Negative", "f64")` → `NegativeF64`
+///
+/// # 参数
+///
+/// * `type_name` - 类型名称（如 `Positive`, `Negative`）
+/// * `float_type` - 浮点类型（如 `f32`, `f64`）
+///
+/// # 返回值
+///
+/// 组合后的类型别名标识符
+pub fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
+    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
+}
 
 /// Iterate over all constraint types and float types, generating code for each combination.
 ///

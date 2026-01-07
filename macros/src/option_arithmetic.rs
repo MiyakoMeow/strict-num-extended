@@ -72,14 +72,10 @@
 //! ```
 
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
-use quote::{format_ident, quote};
+use quote::quote;
 
 use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
-
-/// Generates type alias identifier
-fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
-    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
-}
+use crate::generator::make_type_alias;
 
 /// Generates Option arithmetic operation implementations for given operators
 fn generate_option_arithmetic_for_ops<F>(
