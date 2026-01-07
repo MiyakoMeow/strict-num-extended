@@ -17,6 +17,7 @@ mod generator;
 mod option_arithmetic;
 mod result_arithmetic;
 mod types;
+mod unary_ops;
 
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls};
 use comparison::generate_comparison_traits;
@@ -27,6 +28,7 @@ use float_conversion::{generate_as_f64_methods, generate_try_into_f32_methods};
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
 use types::{generate_new_const_methods, generate_type_aliases};
+use unary_ops::{generate_abs_impls, generate_signum_impls};
 
 /// Generates common definitions (Bounded struct and constants)
 fn generate_common_definitions() -> proc_macro2::TokenStream {
@@ -124,6 +126,10 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
 
     // Generate negation operations
     all_code.push(generate_neg_impls(&config));
+
+    // Generate unary operations (abs, signum)
+    all_code.push(generate_abs_impls(&config));
+    all_code.push(generate_signum_impls(&config));
 
     // Generate negation operations for Result types
     // Note: Cannot implement Neg for Result<T, E> due to orphan rules
