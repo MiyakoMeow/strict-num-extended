@@ -249,6 +249,107 @@
 //! assert_eq!(product.get(), 200.0);
 //! ```
 //!
+//! ### Type Inference and Conversion Rules
+//!
+//! Arithmetic operations automatically infer the appropriate result type based on the operands'
+//! properties. The type system guarantees correctness through compile-time and runtime validation.
+//!
+//! #### Operation Safety Classification
+//!
+//! Operations are classified as either **safe** or **fallible**:
+//!
+//! - **Safe Operations**: Always produce valid results within the inferred type's constraints.
+//!   Return the result directly without `Result` wrapping.
+//! - **Fallible Operations**: May produce invalid results (overflow, division by zero, etc.).
+//!   Return `Result<T, FloatError>` for explicit error handling.
+//!
+//! #### Type Inference Rules
+//!
+//! The result type is determined by analyzing:
+//!
+//! 1. **Sign Properties** (Positive, Negative, Any)
+//! 2. **Bound Properties** (bounded/unbounded ranges)
+//! 3. **Zero Exclusion** (whether the type excludes zero)
+//!
+//! **Addition Rules**:
+//!
+//! - `Positive + Positive → Positive` (fallible, may overflow)
+//! - `Negative + Negative → Negative` (fallible, may overflow)
+//! - `Positive + Negative → Fin` (safe, result has no sign constraint)
+//! - `NonZero + NonZero (same sign) → NonZero` (fallible, may overflow)
+//! - `NonZero + NonZero (different signs) → Fin` (safe)
+//!
+//! **Subtraction Rules**:
+//!
+//! - `Positive - Positive → Fin` (safe, result may have different sign)
+//! - `Negative - Negative → Fin` (safe, result may have different sign)
+//! - `Positive - Negative → Positive` (fallible, may overflow)
+//! - `Negative - Positive → Negative` (fallible, may overflow)
+//! - `NonZero - NonZero → Fin` (fallible if same sign, safe if different signs)
+//!
+//! **Multiplication Rules**:
+//!
+//! - `Positive × Positive → Positive` (fallible)
+//! - `Negative × Negative → Positive` (fallible)
+//! - `Positive × Negative → Negative` (fallible)
+//! - `Bounded × Bounded → Bounded` (safe, result bounds computed from operand bounds)
+//! - `NonZero × NonZero → NonZero` (fallible)
+//!
+//! **Division Rules**:
+//!
+//! - `Positive ÷ Positive → Positive` (fallible, division by zero detection)
+//! - `Negative ÷ Negative → Positive` (fallible, division by zero detection)
+//! - `Positive ÷ Negative → Negative` (fallible, division by zero detection)
+//! - `Bounded (in [-1,1]) ÷ NonZero → Bounded` (safe, when dividend is within [-1,1])
+//! - `NonZero ÷ NonZero → NonZero` (fallible, division by zero detection)
+//!
+//! #### Examples
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Safe operation: returns direct value
+//! let a = PositiveF64::new(5.0).unwrap();
+//! let b = NegativeF64::new(-3.0).unwrap();
+//! let result: FinF64 = a + b;  // Returns FinF64 directly
+//! assert_eq!(result.get(), 2.0);
+//!
+//! // Fallible operation: returns Result
+//! let x = PositiveF64::new(10.0).unwrap();
+//! let y = PositiveF64::new(5.0).unwrap();
+//! let result: Result<PositiveF64, FloatError> = x + y;  // May overflow
+//! assert!(result.is_ok());
+//!
+//! // Safe bounded multiplication
+//! let norm1 = NormalizedF64::new(0.5).unwrap();
+//! let norm2 = NormalizedF64::new(0.4).unwrap();
+//! let product: NormalizedF64 = norm1 * norm2;  // Always in [0,1]
+//! assert_eq!(product.get(), 0.2);
+//!
+//! // Error propagation in Result operations
+//! let valid: Result<PositiveF64, FloatError> = Ok(PositiveF64::new(10.0).unwrap());
+//! const B: NegativeF64 = NegativeF64::new_const(-3.0);
+//! let result: Result<FinF64, FloatError> = valid + B;  // Result + Concrete
+//! assert!(result.is_ok());
+//! assert_eq!(result.unwrap().get(), 7.0);
+//!
+//! // Error propagation when Result is Err
+//! let invalid: Result<PositiveF64, FloatError> = Err(FloatError::OutOfRange);
+//! let error_result: Result<FinF64, FloatError> = invalid + B;  // Error propagates
+//! assert!(error_result.is_err());
+//! ```
+//!
+//! #### Precision and Range Validation
+//!
+//! All arithmetic operations automatically validate:
+//!
+//! - **Range Constraints**: Result values must satisfy the target type's bounds
+//! - **Overflow Detection**: Operations that may exceed representable ranges return errors
+//! - **Division by Zero**: Division operations detect zero divisors and return `FloatError::DivisionByZero`
+//! - **NaN/Infinity**: Operations producing NaN or infinity return appropriate errors
+//!
+//! This ensures mathematical correctness while maintaining ergonomic API design through automatic type inference.
+//!
 //! ## Comparison Operations
 //!
 //! All types support full ordering operations:
