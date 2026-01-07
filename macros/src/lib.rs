@@ -70,6 +70,8 @@ fn generate_error_type() -> proc_macro2::TokenStream {
             OutOfRange,
             /// Division by zero
             DivisionByZero,
+            /// Right-hand side operand is None in Option arithmetic
+            NoneOperand,
         }
 
         impl std::fmt::Display for FloatError {
@@ -80,6 +82,7 @@ fn generate_error_type() -> proc_macro2::TokenStream {
                     FloatError::NegInf => write!(f, "value is negative infinity"),
                     FloatError::OutOfRange => write!(f, "value is outside the valid range for this type"),
                     FloatError::DivisionByZero => write!(f, "division by zero"),
+                    FloatError::NoneOperand => write!(f, "right-hand side operand is None in Option arithmetic"),
                 }
             }
         }

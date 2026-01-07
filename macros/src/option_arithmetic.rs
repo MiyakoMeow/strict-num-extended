@@ -172,15 +172,15 @@ fn generate_pattern_lhs_op_option_rhs(
                     }
                 }
             } else {
-                // Fallible operation: base returns Result, so Option operation returns Result<Option<Output>, FloatError>
+                // Fallible operation: base returns Result, so Option operation returns Result<Output, FloatError>
                 quote! {
                     impl #trait_ident<Option<#rhs_alias>> for #lhs_alias {
-                        type Output = Result<Option<#output_alias>, FloatError>;
+                        type Output = Result<#output_alias, FloatError>;
 
                         fn #method_ident(self, rhs: Option<#rhs_alias>) -> Self::Output {
                             match rhs {
-                                Some(b) => self.#method_ident(b).map(Some),
-                                None => Ok(None),
+                                Some(b) => self.#method_ident(b),
+                                None => Err(FloatError::NoneOperand),
                             }
                         }
                     }
@@ -202,10 +202,15 @@ fn generate_pattern_lhs_op_option_rhs(
 ///   Returns `Option<Output>`
 ///
 /// - **Fallible operations** (e.g., multiplication may cause overflow):
-///   Returns `Result<Option<Output>, FloatError>`
+///   Returns `Result<Output, FloatError>`
+///   - Returns `Ok(Output)` when rhs is `Some(value)` and operation succeeds
+///   - Returns `Err(FloatError::NoneOperand)` when rhs is `None`
 ///
 /// - **Division operations**:
-///   Returns `Result<Option<Output>, FloatError>` (includes zero check)
+///   Returns `Result<Output, FloatError>`
+///   - Returns `Ok(Output)` when rhs is `Some(value)` and division succeeds
+///   - Returns `Err(FloatError::NoneOperand)` when rhs is `None`
+///   - Returns `Err(FloatError::DivisionByZero)` when rhs is `Some(0.0)`
 ///
 /// # Examples
 ///
@@ -232,9 +237,19 @@ fn generate_pattern_lhs_op_option_rhs(
 /// ```text
 /// const A: PositiveF64 = PositiveF64::new_const(5.0);
 /// let b: Option<PositiveF64> = Some(PositiveF64::new_const(3.0));
-/// let result: Result<Option<PositiveF64>, FloatError> = A * b;
+/// let result: Result<PositiveF64, FloatError> = A * b;
 /// assert!(result.is_ok());
-/// assert_eq!(result.unwrap().unwrap().get(), 15.0);
+/// assert_eq!(result.unwrap().get(), 15.0);
+/// ```
+///
+/// ## None operand returns error
+///
+/// ```text
+/// const A: PositiveF64 = PositiveF64::new_const(5.0);
+/// let b: Option<PositiveF64> = None;
+/// let result: Result<PositiveF64, FloatError> = A * b;
+/// assert!(result.is_err());
+/// assert_eq!(result.unwrap_err(), FloatError::NoneOperand);
 /// ```
 pub fn generate_option_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
     let ops = [
