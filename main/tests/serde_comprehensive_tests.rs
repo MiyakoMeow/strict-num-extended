@@ -4,8 +4,8 @@
 //! Tests cover all generated types and verify actual error types.
 
 #![cfg(feature = "serde")]
+#![allow(clippy::shadow_unrelated)] // Test functions commonly use the same local variable names
 
-use serde_json;
 use strict_num_extended::*;
 
 // ==================== Serialization/Deserialization for all types ====================
@@ -158,25 +158,16 @@ fn test_serialize_deserialize_symmetric_f64() {
 
 #[test]
 fn test_serialize_deserialize_error() {
-    let error = FloatError::NaN;
-    let json = serde_json::to_string(&error).unwrap();
-    let deserialized: FloatError = serde_json::from_str(&json).unwrap();
-    assert_eq!(error, deserialized);
-
-    let error = FloatError::PosInf;
-    let json = serde_json::to_string(&error).unwrap();
-    let deserialized: FloatError = serde_json::from_str(&json).unwrap();
-    assert_eq!(error, deserialized);
-
-    let error = FloatError::NegInf;
-    let json = serde_json::to_string(&error).unwrap();
-    let deserialized: FloatError = serde_json::from_str(&json).unwrap();
-    assert_eq!(error, deserialized);
-
-    let error = FloatError::OutOfRange;
-    let json = serde_json::to_string(&error).unwrap();
-    let deserialized: FloatError = serde_json::from_str(&json).unwrap();
-    assert_eq!(error, deserialized);
+    for error_variant in [
+        FloatError::NaN,
+        FloatError::PosInf,
+        FloatError::NegInf,
+        FloatError::OutOfRange,
+    ] {
+        let json = serde_json::to_string(&error_variant).unwrap();
+        let deserialized: FloatError = serde_json::from_str(&json).unwrap();
+        assert_eq!(error_variant, deserialized);
+    }
 }
 
 // ==================== Type-specific validation failure tests ====================

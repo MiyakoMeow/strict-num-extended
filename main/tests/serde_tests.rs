@@ -3,8 +3,8 @@
 //! These tests only run when the "serde" feature is enabled.
 
 #![cfg(feature = "serde")]
+#![allow(clippy::shadow_unrelated)] // Test functions commonly use the same local variable names
 
-use serde_json;
 use strict_num_extended::*;
 
 #[test]
@@ -51,9 +51,9 @@ fn test_serialize_deserialize_symmetric_f64() {
 
 #[test]
 fn test_deserialize_fin_f32_from_json() {
-    let json = "3.14";
+    let json = "123.456";
     let value: FinF32 = serde_json::from_str(json).unwrap();
-    assert_eq!(value.get(), 3.14);
+    assert!((value.get() - 123.456).abs() < 0.001);
 }
 
 #[test]
@@ -197,15 +197,16 @@ fn test_deserialize_struct_with_finite_floats() {
         y: PositiveF64,
     }
 
-    let json = r#"{"x": 3.14, "y": 42.0}"#;
+    let json = r#"{"x": 987.654, "y": 42.0}"#;
     let data: Data = serde_json::from_str(json).unwrap();
-    assert_eq!(data.x.get(), 3.14);
+    assert!((data.x.get() - 987.654).abs() < 0.001);
     assert_eq!(data.y.get(), 42.0);
 }
 
 #[test]
 fn test_deserialize_struct_with_validation_failure() {
     #[derive(serde::Deserialize)]
+    #[allow(dead_code)]
     struct Data {
         x: FinF32,
         y: PositiveF64,
@@ -222,9 +223,10 @@ fn test_deserialize_vec_of_normalized() {
     let json = "[0.0, 0.5, 1.0]";
     let values: Vec<NormalizedF32> = serde_json::from_str(json).unwrap();
     assert_eq!(values.len(), 3);
-    assert_eq!(values[0].get(), 0.0);
-    assert_eq!(values[1].get(), 0.5);
-    assert_eq!(values[2].get(), 1.0);
+    let mut iter = values.iter();
+    assert_eq!(iter.next().unwrap().get(), 0.0);
+    assert_eq!(iter.next().unwrap().get(), 0.5);
+    assert_eq!(iter.next().unwrap().get(), 1.0);
 }
 
 #[test]
