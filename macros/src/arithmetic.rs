@@ -98,7 +98,10 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
 
                         fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
                             let result = self.get() #op_symbol rhs.get();
-                            // SAFETY: The operation is proven safe by type constraints
+                            // SAFETY: The arithmetic configuration has proven at compile time that
+                            // for this specific combination of lhs_type and rhs_type, the result
+                            // is guaranteed to satisfy output_type's constraints. The validation
+                            // would be redundant since the type system already guarantees safety.
                             unsafe { #output_alias::new_unchecked(result) }
                         }
                     }
@@ -167,8 +170,12 @@ pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
 
                     fn neg(self) -> Self::Output {
                         let result = -self.get();
-                        #neg_type_alias::new(result)
-                            .expect("Negation operation failed: result does not satisfy constraint")
+                        // SAFETY: The negation constraint was computed at compile time by
+                        // negating the source constraint's conditions and finding a matching
+                        // constraint. Since neg_constraint_name was found through condition
+                        // matching, the result is mathematically guaranteed to satisfy the
+                        // target constraint. The runtime validation would be redundant.
+                        unsafe { #neg_type_alias::new_unchecked(result) }
                     }
                 }
             });

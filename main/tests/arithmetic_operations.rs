@@ -281,7 +281,7 @@ mod test_option_arithmetic {
         assert!(result1.is_some());
 
         // Since result1 is Option<FinF64>, we can use map to chain with multiplication
-        // FinF64 * PositiveF64 is unsafe, returns Result<FinF64, FloatError>
+        // FinF64 * PositiveF64 is a potentially failing operation, returns Result<FinF64, FloatError>
         let result2: Result<FinF64, FloatError> = result1.map(|x| x * c).unwrap();
         assert!(result2.is_ok());
         assert_eq!(result2.unwrap().get(), 24.0);
@@ -309,7 +309,7 @@ mod test_option_arithmetic {
         let c: Option<PositiveF64> = Some(PositiveF64::new_const(2.0));
 
         // Note: We can't do (a / b) / c directly because of orphan rules
-        // Division is unsafe, returns Result<Output, FloatError>
+        // Division is a potentially failing operation, returns Result<Output, FloatError>
         let result: Result<PositiveF64, FloatError> = match (a, b, c) {
             (Some(x), Some(y), Some(z)) => match x / y {
                 Ok(quotient) => quotient / z,
