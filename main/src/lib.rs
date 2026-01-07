@@ -36,20 +36,158 @@
 //! use strict_num_extended::{FinF32, PositiveF32, NonZeroPositiveF32};
 //!
 //! // Create finite floating-point numbers (no NaN or infinity)
-//! let finite = FinF32::new(3.14).unwrap();
-//! assert_eq!(finite.get(), 3.14);
+//! const FINITE: FinF32 = FinF32::new_const(3.14);
+//! assert_eq!(FINITE.get(), 3.14);
 //!
 //! // Rejected: NaN and infinity are not allowed
 //! assert!(FinF32::new(f32::NAN).is_err());
 //! assert!(FinF32::new(f32::INFINITY).is_err());
 //!
 //! // Positive numbers (>= 0)
-//! let positive = PositiveF32::new(42.0).unwrap();
-//! assert!(positive >= PositiveF32::new(0.0).unwrap());
+//! const POSITIVE: PositiveF32 = PositiveF32::new_const(42.0);
+//! assert!(POSITIVE >= PositiveF32::new_const(0.0));
 //!
 //! // Non-zero positive numbers (> 0)
-//! let nonzero_pos = NonZeroPositiveF32::new(10.0).unwrap();
-//! assert!(nonzero_pos.get() > 0.0);
+//! const NONZERO_POS: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
+//! assert!(NONZERO_POS.get() > 0.0);
+//! ```
+//!
+//! ## Type Conversions
+//!
+//! ### From/TryFrom Traits
+//!
+//! Conversions between constraint types and primitive types are provided through
+//! the standard `From` and `TryFrom` traits:
+//!
+//! ```
+//! use strict_num_extended::*;
+//! use std::convert::TryInto;
+//!
+//! // 1. Constraint type → Primitive (always succeeds)
+//! let fin = FinF32::new(2.5).unwrap();
+//! let f32_val: f32 = fin.into();  // Using From trait
+//! assert_eq!(f32_val, 2.5);
+//!
+//! // 2. Primitive → Constraint type (validated)
+//! let fin: Result<FinF32, _> = FinF32::try_from(3.14);
+//! assert!(fin.is_ok());
+//!
+//! let invalid: Result<FinF32, _> = FinF32::try_from(f32::NAN);
+//! assert!(invalid.is_err());
+//! ```
+//!
+//! ### Subset → Superset Conversions
+//!
+//! Conversions from more constrained types to less constrained types use `From`
+//! and always succeed:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Normalized → Fin (subset to superset)
+//! let normalized = NormalizedF32::new(0.5).unwrap();
+//! let fin: FinF32 = normalized.into();  // Always succeeds
+//! assert_eq!(fin.get(), 0.5);
+//!
+//! // Positive → Fin
+//! let positive = PositiveF64::new(42.0).unwrap();
+//! let fin: FinF64 = positive.into();
+//! ```
+//!
+//! ### Superset → Subset Conversions
+//!
+//! Conversions from less constrained types to more constrained types use `TryFrom`
+//! and may fail:
+//!
+//! ```
+//! use strict_num_extended::*;
+//! use std::convert::TryInto;
+//!
+//! // Fin → Normalized (may fail)
+//! let fin = FinF64::new(0.5).unwrap();
+//! let normalized: Result<NormalizedF64, _> = fin.try_into();
+//! assert!(normalized.is_ok());
+//!
+//! let fin_out_of_range = FinF64::new(2.0).unwrap();
+//! let normalized: Result<NormalizedF64, _> = fin_out_of_range.try_into();
+//! assert!(normalized.is_err());  // Out of range
+//! ```
+//!
+//! ### F32 ↔ F64 Conversions
+//!
+//! Conversions between F32 and F64 types are supported with precision awareness:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // F32 → F64 (always safe, lossless)
+//! let fin32 = FinF32::new(3.0).unwrap();
+//! let fin64: FinF64 = fin32.into();  // From trait
+//! assert_eq!(fin64.get(), 3.0);
+//!
+//! // F64 → F32 (may overflow or lose precision)
+//! let fin64_small = FinF64::new(3.0).unwrap();
+//! let fin32: Result<FinF32, _> = fin64_small.try_into();
+//! assert!(fin32.is_ok());
+//!
+//! let fin64_large = FinF64::new(1e40).unwrap();
+//! let fin32: Result<FinF32, _> = fin64_large.try_into();
+//! assert!(fin32.is_err());  // F32 range overflow
+//! ```
+//!
+//! ## F32/F64 Conversion Methods
+//!
+//! For explicit conversions between F32 and F64 types, specialized methods are provided:
+//!
+//! ### `try_into_f32()` - F64 → F32 with Precision Detection
+//!
+//! The `try_into_f32()` method converts F64 types to F32 with precision-aware validation:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Success: value fits in F32
+//! let f64_val = FinF64::new(3.0).unwrap();
+//! let f32_val: Result<FinF32, _> = f64_val.try_into_f32();
+//! assert!(f32_val.is_ok());
+//!
+//! // Error: precision loss would occur
+//! let f64_precise = FinF64::new(1.234_567_890_123_456_7).unwrap();
+//! let f32_result: Result<FinF32, _> = f64_precise.try_into_f32();
+//! assert!(f32_result.is_err());  // Precision loss detected
+//!
+//! // Error: F32 range overflow
+//! let f64_large = FinF64::new(1e40).unwrap();
+//! let f32_result: Result<FinF32, _> = f64_large.try_into_f32();
+//! assert!(f32_result.is_err());  // Overflow detected
+//! ```
+//!
+//! ### `as_f64()` - F32 → F64 Lossless Conversion
+//!
+//! The `as_f64()` method converts F32 types to F64 without loss of precision:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! let f32_val = FinF32::new(2.5).unwrap();
+//! let f64_val: FinF64 = f32_val.as_f64();  // Always succeeds
+//! assert_eq!(f64_val.get(), 2.5);
+//!
+//! // Roundtrip: F32 → F64 → F32
+//! let original_f32 = FinF32::new(2.5).unwrap();
+//! let f64_val: FinF64 = original_f32.as_f64();
+//! let back_to_f32: Result<FinF32, _> = f64_val.try_into_f32();
+//! assert!(back_to_f32.is_ok());
+//! assert_eq!(back_to_f32.unwrap().get(), original_f32.get());
+//! ```
+//!
+//! These methods support const contexts for creating values:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! const F64_VAL: FinF64 = FinF64::new_const(42.0);
+//! const F32_VAL: FinF32 = FinF32::new_const(3.0);
 //! ```
 //!
 //! ## Arithmetic Operations
@@ -60,15 +198,15 @@
 //! ```
 //! use strict_num_extended::NonZeroPositiveF32;
 //!
-//! let a = NonZeroPositiveF32::new(10.0).unwrap();
-//! let b = NonZeroPositiveF32::new(20.0).unwrap();
+//! const A: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
+//! const B: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(20.0);
 //!
 //! // Addition returns Option (overflow possible)
-//! let sum = (a + b).unwrap();
+//! let sum = (A + B).unwrap();
 //! assert_eq!(sum.get(), 30.0);
 //!
 //! // Multiplication returns Option (overflow possible for unbounded types)
-//! let product = (a * b).unwrap();
+//! let product = (A * B).unwrap();
 //! assert_eq!(product.get(), 200.0);
 //! ```
 //!
@@ -79,42 +217,199 @@
 //! ```
 //! use strict_num_extended::PositiveF32;
 //!
-//! let a = PositiveF32::new(5.0).unwrap();
-//! let b = PositiveF32::new(10.0).unwrap();
+//! const A: PositiveF32 = PositiveF32::new_const(5.0);
+//! const B: PositiveF32 = PositiveF32::new_const(10.0);
 //!
-//! assert!(a < b);
-//! assert!(b > a);
-//! assert!(a <= b);
-//! assert!(b >= a);
-//! assert_ne!(a, b);
+//! assert!(A < B);
+//! assert!(B > A);
+//! assert!(A <= B);
+//! assert!(B >= A);
+//! assert_ne!(A, B);
+//! ```
+//!
+//! ## Result Type Arithmetic
+//!
+//! Arithmetic operations between `Result<T, FloatError>` and concrete types are supported
+//! with automatic error propagation:
+//!
+//! ### Result op Concrete
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Result<LHS> op Concrete<RHS>
+//! let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new(5.0).unwrap());
+//! const B: NegativeF64 = NegativeF64::new_const(-3.0);
+//! let result: Result<FinF64, FloatError> = a + B;
+//! assert!(result.is_ok());
+//! assert_eq!(result.unwrap().get(), 2.0);
+//!
+//! // Error propagation
+//! let err: Result<PositiveF64, FloatError> = Err(FloatError::NaN);
+//! let result: Result<FinF64, FloatError> = err + B;
+//! assert!(result.is_err());
+//! ```
+//!
+//! ### Concrete op Result
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Concrete<LHS> op Result<RHS>
+//! const A: PositiveF64 = PositiveF64::new_const(10.0);
+//! let b: Result<NegativeF64, FloatError> = Ok(NegativeF64::new(-3.0).unwrap());
+//! let result: Result<FinF64, FloatError> = A + b;
+//! assert!(result.is_ok());
+//! assert_eq!(result.unwrap().get(), 7.0);
+//!
+//! // Error on RHS
+//! let err_b: Result<NegativeF64, FloatError> = Err(FloatError::PosInf);
+//! let result: Result<FinF64, FloatError> = A + err_b;
+//! assert!(result.is_err());
+//! ```
+//!
+//! ### Error Propagation Rules
+//!
+//! - If LHS is `Err`, the error propagates directly
+//! - If RHS is `Err`, the error propagates directly
+//! - If both are `Ok`, the operation proceeds with normal validation
+//! - Division by zero returns `Err(FloatError::DivisionByZero)`
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Division by zero detection
+//! let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new(10.0).unwrap());
+//! const ZERO: PositiveF64 = PositiveF64::new_const(0.0);
+//! let result: Result<PositiveF64, FloatError> = a / ZERO;
+//! assert!(result.is_err());
+//! assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
+//! ```
+//!
+//! ## Option Type Arithmetic
+//!
+//! Arithmetic operations with `Option<T>` types provide graceful handling of optional values:
+//!
+//! ### Safe Operations (Concrete op Option)
+//!
+//! Safe operations (like `Positive + Negative`) return `Option<Output>`:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! const A: PositiveF64 = PositiveF64::new_const(5.0);
+//! let b: Option<NegativeF64> = Some(NegativeF64::new(-3.0).unwrap());
+//! let result: Option<FinF64> = A + b;
+//! assert!(result.is_some());
+//! assert_eq!(result.unwrap().get(), 2.0);
+//!
+//! // None propagation
+//! let none_b: Option<NegativeF64> = None;
+//! let result: Option<FinF64> = A + none_b;
+//! assert!(result.is_none());
+//! ```
+//!
+//! ### Unsafe Operations (Concrete op Option)
+//!
+//! Unsafe operations (multiplication, division) return `Result<Output, FloatError>`:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! const A: PositiveF64 = PositiveF64::new_const(5.0);
+//! let b: Option<PositiveF64> = Some(PositiveF64::new(3.0).unwrap());
+//! let result: Result<PositiveF64, FloatError> = A * b;
+//! assert!(result.is_ok());
+//! assert_eq!(result.unwrap().get(), 15.0);
+//!
+//! // None operand returns error
+//! let none_b: Option<PositiveF64> = None;
+//! let result: Result<PositiveF64, FloatError> = A / none_b;
+//! assert!(result.is_err());
+//! assert_eq!(result.unwrap_err(), FloatError::NoneOperand);
+//! ```
+//!
+//! ### Chaining Option Operations
+//!
+//! Option arithmetic can be chained for complex calculations:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! const A: PositiveF64 = PositiveF64::new_const(10.0);
+//! let b: Option<NegativeF64> = Some(NegativeF64::new(-2.0).unwrap());
+//! let c: Option<PositiveF64> = Some(PositiveF64::new(3.0).unwrap());
+//!
+//! // Safe operation returns Option
+//! let step1: Option<FinF64> = A + b;  // Some(8.0)
+//! assert!(step1.is_some());
+//!
+//! // Chain with unsafe operation
+//! let result: Result<FinF64, FloatError> = step1.map(|x| x * c).unwrap();
+//! assert!(result.is_ok());
+//! assert_eq!(result.unwrap().get(), 24.0);
 //! ```
 //!
 //! # Error Handling
 //!
-//! All floating-point conversions return `Result<T, FloatError>` for proper error handling:
+//! All operations that can fail return `Result<T, FloatError>`. The `FloatError` enum
+//! provides detailed error information:
+//!
+//! ## Error Types
+//!
+//! - `FloatError::NaN` - Value is NaN (Not a Number)
+//! - `FloatError::PosInf` - Value is positive infinity
+//! - `FloatError::NegInf` - Value is negative infinity
+//! - `FloatError::OutOfRange` - Value is outside the valid range for the target type
+//! - `FloatError::DivisionByZero` - Division by zero occurred
+//! - `FloatError::NoneOperand` - Right-hand side operand is None in Option arithmetic
+//!
+//! ## Example: Error Handling
 //!
 //! ```
-//! use strict_num_extended::{FinF32, NonZeroF32};
+//! use strict_num_extended::{FinF32, NonZeroF32, FloatError, NormalizedF32, PositiveF64};
 //!
-//! let a: Result<FinF32, _> = FinF32::new(1.0);
-//! let b: Result<NonZeroF32, _> = NonZeroF32::new(0.0);
-//! assert!(a.is_ok());
-//! assert!(b.is_err());
+//! // Successful creation
+//! let valid: Result<FinF32, FloatError> = FinF32::new(3.14);
+//! assert!(valid.is_ok());
+//!
+//! // NaN error
+//! let nan: Result<FinF32, FloatError> = FinF32::new(f32::NAN);
+//! assert!(nan.is_err());
+//! assert_eq!(nan.unwrap_err(), FloatError::NaN);
+//!
+//! // Infinity error
+//! let inf: Result<FinF32, FloatError> = FinF32::new(f32::INFINITY);
+//! assert!(inf.is_err());
+//! assert_eq!(inf.unwrap_err(), FloatError::PosInf);
+//!
+//! // Out of range error
+//! let out_of_range: Result<NormalizedF32, FloatError> = NormalizedF32::new(2.0);
+//! assert!(out_of_range.is_err());
+//! assert_eq!(out_of_range.unwrap_err(), FloatError::OutOfRange);
+//!
+//! // Division by zero
+//! let a = PositiveF64::new(10.0).unwrap();
+//! let zero = PositiveF64::new(0.0).unwrap();
+//! let result: Result<PositiveF64, FloatError> = a / zero;
+//! assert!(result.is_err());
+//! assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
 //! ```
 //!
-//! ## Practical Example: Safe Division
-//!
-//! Result types are particularly useful for functions that may fail:
+//! ## Practical Example: Safe Division Function
 //!
 //! ```
 //! use strict_num_extended::{FinF32, NonZeroF32, FloatError};
 //!
-//! fn safe_divide(a: Result<FinF32, FloatError>, b: Result<NonZeroF32, FloatError>) -> Result<FinF32, FloatError> {
-//!     match (a, b) {
+//! fn safe_divide(
+//!     numerator: Result<FinF32, FloatError>,
+//!     denominator: Result<NonZeroF32, FloatError>,
+//! ) -> Result<FinF32, FloatError> {
+//!     match (numerator, denominator) {
 //!         (Ok(num), Ok(denom)) => {
-//!             // Get the values, divide, then wrap back in FinF32
+//!             // Safe: denom is guaranteed non-zero
 //!             FinF32::new(num.get() / denom.get())
-//!         },
+//!         }
 //!         (Err(e), _) => Err(e),
 //!         (Ok(_), Err(e)) => Err(e),
 //!     }
@@ -127,13 +422,10 @@
 //! assert!(result.is_ok());
 //! assert_eq!(result.unwrap().get(), 5.0);
 //!
-//! // Division by zero is prevented - NonZeroF32 returns error for 0.0
-//! let zero_denom: Result<NonZeroF32, FloatError> = NonZeroF32::new(0.0);
-//! assert!(zero_denom.is_err());
-//!
+//! // Division by zero is prevented
 //! let invalid = safe_divide(
 //!     FinF32::new(10.0),
-//!     zero_denom
+//!     NonZeroF32::new(0.0)  // Returns Err
 //! );
 //! assert!(invalid.is_err());
 //! ```
@@ -149,6 +441,28 @@
 //!
 //! **Note**: The `new_const` method now supports compile-time validation and will panic at
 //! compile time if the value does not satisfy the constraint conditions.
+//!
+//! ### Unsafe Creation
+//!
+//! For performance-critical code where you can guarantee validity, use `new_unchecked()`:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // WARNING: Only use when you can guarantee the value is valid!
+//! // Undefined behavior if constraint is violated
+//! const FIN: FinF32 = unsafe { FinF32::new_unchecked(3.14) };
+//! assert_eq!(FIN.get(), 3.14);
+//!
+//! // Safe usage: compile-time constant
+//! const ONE: PositiveF32 = unsafe { PositiveF32::new_unchecked(1.0) };
+//!
+//! // UNSAFE: Invalid value causes undefined behavior
+//! // const NAN: FinF32 = unsafe { FinF32::new_unchecked(f32::NAN) };
+//! ```
+//!
+//! **Note**: Prefer `new_const()` for compile-time constants. It provides validation
+//! during compilation and is safer than `new_unchecked()`.
 //!
 //! # How Constraints Work
 //!
@@ -281,23 +595,23 @@
 //! use strict_num_extended::*;
 //!
 //! // Positive ↔ Negative
-//! let pos = PositiveF64::new(5.0).unwrap();
-//! let neg: NegativeF64 = -pos;
+//! const POS: PositiveF64 = PositiveF64::new_const(5.0);
+//! let neg: NegativeF64 = -POS;
 //! assert_eq!(neg.get(), -5.0);
 //!
 //! // NonZeroPositive ↔ NonZeroNegative
-//! let nz_pos = NonZeroPositiveF32::new(10.0).unwrap();
-//! let nz_neg: NonZeroNegativeF32 = -nz_pos;
+//! const NZ_POS: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
+//! let nz_neg: NonZeroNegativeF32 = -NZ_POS;
 //! assert_eq!(nz_neg.get(), -10.0);
 //!
 //! // Normalized ↔ NegativeNormalized
-//! let norm = NormalizedF64::new(0.75).unwrap();
-//! let neg_norm: NegativeNormalizedF64 = -norm;
+//! const NORM: NormalizedF64 = NormalizedF64::new_const(0.75);
+//! let neg_norm: NegativeNormalizedF64 = -NORM;
 //! assert_eq!(neg_norm.get(), -0.75);
 //!
 //! // Fin is reflexive (negating Fin returns Fin)
-//! let fin = FinF32::new(2.5).unwrap();
-//! let neg_fin: FinF32 = -fin;
+//! const FIN: FinF32 = FinF32::new_const(2.5);
+//! let neg_fin: FinF32 = -FIN;
 //! assert_eq!(neg_fin.get(), -2.5);
 //! ```
 

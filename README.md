@@ -17,7 +17,8 @@ A Rust library providing zero-cost finite floating-point types through the type 
 - **Composable Constraints** - Combine multiple constraints (e.g., NonZeroPositive)
 - **Full Trait Implementation** - PartialEq, Eq, PartialOrd, Ord, Display, Debug, arithmetic operators
 - **Const Support** - Create compile-time constants with validation
-- **Option Types** - Optional variants for graceful error handling
+- **Option/Result Arithmetic** - Optional and fallible operations with automatic error propagation
+- **Type Conversions** - Safe F32↔F64 conversions with precision detection
 
 ### Basic Usage
 
@@ -53,6 +54,48 @@ let negated: SymmetricF32 = -symmetric;
 assert_eq!(negated.get(), -0.75);
 ```
 
+## Type Conversions
+
+### Between Constraints
+
+The library provides seamless conversions between constraint types using standard Rust `From` and `TryFrom` traits:
+
+- **Subset to Superset**: Converting from more constrained types (e.g., `NormalizedF32`) to less constrained types (e.g., `FinF32`) uses the `From` trait and always succeeds
+- **Superset to Subset**: Converting from less constrained types to more constrained types uses the `TryFrom` trait and validates the value, returning `Result<T, FloatError>` to handle potential range violations
+
+This design ensures type safety while providing flexibility in working with different constraint levels.
+
+### F32 ↔ F64 Conversions
+
+Safe conversions between F32 and F64 variants with precision awareness:
+
+- **F32 → F64**: Lossless conversion using the `From` trait, always succeeds
+- **F64 → F32**: Precision-aware conversion using `TryFrom` trait, detects both range overflow and precision loss
+- **Specialized Methods**: The `try_into_f32()` and `as_f64()` methods provide explicit control over F32/F64 conversions with compile-time support
+
+## Result & Option Arithmetic
+
+### Result Types
+
+Automatic error propagation for arithmetic operations with `Result<T, FloatError>`:
+
+- Operations between `Result<T>` and concrete types automatically propagate errors
+- If either operand is `Err`, the error is forwarded directly
+- When both operands are `Ok`, the operation proceeds with normal validation
+- Division by zero is detected and returns `FloatError::DivisionByZero`
+
+This eliminates verbose error handling boilerplate in calculations that may fail.
+
+### Option Types
+
+Graceful handling of optional values in arithmetic operations:
+
+- **Safe Operations** (e.g., `Positive + Negative`): Return `Option<Output>`, propagating `None` automatically
+- **Unsafe Operations** (e.g., multiplication, division): Return `Result<Output, FloatError>`, with `None` operands converted to `FloatError::NoneOperand`
+- Supports chaining operations for complex calculations with optional values
+
+This design provides ergonomic handling of missing values without nested match expressions.
+
 > **Note**: For more detailed examples, and API documentation, see the [module documentation](https://docs.rs/strict-num-extended).
 
 ## Available Types
@@ -68,6 +111,20 @@ assert_eq!(negated.get(), -0.75);
 | `SymmetricF32` / `SymmetricF64` | `-1.0 ≤ x ≤ 1.0` | `-1.0, 0.0, 0.5, 1.0` |
 | `NonZeroPositiveF32` / `NonZeroPositiveF64` | `x > 0` | `0.001, 1.0, 100.0` |
 | `NonZeroNegativeF32` / `NonZeroNegativeF64` | `x < 0` | `-0.001, -1.0, -100.0` |
+
+## Error Handling
+
+All fallible operations return `Result<T, FloatError>` with detailed error information:
+
+**Error Types**:
+- `NaN` - Value is Not a Number
+- `PosInf` - Value is positive infinity
+- `NegInf` - Value is negative infinity
+- `OutOfRange` - Value is outside the valid range for the target type
+- `DivisionByZero` - Division by zero occurred
+- `NoneOperand` - Right-hand side operand is None in Option arithmetic
+
+The `FloatError` enum provides comprehensive error information for proper error handling and debugging, allowing precise error matching and recovery strategies.
 
 ### Contributing
 
