@@ -192,8 +192,9 @@
 //!
 //! ## Arithmetic Operations
 //!
-//! Arithmetic operations automatically validate results and return `Option` for potentially
-//! failing operations. Safe operations (like bounded type multiplication) return direct values:
+//! Arithmetic operations automatically validate results and return either the target type
+//! or `Result<T, FloatError>` for potentially failing operations. Safe operations (like
+//! bounded type multiplication) return direct values:
 //!
 //! ```
 //! use strict_num_extended::NonZeroPositiveF32;
@@ -201,11 +202,11 @@
 //! const A: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
 //! const B: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(20.0);
 //!
-//! // Addition returns Option (overflow possible)
+//! // Addition returns Result (overflow possible)
 //! let sum = (A + B).unwrap();
 //! assert_eq!(sum.get(), 30.0);
 //!
-//! // Multiplication returns Option (overflow possible for unbounded types)
+//! // Multiplication returns Result (overflow possible for unbounded types)
 //! let product = (A * B).unwrap();
 //! assert_eq!(product.get(), 200.0);
 //! ```
