@@ -52,6 +52,50 @@
 //! This two-layer safety approach ensures your floating-point code is correct both at
 //! compile time and at runtime, catching errors early and preventing undefined behavior.
 //!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Arithmetic detects overflow
+//! let a = PositiveF64::new(1e308).unwrap();
+//! let b = PositiveF64::new(1e308).unwrap();
+//! let result = a + b;  // Returns Result, detects overflow
+//! assert!(result.is_err());
+//! ```
+//!
+//! ### Basic Usage
+//!
+//! ```
+//! use strict_num_extended::{FinF32, PositiveF32, NonZeroPositiveF32, SymmetricF32};
+//!
+//! // Create finite floating-point numbers (no NaN or infinity)
+//! const FINITE: FinF32 = FinF32::new_const(3.14);
+//! assert_eq!(FINITE.get(), 3.14);
+//!
+//! // Rejected: NaN and infinity are not allowed
+//! assert!(FinF32::new(f32::NAN).is_err());
+//! assert!(FinF32::new(f32::INFINITY).is_err());
+//!
+//! // Positive numbers (>= 0)
+//! const POSITIVE: PositiveF32 = PositiveF32::new_const(42.0);
+//! assert!(POSITIVE >= PositiveF32::new_const(0.0));
+//!
+//! // Non-zero positive numbers (> 0)
+//! const NONZERO_POS: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
+//! assert!(NONZERO_POS.get() > 0.0);
+//!
+//! // Arithmetic operations preserve constraints
+//! let result = (NONZERO_POS + NONZERO_POS).unwrap();
+//! assert_eq!(result.get(), 20.0);
+//!
+//! // Symmetric numbers in range [-1.0, 1.0]
+//! const SYMMETRIC: SymmetricF32 = SymmetricF32::new_const(0.75);
+//! assert_eq!(SYMMETRIC.get(), 0.75);
+//!
+//! // Negation is reflexive (Symmetric → Symmetric)
+//! let negated: SymmetricF32 = -SYMMETRIC;
+//! assert_eq!(negated.get(), -0.75);
+//! ```
+//!
 //! ## Composable Constraints
 //!
 //! All constraints can be freely combined. For example, `NonZeroPositiveF32` combines
@@ -227,6 +271,12 @@
 //! const F64_VAL: FinF64 = FinF64::new_const(42.0);
 //! const F32_VAL: FinF32 = FinF32::new_const(3.0);
 //! ```
+//!
+//! > **Type Inference for Arithmetic Operations**: The library automatically infers the appropriate
+//! > result type for arithmetic operations based on operand properties. The library supports
+//! > standard Rust `From` and `TryFrom` traits for seamless conversions between constraint types,
+//! > along with F32 ↔ F64 conversions with precision awareness. See the detailed examples above
+//! > for conversion rules and patterns.
 //!
 //! ## Arithmetic Operations
 //!
@@ -489,6 +539,35 @@
 //! assert!(result.is_ok());
 //! assert_eq!(result.unwrap().get(), 24.0);
 //! ```
+//!
+//! ## Result & Option Arithmetic Overview
+//!
+//! The library provides comprehensive support for arithmetic operations with `Result<T, FloatError>`
+//! and `Option<T>` types:
+//!
+//! ### Result Types
+//!
+//! Automatic error propagation for arithmetic operations with `Result<T, FloatError>`:
+//!
+//! - Operations between `Result<T>` and concrete types automatically propagate errors
+//! - If either operand is `Err`, the error is forwarded directly
+//! - When both operands are `Ok`, the operation proceeds with normal validation
+//! - Division by zero is detected and returns `FloatError::DivisionByZero`
+//!
+//! This eliminates verbose error handling boilerplate in calculations that may fail.
+//!
+//! ### Option Types
+//!
+//! Graceful handling of optional values in arithmetic operations:
+//!
+//! - **Safe Operations** (e.g., `Positive + Negative`): Return `Option<Output>`, propagating `None` automatically
+//! - **Unsafe Operations** (e.g., multiplication, division): Return `Result<Output, FloatError>`, with `None` operands converted to `FloatError::NoneOperand`
+//! - Supports chaining operations for complex calculations with optional values
+//!
+//! This design provides ergonomic handling of missing values without nested match expressions.
+//!
+//! > **Note**: For more detailed examples and API documentation, see the specific sections above
+//! > covering [Result Type Arithmetic](#result-type-arithmetic) and [Option Type Arithmetic](#option-type-arithmetic).
 //!
 //! # Error Handling
 //!
