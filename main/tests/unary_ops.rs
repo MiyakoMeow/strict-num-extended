@@ -516,7 +516,7 @@ fn test_sin_various_types() {
 
     assert!((sin_fin.get() - 0.5).abs() < f64::EPSILON);
     assert_eq!(sin_pos.get(), 0.0);
-    assert!((sin_sym.get() - 0.479425538604203).abs() < f64::EPSILON);
+    assert!((sin_sym.get() - 0.479_425_538_604_203).abs() < f64::EPSILON);
 }
 
 // ============================================================================
@@ -588,25 +588,25 @@ fn test_tan_various_types() {
     assert!(tan_pos.is_ok());
 
     // tan(π/6) = 1/√3 ≈ 0.5773502691896257
-    let expected = 0.5773502691896257_f64;
+    let expected = 0.577_350_269_189_625_7_f64;
     assert!((tan_fin.unwrap().get() - expected).abs() < f64::EPSILON);
     assert_eq!(tan_pos.unwrap().get(), 0.0);
 }
 
 #[test]
 fn test_tan_singular_point() {
-    // tan 在奇异点附近会产生非常大的值
+    // tan produces very large values near singular points
     let close_to_singular = FinF64::new((std::f64::consts::PI / 2.0) - 0.0001).unwrap();
     let result: Result<FinF64, FloatError> = close_to_singular.tan();
-    // 非常接近奇异点，应该返回一个很大的有限值
+    // Very close to singular point, should return a large finite value
     assert!(result.is_ok());
     assert!(result.unwrap().get().abs() > 1000.0);
 
-    // 使用一个值使得 tan 结果非常大但不是无穷大
+    // Use a value that makes tan result very large but not infinite
     let very_close = FinF64::new((std::f64::consts::PI / 2.0) - 1e-10).unwrap();
     let result2: Result<FinF64, FloatError> = very_close.tan();
-    // 这可能产生无穷大，也可能产生非常大的有限值
-    // 我们只检查它不会 panic
+    // This may produce infinity or a very large finite value
+    // We only check that it doesn't panic
     let _ = result2;
 }
 

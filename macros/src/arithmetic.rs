@@ -41,7 +41,7 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
 
                         fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
                             let result = self.get() / rhs.get();
-                            // 除法可能产生无穷大，统一返回 NaN 错误
+                            // Division may produce infinity, uniformly return NaN error
                             if !result.is_finite() {
                                 return Err(FloatError::NaN);
                             }
