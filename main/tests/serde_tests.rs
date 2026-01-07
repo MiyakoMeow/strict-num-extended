@@ -47,7 +47,7 @@ fn test_serialize_deserialize_symmetric_f64() {
     assert_eq!(original.get(), deserialized.get());
 }
 
-// ==================== 反序列化验证测试 ====================
+// ==================== Deserialization validation tests ====================
 
 #[test]
 fn test_deserialize_fin_f32_from_json() {
@@ -77,10 +77,10 @@ fn test_deserialize_symmetric_f64_from_json() {
     assert_eq!(value.get(), -0.5);
 }
 
-// ==================== 反序列化失败案例 ====================
+// ==================== Deserialization failure cases ====================
 
-// 注意: JSON 标准不支持 NaN 和 Infinity 作为字面量
-// 这些值在 JSON 中会被拒绝在反序列化为 f32/f64 之前
+// Note: JSON standard does not support NaN and Infinity as literals
+// These values are rejected before being deserialized into f32/f64
 
 #[test]
 fn test_deserialize_positive_f64_negative_fails() {
@@ -93,14 +93,14 @@ fn test_deserialize_positive_f64_negative_fails() {
 
 #[test]
 fn test_deserialize_normalized_f32_out_of_range_fails() {
-    // 测试上界超出
+    // Test upper bound exceeded
     let json = "1.5";
     let result: Result<NormalizedF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err_msg = result.unwrap_err().to_string();
     assert!(err_msg.to_lowercase().contains("range"));
 
-    // 测试下界超出
+    // Test lower bound exceeded
     let json = "-0.5";
     let result: Result<NormalizedF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
@@ -110,14 +110,14 @@ fn test_deserialize_normalized_f32_out_of_range_fails() {
 
 #[test]
 fn test_deserialize_symmetric_f64_out_of_range_fails() {
-    // 测试上界超出
+    // Test upper bound exceeded
     let json = "1.5";
     let result: Result<SymmetricF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err_msg = result.unwrap_err().to_string();
     assert!(err_msg.to_lowercase().contains("range"));
 
-    // 测试下界超出
+    // Test lower bound exceeded
     let json = "-1.5";
     let result: Result<SymmetricF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
@@ -143,7 +143,7 @@ fn test_deserialize_nonzero_negative_f64_negative_zero_fails() {
     assert!(err_msg.to_lowercase().contains("range"));
 }
 
-// ==================== 边界值测试 ====================
+// ==================== Boundary value tests ====================
 
 #[test]
 fn test_deserialize_normalized_boundary_zero() {
@@ -187,7 +187,7 @@ fn test_deserialize_negative_boundary_zero() {
     assert_eq!(value.get(), 0.0);
 }
 
-// ==================== 复杂数据结构测试 ====================
+// ==================== Complex data structure tests ====================
 
 #[test]
 fn test_deserialize_struct_with_finite_floats() {
@@ -211,7 +211,7 @@ fn test_deserialize_struct_with_validation_failure() {
         y: PositiveF64,
     }
 
-    // y 字段为负数，应该失败
+    // y field is negative, should fail
     let json = r#"{"x": 3.14, "y": -1.0}"#;
     let result: Result<Data, _> = serde_json::from_str(json);
     assert!(result.is_err());

@@ -113,10 +113,10 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
             where
                 D: serde::Deserializer<'de>,
             {
-                // Deserialize the raw value first
+                // First deserialize the raw value
                 let value = T::deserialize(deserializer)?;
 
-                // Validate using the new() method
+                // Then validate using the new() method
                 Self::new(value).map_err(|e| {
                     use serde::de::Error;
                     match e {
