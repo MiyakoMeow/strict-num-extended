@@ -1,6 +1,6 @@
-//! # From/TryFrom trait 实现生成模块
+//! # From/TryFrom trait implementation generation module
 //!
-//! 自动生成所有类型转换的标准库 trait 实现
+//! Automatically generates standard library trait implementations for all type conversions
 
 use crate::config::TypeConfig;
 use crate::generator::for_all_constraint_float_types;
@@ -8,17 +8,17 @@ use proc_macro2::Ident;
 use quote::format_ident;
 use quote::quote;
 
-/// 生成所有 From/TryFrom 实现
+/// Generate all From/TryFrom implementations
 pub fn generate_conversion_traits(config: &TypeConfig) -> proc_macro2::TokenStream {
     let mut all_code = vec![];
 
-    // 1. 约束类型 → 原语 (From)
+    // 1. Constraint type → Primitive (From)
     all_code.push(generate_constraint_to_primitive_from(config));
 
-    // 2. 原语 → 约束类型 (TryFrom)
+    // 2. Primitive → Constraint type (TryFrom)
     all_code.push(generate_primitive_to_constraint_tryfrom(config));
 
-    // 3. 约束类型 → 约束类型 (From/TryFrom)
+    // 3. Constraint type → Constraint type (From/TryFrom)
     all_code.push(generate_constraint_to_constraint_traits(config));
 
     // 4. F32 → F64 (From)
@@ -27,16 +27,16 @@ pub fn generate_conversion_traits(config: &TypeConfig) -> proc_macro2::TokenStre
     // 5. F64 → F32 (TryFrom)
     all_code.push(generate_f64_to_f32_tryfrom(config));
 
-    // 6. f32 → F64约束类型 (TryFrom)
+    // 6. f32 → F64 constraint type (TryFrom)
     all_code.push(generate_f32_to_f64_constraint_tryfrom(config));
 
-    // 7. f64 → F32约束类型 (TryFrom)
+    // 7. f64 → F32 constraint type (TryFrom)
     all_code.push(generate_f64_to_f32_constraint_tryfrom(config));
 
     quote! { #(#all_code)* }
 }
 
-/// 判断源约束是否包含于目标约束（是否总是安全）
+/// Check if source constraint is contained in target constraint (always safe)
 fn is_subset_constraint(
     src_lower: Option<f64>,
     src_upper: Option<f64>,
@@ -45,29 +45,27 @@ fn is_subset_constraint(
     dst_upper: Option<f64>,
     dst_excludes_zero: bool,
 ) -> bool {
-    // 1. 目标下界必须 <= 源下界
+    // 1. Target lower bound must be <= source lower bound
     let lower_contains = match (src_lower, dst_lower) {
         (Some(src), Some(dst)) => src >= dst,
-        (Some(_), None) => true,
         (None, Some(_)) => false,
-        (None, None) => true,
+        _ => true,
     };
 
-    // 2. 目标上界必须 >= 源上界
+    // 2. Target upper bound must be >= source upper bound
     let upper_contains = match (src_upper, dst_upper) {
         (Some(src), Some(dst)) => src <= dst,
-        (Some(_), None) => true,
         (None, Some(_)) => false,
-        (None, None) => true,
+        _ => true,
     };
 
-    // 3. 零排除要求兼容
+    // 3. Zero exclusion requirements must be compatible
     let zero_compatible = !dst_excludes_zero || src_excludes_zero;
 
     lower_contains && upper_contains && zero_compatible
 }
 
-/// 生成: 约束类型 → 原语 (From)
+/// Generate: Constraint type → Primitive (From)
 fn generate_constraint_to_primitive_from(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
         let alias = format_ident!("{}{}", type_name, float_type.to_string().to_uppercase());
@@ -85,7 +83,7 @@ fn generate_constraint_to_primitive_from(config: &TypeConfig) -> proc_macro2::To
     quote! { #(#impls)* }
 }
 
-/// 生成: 原语 → 约束类型 (`TryFrom`)
+/// Generate: Primitive → Constraint type (`TryFrom`)
 fn generate_primitive_to_constraint_tryfrom(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
         let alias = format_ident!("{}{}", type_name, float_type.to_string().to_uppercase());
@@ -105,26 +103,26 @@ fn generate_primitive_to_constraint_tryfrom(config: &TypeConfig) -> proc_macro2:
     quote! { #(#impls)* }
 }
 
-/// 生成: 约束类型 → 约束类型 (From/TryFrom)
+/// Generate: Constraint type → Constraint type (From/TryFrom)
 fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2::TokenStream {
     let mut all_impls = vec![];
 
-    // 为每种浮点类型生成转换
+    // Generate conversions for each float type
     for float_type in &["f32", "f64"] {
         let float_ident = Ident::new(float_type, proc_macro2::Span::call_site());
 
-        // 收集所有该浮点类型的约束类型
+        // Collect all constraint types for this float type
         let types: Vec<_> = config
             .constraint_types
             .iter()
             .filter(|tt| tt.float_types.contains(&float_ident))
             .collect();
 
-        // 为每对类型生成 From 或 TryFrom
+        // Generate From or TryFrom for each pair of types
         for src_type in &types {
             for dst_type in &types {
                 if src_type.type_name.eq(&dst_type.type_name) {
-                    continue; // 跳过相同类型
+                    continue; // Skip same type
                 }
 
                 let src_alias = format_ident!(
@@ -138,19 +136,19 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
                     float_type.to_string().to_uppercase()
                 );
 
-                // 查找约束定义
+                // Find constraint definitions
                 let src_constraint = config
                     .constraints
                     .iter()
-                    .find(|c| c.name == src_type.constraint_name)
-                    .unwrap();
+                    .find(|c| c.name.eq(&src_type.constraint_name))
+                    .expect("Source constraint not found");
                 let dst_constraint = config
                     .constraints
                     .iter()
-                    .find(|c| c.name == dst_type.constraint_name)
-                    .unwrap();
+                    .find(|c| c.name.eq(&dst_type.constraint_name))
+                    .expect("Destination constraint not found");
 
-                // 判断是否是子集关系
+                // Check if subset relationship
                 let is_safe = is_subset_constraint(
                     src_constraint.bounds.lower,
                     src_constraint.bounds.upper,
@@ -161,7 +159,7 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
                 );
 
                 if is_safe {
-                    // From 实现
+                    // From implementation
                     all_impls.push(quote! {
                         impl From<#src_alias> for #dst_alias {
                             #[inline]
@@ -171,7 +169,7 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
                         }
                     });
                 } else {
-                    // TryFrom 实现
+                    // TryFrom implementation
                     all_impls.push(quote! {
                         impl TryFrom<#src_alias> for #dst_alias {
                             type Error = FloatError;
@@ -190,7 +188,7 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
     quote! { #(#all_impls)* }
 }
 
-/// 生成: F32 → F64 (From)
+/// Generate: F32 → F64 (From)
 fn generate_f32_to_f64_from(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
         if *float_type != "f32" {
@@ -213,7 +211,7 @@ fn generate_f32_to_f64_from(config: &TypeConfig) -> proc_macro2::TokenStream {
     quote! { #(#impls)* }
 }
 
-/// 生成: F64 → F32 (`TryFrom`)
+/// Generate: F64 → F32 (`TryFrom`)
 fn generate_f64_to_f32_tryfrom(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
         if *float_type != "f64" {
@@ -238,10 +236,10 @@ fn generate_f64_to_f32_tryfrom(config: &TypeConfig) -> proc_macro2::TokenStream 
     quote! { #(#impls)* }
 }
 
-/// 生成: f32 → F64约束类型 (TryFrom)
+/// Generate: f32 → F64 constraint type (`TryFrom`)
 fn generate_f32_to_f64_constraint_tryfrom(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
-        if float_type.to_string() != "f64" {
+        if *float_type != "f64" {
             return quote! {};
         }
 
@@ -262,10 +260,10 @@ fn generate_f32_to_f64_constraint_tryfrom(config: &TypeConfig) -> proc_macro2::T
     quote! { #(#impls)* }
 }
 
-/// 生成: f64 → F32约束类型 (TryFrom)
+/// Generate: f64 → F32 constraint type (`TryFrom`)
 fn generate_f64_to_f32_constraint_tryfrom(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
-        if float_type.to_string() != "f32" {
+        if *float_type != "f32" {
             return quote! {};
         }
 

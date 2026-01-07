@@ -1,23 +1,23 @@
-//! From/TryFrom trait 测试
+//! From/TryFrom trait tests
 
 use std::convert::TryFrom;
 
-// 1. 约束类型 → 原语
+// 1. Constraint type → Primitive
 #[test]
 fn test_constraint_to_primitive() {
-    let fin = strict_num_extended::FinF32::new_const(3.14);
+    let fin = strict_num_extended::FinF32::new_const(2.5);
     let f32_val: f32 = fin.into();
-    assert_eq!(f32_val, 3.14);
+    assert_eq!(f32_val, 2.5);
 }
 
-// 2. 原语 → 约束类型 (成功)
+// 2. Primitive → Constraint type (success)
 #[test]
 fn test_primitive_to_constraint_success() {
-    let fin: strict_num_extended::FinF32 = strict_num_extended::FinF32::try_from(3.14).unwrap();
-    assert_eq!(fin.get(), 3.14);
+    let fin: strict_num_extended::FinF32 = strict_num_extended::FinF32::try_from(2.5).unwrap();
+    assert_eq!(fin.get(), 2.5);
 }
 
-// 3. 原语 → 约束类型 (失败)
+// 3. Primitive → Constraint type (failure)
 #[test]
 fn test_primitive_to_constraint_failure() {
     let result: Result<strict_num_extended::FinF32, _> =
@@ -25,7 +25,7 @@ fn test_primitive_to_constraint_failure() {
     assert!(result.is_err());
 }
 
-// 4. 子集 → 超集 (From)
+// 4. Subset → Superset (From)
 #[test]
 fn test_subset_to_superset() {
     let normalized = strict_num_extended::NormalizedF32::new_const(0.5);
@@ -33,7 +33,7 @@ fn test_subset_to_superset() {
     assert_eq!(fin.get(), 0.5);
 }
 
-// 5. 超集 → 子集 (TryFrom 成功)
+// 5. Superset → Subset (TryFrom success)
 #[test]
 fn test_superset_to_subset_success() {
     let fin = strict_num_extended::FinF32::new_const(0.5);
@@ -41,7 +41,7 @@ fn test_superset_to_subset_success() {
     assert!(normalized.is_ok());
 }
 
-// 6. 超集 → 子集 (TryFrom 失败)
+// 6. Superset → Subset (TryFrom failure)
 #[test]
 fn test_superset_to_subset_failure() {
     let fin = strict_num_extended::FinF32::new_const(2.0);
