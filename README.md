@@ -100,22 +100,9 @@ assert_eq!(negated.get(), -0.75);
 
 ## Type Conversions
 
-### Between Constraints
+The library provides seamless conversions between constraint types using standard Rust `From` and `TryFrom` traits, along with F32 ↔ F64 conversions with precision awareness. See the [module documentation](https://docs.rs/strict-num-extended) for detailed conversion examples and rules.
 
-The library provides seamless conversions between constraint types using standard Rust `From` and `TryFrom` traits:
-
-- **Subset to Superset**: Converting from more constrained types (e.g., `NormalizedF32`) to less constrained types (e.g., `FinF32`) uses the `From` trait and always succeeds
-- **Superset to Subset**: Converting from less constrained types to more constrained types uses the `TryFrom` trait and validates the value, returning `Result<T, FloatError>` to handle potential range violations
-
-This design ensures type safety while providing flexibility in working with different constraint levels.
-
-### F32 ↔ F64 Conversions
-
-Safe conversions between F32 and F64 variants with precision awareness:
-
-- **F32 → F64**: Lossless conversion using the `From` trait, always succeeds
-- **F64 → F32**: Precision-aware conversion using `TryFrom` trait, detects both range overflow and precision loss
-- **Specialized Methods**: The `try_into_f32()` and `as_f64()` methods provide explicit control over F32/F64 conversions with compile-time support
+> **Type Inference for Arithmetic Operations**: The library automatically infers the appropriate result type for arithmetic operations based on operand properties. See the [Arithmetic Operations section](https://docs.rs/strict-num-extended#type-inference-and-conversion-rules) in the module documentation for detailed rules, including operation safety classification and type conversion rules for addition, subtraction, multiplication, and division.
 
 ## Result & Option Arithmetic
 
