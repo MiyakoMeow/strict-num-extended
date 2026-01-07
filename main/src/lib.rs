@@ -14,6 +14,46 @@
 //! - `NegativeNormalizedF32` and `NegativeNormalizedF64`: Negative normalized floating-point numbers (-1.0 <= value <= 0.0, finite)
 //! - `SymmetricF32` and `SymmetricF64`: Symmetric floating-point numbers (-1.0 <= value <= 1.0, finite)
 //!
+//! ## Type Safety
+//!
+//! This library provides type safety through both compile-time and runtime guarantees:
+//!
+//! ### Compile-Time Safety
+//!
+//! Create constants at compile time with guaranteed validity:
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! const MAX_VALUE: PositiveF64 = PositiveF64::new_const(100.0);
+//! const HALF: NormalizedF32 = NormalizedF32::new_const(0.5);
+//! ```
+//!
+//! The `new_const()` method validates constraints at compile time, ensuring invalid values
+//! are caught before your code even runs.
+//!
+//! ### Runtime Safety
+//!
+//! At runtime, all operations automatically:
+//! - **Validate value ranges** when creating instances
+//! - **Detect overflow** in arithmetic operations
+//! - **Return detailed errors** via `Result<T, FloatError>` for any violation
+//!
+//! ```
+//! use strict_num_extended::*;
+//!
+//! // Value creation validates ranges
+//! let value = PositiveF64::new(42.0);
+//! assert!(value.is_ok());
+//!
+//! // Invalid value returns error
+//! let invalid = PositiveF64::new(-1.0);
+//! assert!(invalid.is_err());
+//! ```
+//!
+//! This two-layer safety approach ensures your floating-point code is correct both at
+//! compile time and at runtime, catching errors early and preventing undefined behavior.
+//!
 //! ## Composable Constraints
 //!
 //! All constraints can be freely combined. For example, `NonZeroPositiveF32` combines
@@ -467,8 +507,14 @@
 //!
 //! # How Constraints Work
 //!
-//! All types automatically reject special floating-point values that could cause bugs.
-//! This validation happens at creation time, ensuring type safety throughout your program.
+//! All types automatically enforce constraints through runtime validation and compile-time checks:
+//!
+//! - **Compile-time**: Use `new_const()` to create validated constants
+//! - **Runtime**: Use `new()` which returns `Result<T, FloatError>` after validation
+//!
+//! Constraint violations are caught early:
+//! - At compile time for constants (if value is invalid)
+//! - At runtime for dynamic values (returns `FloatError`)
 //!
 //! ## Finite Constraint
 //!
@@ -477,9 +523,9 @@
 //! ```
 //! use strict_num_extended::FinF32;
 //!
-//! let valid = FinF32::new(3.14);         // ✓ Some(value)
-//! let invalid = FinF32::new(f32::NAN);    // ✗ None
-//! let invalid = FinF32::new(f32::INFINITY); // ✗ None
+//! let valid = FinF32::new(3.14);         // Ok(value)
+//! let invalid = FinF32::new(f32::NAN);    // Err(FloatError::NaN)
+//! let invalid = FinF32::new(f32::INFINITY); // Err(FloatError::PosInf)
 //! ```
 //!
 //! ## Positive Constraint
@@ -489,10 +535,10 @@
 //! ```
 //! use strict_num_extended::PositiveF32;
 //!
-//! let valid = PositiveF32::new(0.0);      // ✓ Some(value)
-//! let valid = PositiveF32::new(1.5);      // ✓ Some(value)
-//! let invalid = PositiveF32::new(-1.0);   // ✗ None (negative)
-//! let invalid = PositiveF32::new(f32::INFINITY); // ✗ None (infinite)
+//! let valid = PositiveF32::new(0.0);      // Ok(value)
+//! let valid = PositiveF32::new(1.5);      // Ok(value)
+//! let invalid = PositiveF32::new(-1.0);   // Err(FloatError::OutOfRange) (negative)
+//! let invalid = PositiveF32::new(f32::INFINITY); // Err(FloatError::PosInf) (infinite)
 //! ```
 //!
 //! ## Negative Constraint
@@ -502,10 +548,10 @@
 //! ```
 //! use strict_num_extended::NegativeF32;
 //!
-//! let valid = NegativeF32::new(0.0);      // ✓ Some(value)
-//! let valid = NegativeF32::new(-1.5);     // ✓ Some(value)
-//! let invalid = NegativeF32::new(1.0);    // ✗ None (positive)
-//! let invalid = NegativeF32::new(f32::NEG_INFINITY); // ✗ None (infinite)
+//! let valid = NegativeF32::new(0.0);      // Ok(value)
+//! let valid = NegativeF32::new(-1.5);     // Ok(value)
+//! let invalid = NegativeF32::new(1.0);    // Err(FloatError::OutOfRange) (positive)
+//! let invalid = NegativeF32::new(f32::NEG_INFINITY); // Err(FloatError::NegInf) (infinite)
 //! ```
 //!
 //! ## `NonZero` Constraint
@@ -515,10 +561,10 @@
 //! ```
 //! use strict_num_extended::NonZeroF32;
 //!
-//! let valid = NonZeroF32::new(1.0);       // ✓ Some(value)
-//! let valid = NonZeroF32::new(-1.0);      // ✓ Some(value)
-//! let invalid = NonZeroF32::new(0.0);     // ✗ None (zero)
-//! let invalid = NonZeroF32::new(-0.0);    // ✗ None (negative zero)
+//! let valid = NonZeroF32::new(1.0);       // Ok(value)
+//! let valid = NonZeroF32::new(-1.0);      // Ok(value)
+//! let invalid = NonZeroF32::new(0.0);     // Err(FloatError::OutOfRange) (zero)
+//! let invalid = NonZeroF32::new(-0.0);    // Err(FloatError::OutOfRange) (negative zero)
 //! ```
 //!
 //! ## Normalized Constraint
@@ -528,11 +574,11 @@
 //! ```
 //! use strict_num_extended::NormalizedF32;
 //!
-//! let valid = NormalizedF32::new(0.75);   // ✓ Some(value)
-//! let valid = NormalizedF32::new(0.0);    // ✓ Some(value)
-//! let valid = NormalizedF32::new(1.0);    // ✓ Some(value)
-//! let invalid = NormalizedF32::new(1.5);  // ✗ None (> 1.0)
-//! let invalid = NormalizedF32::new(-0.5); // ✗ None (< 0.0)
+//! let valid = NormalizedF32::new(0.75);   // Ok(value)
+//! let valid = NormalizedF32::new(0.0);    // Ok(value)
+//! let valid = NormalizedF32::new(1.0);    // Ok(value)
+//! let invalid = NormalizedF32::new(1.5);  // Err(FloatError::OutOfRange) (> 1.0)
+//! let invalid = NormalizedF32::new(-0.5); // Err(FloatError::OutOfRange) (< 0.0)
 //! ```
 //!
 //! ## `NegativeNormalized` Constraint
@@ -542,11 +588,11 @@
 //! ```
 //! use strict_num_extended::NegativeNormalizedF32;
 //!
-//! let valid = NegativeNormalizedF32::new(-0.75);  // ✓ Some(value)
-//! let valid = NegativeNormalizedF32::new(-1.0);   // ✓ Some(value)
-//! let valid = NegativeNormalizedF32::new(0.0);    // ✓ Some(value)
-//! let invalid = NegativeNormalizedF32::new(1.5);  // ✗ None (> 0.0)
-//! let invalid = NegativeNormalizedF32::new(-1.5); // ✗ None (< -1.0)
+//! let valid = NegativeNormalizedF32::new(-0.75);  // Ok(value)
+//! let valid = NegativeNormalizedF32::new(-1.0);   // Ok(value)
+//! let valid = NegativeNormalizedF32::new(0.0);    // Ok(value)
+//! let invalid = NegativeNormalizedF32::new(1.5);  // Err(FloatError::OutOfRange) (> 0.0)
+//! let invalid = NegativeNormalizedF32::new(-1.5); // Err(FloatError::OutOfRange) (< -1.0)
 //! ```
 //!
 //! ## `Symmetric` Constraint
@@ -556,12 +602,12 @@
 //! ```
 //! use strict_num_extended::SymmetricF32;
 //!
-//! let valid = SymmetricF32::new(0.75);   // ✓ Some(value)
-//! let valid = SymmetricF32::new(-0.5);   // ✓ Some(value)
-//! let valid = SymmetricF32::new(1.0);    // ✓ Some(value)
-//! let valid = SymmetricF32::new(-1.0);   // ✓ Some(value)
-//! let invalid = SymmetricF32::new(1.5);  // ✗ None (> 1.0)
-//! let invalid = SymmetricF32::new(-1.5); // ✗ None (< -1.0)
+//! let valid = SymmetricF32::new(0.75);   // Ok(value)
+//! let valid = SymmetricF32::new(-0.5);   // Ok(value)
+//! let valid = SymmetricF32::new(1.0);    // Ok(value)
+//! let valid = SymmetricF32::new(-1.0);   // Ok(value)
+//! let invalid = SymmetricF32::new(1.5);  // Err(FloatError::OutOfRange) (> 1.0)
+//! let invalid = SymmetricF32::new(-1.5); // Err(FloatError::OutOfRange) (< -1.0)
 //! ```
 //!
 //! Note: The `Symmetric` type is reflexive under negation (negating a `Symmetric` returns `Symmetric`):
@@ -582,10 +628,10 @@
 //! use strict_num_extended::NonZeroPositiveF32;
 //!
 //! // NonZeroPositive = Positive AND NonZero (equivalent to x > 0)
-//! let valid = NonZeroPositiveF32::new(1.0);     // ✓ Some(value)
-//! let valid = NonZeroPositiveF32::new(0.001);   // ✓ Some(value)
-//! let invalid = NonZeroPositiveF32::new(0.0);   // ✗ None (zero)
-//! let invalid = NonZeroPositiveF32::new(-1.0);  // ✗ None (negative)
+//! let valid = NonZeroPositiveF32::new(1.0);     // Ok(value)
+//! let valid = NonZeroPositiveF32::new(0.001);   // Ok(value)
+//! let invalid = NonZeroPositiveF32::new(0.0);   // Err(FloatError::OutOfRange) (zero)
+//! let invalid = NonZeroPositiveF32::new(-1.0);  // Err(FloatError::OutOfRange) (negative)
 //! ```
 //!
 //! ## Unary Negation
