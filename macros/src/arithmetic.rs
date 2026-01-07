@@ -3,7 +3,7 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
-use crate::config::{ArithmeticOp, TypeConfig};
+use crate::config::{ArithmeticOp, TypeConfig, get_standard_arithmetic_ops};
 use crate::generator::{find_constraint_def, generate_arithmetic_for_all_types, make_type_alias};
 
 /// Generates type-safe arithmetic operation implementations.
@@ -11,12 +11,7 @@ use crate::generator::{find_constraint_def, generate_arithmetic_for_all_types, m
 /// This generates cross-type arithmetic operations with automatic output type inference.
 /// Safe operations return the result directly, while potentially failing operations return Option.
 pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
-    let ops = [
-        (ArithmeticOp::Add, "Add", "add", quote! { + }),
-        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
-        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
-        (ArithmeticOp::Div, "Div", "div", quote! { / }),
-    ];
+    let ops = get_standard_arithmetic_ops();
 
     generate_arithmetic_for_all_types(
         config,

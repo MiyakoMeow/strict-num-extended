@@ -3,7 +3,9 @@
 //! Automatically generates standard library trait implementations for all type conversions
 
 use crate::config::TypeConfig;
-use crate::generator::{find_constraint_def, for_all_constraint_float_types};
+use crate::generator::{
+    filter_constraint_types_by_float, find_constraint_def, for_all_constraint_float_types,
+};
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
 
@@ -110,12 +112,8 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
     for float_type in &["f32", "f64"] {
         let float_ident = Ident::new(float_type, proc_macro2::Span::call_site());
 
-        // Collect all constraint types for this float type
-        let types: Vec<_> = config
-            .constraint_types
-            .iter()
-            .filter(|tt| tt.float_types.contains(&float_ident))
-            .collect();
+        // 使用辅助函数过滤包含该浮点类型的约束类型
+        let types = filter_constraint_types_by_float(config, &float_ident);
 
         // Generate From or TryFrom for each pair of types
         for src_type in &types {

@@ -47,6 +47,33 @@ pub enum ArithmeticOp {
     Div,
 }
 
+/// 获取标准算术运算符定义数组
+///
+/// 包含四种基本算术运算（加、减、乘、除）及其对应的：
+/// - 运算符枚举
+/// - trait 名称（如 "Add"）
+/// - 方法名称（如 "add"）
+/// - 运算符符号（如 quote! { + }）
+///
+/// # 返回值
+///
+/// 返回一个包含所有标准算术运算定义的数组
+pub fn get_standard_arithmetic_ops() -> [(
+    ArithmeticOp,
+    &'static str,
+    &'static str,
+    proc_macro2::TokenStream,
+); 4] {
+    use quote::quote;
+
+    [
+        (ArithmeticOp::Add, "Add", "add", quote! { + }),
+        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
+        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
+        (ArithmeticOp::Div, "Div", "div", quote! { / }),
+    ]
+}
+
 /// Result of arithmetic operation type inference.
 #[derive(Debug, Clone)]
 pub struct ArithmeticResult {

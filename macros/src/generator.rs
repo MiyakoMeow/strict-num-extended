@@ -55,6 +55,33 @@ pub fn find_constraint_def<'a>(
         .expect("Constraint not found")
 }
 
+/// 过滤包含指定浮点类型的约束类型
+///
+/// # 参数
+///
+/// * `config` - 类型配置
+/// * `float_type` - 浮点类型标识符（如 `f32`, `f64`）
+///
+/// # 返回值
+///
+/// 包含该浮点类型的所有约束类型的集合
+///
+/// # 示例
+///
+/// ```ignore
+/// let f32_types = filter_constraint_types_by_float(config, &format_ident!("f32"));
+/// ```
+pub fn filter_constraint_types_by_float<'a>(
+    config: &'a TypeConfig,
+    float_type: &Ident,
+) -> Vec<&'a crate::config::TypeDef> {
+    config
+        .constraint_types
+        .iter()
+        .filter(|tt| tt.float_types.contains(float_type))
+        .collect()
+}
+
 /// 为所有约束类型组合生成算术运算实现
 ///
 /// 这个函数封装了遍历 lhs × rhs × `float_types` 组合的通用逻辑，

@@ -74,7 +74,7 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
-use crate::config::{ArithmeticOp, TypeConfig};
+use crate::config::{ArithmeticOp, TypeConfig, get_standard_arithmetic_ops};
 use crate::generator::generate_arithmetic_for_all_types;
 
 /// Generates `Lhs op Option<Rhs>` pattern arithmetic operation implementations
@@ -184,12 +184,6 @@ fn generate_pattern_lhs_op_option_rhs(
 /// assert_eq!(result.unwrap_err(), FloatError::NoneOperand);
 /// ```
 pub fn generate_option_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
-    let ops = [
-        (ArithmeticOp::Add, "Add", "add", quote! { + }),
-        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
-        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
-        (ArithmeticOp::Div, "Div", "div", quote! { / }),
-    ];
-
+    let ops = get_standard_arithmetic_ops();
     generate_pattern_lhs_op_option_rhs(config, &ops)
 }

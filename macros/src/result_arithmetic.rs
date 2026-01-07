@@ -28,7 +28,7 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
-use crate::config::{ArithmeticOp, TypeConfig};
+use crate::config::{ArithmeticOp, TypeConfig, get_standard_arithmetic_ops};
 use crate::generator::generate_arithmetic_for_all_types;
 
 /// Generates arithmetic operations for Result types.
@@ -42,12 +42,7 @@ use crate::generator::generate_arithmetic_for_all_types;
 /// - Fallible operations: directly propagate Result from base operation
 /// - Division: zero check is handled by base operation
 pub fn generate_result_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
-    let ops = [
-        (ArithmeticOp::Add, "Add", "add", quote! { + }),
-        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
-        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
-        (ArithmeticOp::Div, "Div", "div", quote! { / }),
-    ];
+    let ops = get_standard_arithmetic_ops();
 
     // Generate implementations for all three patterns
     let pattern1_impls = generate_pattern_lhs_op_result_rhs(config, &ops);
