@@ -101,15 +101,15 @@ fn infer_signum_output_type(constraint_def: &ConstraintDef) -> Ident {
 
 /// Generates `abs()` method implementations for all constraint types
 ///
-/// For each type, generates:
-/// ```rust
-/// impl #type_alias {
+/// For each type, generates code similar to:
+/// ```text
+/// impl TypeAlias {
 ///     #[inline]
 ///     #[must_use]
-///     pub fn abs(self) -> #output_alias {
+///     pub fn abs(self) -> OutputAlias {
 ///         let result = self.get().abs();
 ///         // SAFETY: ...
-///         unsafe { #output_alias::new_unchecked(result) }
+///         unsafe { OutputAlias::new_unchecked(result) }
 ///     }
 /// }
 /// ```
@@ -168,15 +168,15 @@ pub fn generate_abs_impls(config: &TypeConfig) -> TokenStream2 {
 
 /// Generates `signum()` method implementations for all constraint types
 ///
-/// For each type, generates:
-/// ```rust
-/// impl #type_alias {
+/// For each type, generates code similar to:
+/// ```text
+/// impl TypeAlias {
 ///     #[inline]
 ///     #[must_use]
-///     pub fn signum(self) -> #output_alias {
+///     pub fn signum(self) -> OutputAlias {
 ///         let result = self.get().signum();
 ///         // SAFETY: ...
-///         unsafe { #output_alias::new_unchecked(result) }
+///         unsafe { OutputAlias::new_unchecked(result) }
 ///     }
 /// }
 /// ```
