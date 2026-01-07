@@ -1,6 +1,7 @@
 //! # Proc Macro Implementation
 //!
 //! Provides complete procedural macro code generation for strict-num-extended
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use proc_macro::TokenStream;
 use quote::quote;

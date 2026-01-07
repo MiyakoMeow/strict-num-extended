@@ -1,5 +1,3 @@
-#![allow(clippy::manual_range_contains)]
-
 //! # Finite Floating-Point Types
 //!
 //! This module provides finite floating-point types. All types guarantee finite values
@@ -661,6 +659,9 @@
 //! let neg_fin: FinF32 = -FIN;
 //! assert_eq!(neg_fin.get(), -2.5);
 //! ```
+
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![allow(clippy::manual_range_contains)]
 
 // Generate all code using proc_macro
 strict_num_extended_macros::generate_finite_float_types!([

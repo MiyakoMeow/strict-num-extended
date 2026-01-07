@@ -35,7 +35,7 @@
 //! assert!(neg_none.is_none());
 //! ```
 //!
-//! ## Option<Lhs> op Rhs
+//! ## `Option<Lhs>` op Rhs
 //!
 //! Use `.map()` or `.and_then()`:
 //!
@@ -53,7 +53,7 @@
 //! assert!(result_none.is_none());
 //! ```
 //!
-//! ## Option<Lhs> op Option<Rhs>
+//! ## `Option<Lhs>` op `Option<Rhs>`
 //!
 //! Use pattern matching or combinators:
 //!
