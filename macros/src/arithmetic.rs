@@ -34,17 +34,17 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
                     }
                 }
             } else if op == ArithmeticOp::Div {
-                // Division: always check for zero
+                // Division: result may be infinity, return NaN error
                 quote! {
                     impl #trait_ident<#rhs_alias> for #lhs_alias {
                         type Output = Result<#output_alias, FloatError>;
 
                         fn #method_ident(self, rhs: #rhs_alias) -> Self::Output {
-                            let rhs_val = rhs.get();
-                            if rhs_val == 0.0 {
-                                return Err(FloatError::DivisionByZero);
+                            let result = self.get() / rhs.get();
+                            // Division may produce infinity, uniformly return NaN error
+                            if !result.is_finite() {
+                                return Err(FloatError::NaN);
                             }
-                            let result = self.get() / rhs_val;
                             #output_alias::new(result)
                         }
                     }

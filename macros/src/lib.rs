@@ -28,7 +28,10 @@ use float_conversion::{generate_as_f64_methods, generate_try_into_f32_methods};
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
 use types::{generate_new_const_methods, generate_type_aliases};
-use unary_ops::{generate_abs_impls, generate_signum_impls};
+use unary_ops::{
+    generate_abs_impls, generate_cos_impls, generate_signum_impls, generate_sin_impls,
+    generate_tan_impls,
+};
 
 /// Generates common definitions (Bounded struct and constants)
 fn generate_common_definitions() -> proc_macro2::TokenStream {
@@ -73,8 +76,6 @@ fn generate_error_type() -> proc_macro2::TokenStream {
             NegInf,
             /// Value is outside the valid range for this type
             OutOfRange,
-            /// Division by zero
-            DivisionByZero,
             /// Right-hand side operand is None in Option arithmetic
             NoneOperand,
         }
@@ -86,7 +87,6 @@ fn generate_error_type() -> proc_macro2::TokenStream {
                     FloatError::PosInf => write!(f, "value is positive infinity"),
                     FloatError::NegInf => write!(f, "value is negative infinity"),
                     FloatError::OutOfRange => write!(f, "value is outside the valid range for this type"),
-                    FloatError::DivisionByZero => write!(f, "division by zero"),
                     FloatError::NoneOperand => write!(f, "right-hand side operand is None in Option arithmetic"),
                 }
             }
@@ -130,6 +130,11 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     // Generate unary operations (abs, signum)
     all_code.push(generate_abs_impls(&config));
     all_code.push(generate_signum_impls(&config));
+
+    // Generate trigonometric operations (sin, cos, tan)
+    all_code.push(generate_sin_impls(&config));
+    all_code.push(generate_cos_impls(&config));
+    all_code.push(generate_tan_impls(&config));
 
     // Generate negation operations for Result types
     // Note: Cannot implement Neg for Result<T, E> due to orphan rules

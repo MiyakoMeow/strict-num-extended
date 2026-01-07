@@ -395,8 +395,7 @@
 //!
 //! - **Range Constraints**: Result values must satisfy the target type's bounds
 //! - **Overflow Detection**: Operations that may exceed representable ranges return errors
-//! - **Division by Zero**: Division operations detect zero divisors and return `FloatError::DivisionByZero`
-//! - **NaN/Infinity**: Operations producing NaN or infinity return appropriate errors
+//! - **NaN/Infinity**: Operations producing NaN or infinity return `FloatError::NaN`
 //!
 //! This ensures mathematical correctness while maintaining ergonomic API design through automatic type inference.
 //!
@@ -463,7 +462,7 @@
 //! - If LHS is `Err`, the error propagates directly
 //! - If RHS is `Err`, the error propagates directly
 //! - If both are `Ok`, the operation proceeds with normal validation
-//! - Division by zero returns `Err(FloatError::DivisionByZero)`
+//! - Division by zero returns `Err(FloatError::NaN)`
 //!
 //! ```
 //! use strict_num_extended::*;
@@ -473,7 +472,7 @@
 //! const ZERO: PositiveF64 = PositiveF64::new_const(0.0);
 //! let result: Result<PositiveF64, FloatError> = a / ZERO;
 //! assert!(result.is_err());
-//! assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
+//! assert_eq!(result.unwrap_err(), FloatError::NaN);
 //! ```
 //!
 //! ## Option Type Arithmetic
@@ -552,7 +551,7 @@
 //! - Operations between `Result<T>` and concrete types automatically propagate errors
 //! - If either operand is `Err`, the error is forwarded directly
 //! - When both operands are `Ok`, the operation proceeds with normal validation
-//! - Division by zero is detected and returns `FloatError::DivisionByZero`
+//! - Division by zero returns `FloatError::NaN`
 //!
 //! This eliminates verbose error handling boilerplate in calculations that may fail.
 //!
@@ -580,7 +579,6 @@
 //! - `FloatError::PosInf` - Value is positive infinity
 //! - `FloatError::NegInf` - Value is negative infinity
 //! - `FloatError::OutOfRange` - Value is outside the valid range for the target type
-//! - `FloatError::DivisionByZero` - Division by zero occurred
 //! - `FloatError::NoneOperand` - Right-hand side operand is None in Option arithmetic
 //!
 //! ## Example: Error Handling
@@ -612,7 +610,7 @@
 //! let zero = PositiveF64::new(0.0).unwrap();
 //! let result: Result<PositiveF64, FloatError> = a / zero;
 //! assert!(result.is_err());
-//! assert_eq!(result.unwrap_err(), FloatError::DivisionByZero);
+//! assert_eq!(result.unwrap_err(), FloatError::NaN);
 //! ```
 //!
 //! ## Practical Example: Safe Division Function
