@@ -73,7 +73,7 @@ pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
 
-        // 使用辅助函数查找约束定义
+        // Use helper function to find constraint definition
         let constraint_def = find_constraint_def(config, &type_def.constraint_name);
 
         // Skip if no corresponding negation type

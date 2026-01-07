@@ -47,17 +47,18 @@ pub enum ArithmeticOp {
     Div,
 }
 
-/// 获取标准算术运算符定义数组
+/// Gets standard arithmetic operator definition array
 ///
-/// 包含四种基本算术运算（加、减、乘、除）及其对应的：
-/// - 运算符枚举
-/// - trait 名称（如 "Add"）
-/// - 方法名称（如 "add"）
-/// - 运算符符号（如 quote! { + }）
+/// Contains four basic arithmetic operations (addition, subtraction, multiplication, division)
+/// and their corresponding:
+/// - Operator enum
+/// - Trait name (e.g., "Add")
+/// - Method name (e.g., "add")
+/// - Operator symbol (e.g., quote! { + })
 ///
-/// # 返回值
+/// # Returns
 ///
-/// 返回一个包含所有标准算术运算定义的数组
+/// An array containing all standard arithmetic operation definitions
 pub fn get_standard_arithmetic_ops() -> [(
     ArithmeticOp,
     &'static str,

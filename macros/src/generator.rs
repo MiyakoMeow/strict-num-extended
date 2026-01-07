@@ -11,39 +11,39 @@ use crate::config::{ArithmeticOp, ArithmeticResult, ConstraintDef, TypeConfig};
 // Helper functions (shared by multiple modules)
 // ============================================================================
 
-/// 根据类型名和浮点类型生成类型别名标识符
+/// Generates type alias identifier from type name and floating-point type
 ///
-/// # 示例
+/// # Examples
 ///
 /// - `make_type_alias("Positive", "f32")` → `PositiveF32`
 /// - `make_type_alias("Negative", "f64")` → `NegativeF64`
 ///
-/// # 参数
+/// # Arguments
 ///
-/// * `type_name` - 类型名称（如 `Positive`, `Negative`）
-/// * `float_type` - 浮点类型（如 `f32`, `f64`）
+/// * `type_name` - Type name (e.g., `Positive`, `Negative`)
+/// * `float_type` - Floating-point type (e.g., `f32`, `f64`)
 ///
-/// # 返回值
+/// # Returns
 ///
-/// 组合后的类型别名标识符
+/// The combined type alias identifier
 pub fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
 }
 
-/// 根据约束名称查找约束定义
+/// Finds constraint definition by constraint name
 ///
-/// # 参数
+/// # Arguments
 ///
-/// * `config` - 类型配置
-/// * `constraint_name` - 约束名称（如 `Positive`, `Negative`）
+/// * `config` - Type configuration
+/// * `constraint_name` - Constraint name (e.g., `Positive`, `Negative`)
 ///
-/// # 返回值
+/// # Returns
 ///
-/// 找到的约束定义的引用
+/// Reference to the found constraint definition
 ///
 /// # Panics
 ///
-/// 如果找不到对应的约束定义，会 panic
+/// Panics if the corresponding constraint definition is not found
 pub fn find_constraint_def<'a>(
     config: &'a TypeConfig,
     constraint_name: &Ident,
@@ -55,18 +55,18 @@ pub fn find_constraint_def<'a>(
         .expect("Constraint not found")
 }
 
-/// 过滤包含指定浮点类型的约束类型
+/// Filters constraint types that include the specified floating-point type
 ///
-/// # 参数
+/// # Arguments
 ///
-/// * `config` - 类型配置
-/// * `float_type` - 浮点类型标识符（如 `f32`, `f64`）
+/// * `config` - Type configuration
+/// * `float_type` - Floating-point type identifier (e.g., `f32`, `f64`)
 ///
-/// # 返回值
+/// # Returns
 ///
-/// 包含该浮点类型的所有约束类型的集合
+/// Collection of all constraint types that include this floating-point type
 ///
-/// # 示例
+/// # Examples
 ///
 /// ```ignore
 /// let f32_types = filter_constraint_types_by_float(config, &format_ident!("f32"));
@@ -82,22 +82,22 @@ pub fn filter_constraint_types_by_float<'a>(
         .collect()
 }
 
-/// 为所有约束类型组合生成算术运算实现
+/// Generates arithmetic operation implementations for all constraint type combinations
 ///
-/// 这个函数封装了遍历 lhs × rhs × `float_types` 组合的通用逻辑，
-/// 并从预计算的算术结果表中查找结果类型。
+/// This function encapsulates the common logic of iterating through lhs × rhs × `float_types`
+/// combinations and looking up result types from the precomputed arithmetic results table.
 ///
-/// # 参数
+/// # Arguments
 ///
-/// * `config` - 类型配置
-/// * `ops` - 运算符定义数组，格式为 (运算符, trait名称, 方法名称, 运算符符号)
-/// * `impl_generator` - 用户提供的实现生成器函数
+/// * `config` - Type configuration
+/// * `ops` - Operator definition array, format: (operator, trait name, method name, operator symbol)
+/// * `impl_generator` - User-provided implementation generator function
 ///
-/// # 返回值
+/// # Returns
 ///
-/// 生成的所有算术运算实现的 `TokenStream`
+/// `TokenStream` of all generated arithmetic operation implementations
 ///
-/// # 示例
+/// # Examples
 ///
 /// ```ignore
 /// let ops = [
@@ -106,7 +106,7 @@ pub fn filter_constraint_types_by_float<'a>(
 /// ];
 ///
 /// generate_arithmetic_for_all_types(config, &ops, |lhs, rhs, output, trait_ident, method_ident, op_symbol, result, op| {
-///     // 生成具体的 trait 实现
+///     // Generate specific trait implementation
 ///     quote! {
 ///         impl #trait_ident for #lhs {
 ///             // ...
@@ -139,7 +139,7 @@ where
                 let trait_ident = Ident::new(trait_name, Span::call_site());
                 let method_ident = Ident::new(method_name, Span::call_site());
 
-                // 从预计算表中获取算术结果
+                // Get arithmetic result from precomputed table
                 let key = (
                     *op,
                     lhs_type.type_name.to_string(),

@@ -112,7 +112,7 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
     for float_type in &["f32", "f64"] {
         let float_ident = Ident::new(float_type, proc_macro2::Span::call_site());
 
-        // 使用辅助函数过滤包含该浮点类型的约束类型
+        // Use helper function to filter constraint types that include this float type
         let types = filter_constraint_types_by_float(config, &float_ident);
 
         // Generate From or TryFrom for each pair of types
@@ -133,7 +133,7 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
                     float_type.to_string().to_uppercase()
                 );
 
-                // 使用辅助函数查找约束定义
+                // Use helper function to find constraint definitions
                 let src_constraint = find_constraint_def(config, &src_type.constraint_name);
                 let dst_constraint = find_constraint_def(config, &dst_type.constraint_name);
 
