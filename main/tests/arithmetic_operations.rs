@@ -255,19 +255,18 @@ mod test_option_arithmetic {
     fn test_lhs_mul_option_rhs_some() {
         const A: PositiveF64 = PositiveF64::new_const(5.0);
         let b: Option<PositiveF64> = Some(PositiveF64::new_const(3.0));
-        let result: Result<Option<PositiveF64>, FloatError> = A * b;
+        let result: Result<PositiveF64, FloatError> = A * b;
         assert!(result.is_ok());
-        assert!(result.as_ref().unwrap().is_some());
-        assert_eq!(result.unwrap().unwrap().get(), 15.0);
+        assert_eq!(result.unwrap().get(), 15.0);
     }
 
     #[test]
     fn test_lhs_div_option_rhs_none() {
         const A: PositiveF64 = PositiveF64::new_const(15.0);
         let b: Option<PositiveF64> = None;
-        let result: Result<Option<PositiveF64>, FloatError> = A / b;
-        assert!(result.is_ok());
-        assert!(result.unwrap().is_none());
+        let result: Result<PositiveF64, FloatError> = A / b;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), FloatError::NoneOperand);
     }
 
     #[test]
@@ -282,11 +281,10 @@ mod test_option_arithmetic {
         assert!(result1.is_some());
 
         // Since result1 is Option<FinF64>, we can use map to chain with multiplication
-        // FinF64 * PositiveF64 is unsafe, returns Result<Option<FinF64>, FloatError>
-        let result2: Result<Option<FinF64>, FloatError> = result1.map(|x| x * c).unwrap();
+        // FinF64 * PositiveF64 is unsafe, returns Result<FinF64, FloatError>
+        let result2: Result<FinF64, FloatError> = result1.map(|x| x * c).unwrap();
         assert!(result2.is_ok());
-        assert!(result2.as_ref().unwrap().is_some());
-        assert_eq!(result2.unwrap().unwrap().get(), 24.0);
+        assert_eq!(result2.unwrap().get(), 24.0);
     }
 
     #[test]
@@ -311,33 +309,42 @@ mod test_option_arithmetic {
         let c: Option<PositiveF64> = Some(PositiveF64::new_const(2.0));
 
         // Note: We can't do (a / b) / c directly because of orphan rules
-        // Division is unsafe, returns Result<Option<Output>, FloatError>
-        let result: Result<Option<PositiveF64>, FloatError> = match (a, b, c) {
-            (Some(x), Some(y), Some(z)) => {
-                // x / y returns Result<PositiveF64, FloatError>
-                match x / y {
-                    Ok(quotient) => {
-                        // quotient / z returns Result<Option<PositiveF64>, FloatError>
-                        match quotient / z {
-                            Ok(inner_result) => Ok(Some(inner_result)),
-                            Err(e) => Err(e),
-                        }
-                    }
-                    Err(e) => Err(e),
-                }
-            }
-            (Some(x), Some(y), None) => {
-                // x / y returns Ok(...), then dividing by None gives Ok(None)
-                match x / y {
-                    Ok(_) => Ok(None),
-                    Err(e) => Err(e),
-                }
-            }
-            _ => Ok(None),
+        // Division is unsafe, returns Result<Output, FloatError>
+        let result: Result<PositiveF64, FloatError> = match (a, b, c) {
+            (Some(x), Some(y), Some(z)) => match x / y {
+                Ok(quotient) => quotient / z,
+                Err(e) => Err(e),
+            },
+            _ => Err(FloatError::NoneOperand),
         };
         assert!(result.is_ok());
-        assert!(result.as_ref().unwrap().is_some());
-        assert_eq!(result.unwrap().unwrap().get(), 5.0);
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_option_none_operand_error() {
+        const A: PositiveF64 = PositiveF64::new_const(5.0);
+        let b: Option<PositiveF64> = None;
+
+        // Test multiplication
+        let result_mul: Result<PositiveF64, FloatError> = A * b;
+        assert!(result_mul.is_err());
+        assert_eq!(result_mul.unwrap_err(), FloatError::NoneOperand);
+
+        // Test division
+        let result_div: Result<PositiveF64, FloatError> = A / b;
+        assert!(result_div.is_err());
+        assert_eq!(result_div.unwrap_err(), FloatError::NoneOperand);
+    }
+
+    #[test]
+    fn test_option_fallible_operation_with_error() {
+        const A: PositiveF64 = PositiveF64::new_const(1e308);
+        let b: Option<PositiveF64> = Some(PositiveF64::new_const(1e308));
+
+        // Overflow should still propagate correctly
+        let result: Result<PositiveF64, FloatError> = A + b;
+        assert!(result.is_err());
     }
 }
 

@@ -1,10 +1,29 @@
 //! Result type arithmetic operations module
 //!
-//! Generates arithmetic operations for Result<T, `FloatError`> types,
-//! supporting three combination patterns:
-//! 1. Lhs op Result<Rhs, `FloatError`>
-//! 2. Result<Lhs, `FloatError`> op Rhs
-//! 3. Result<Lhs, `FloatError`> op Result<Rhs, `FloatError`>
+//! Generates arithmetic operations for `Result<T, FloatError>` types, supporting:
+//! 1. `Lhs op Result<Rhs, FloatError>`
+//! 2. `Result<Lhs, FloatError> op Rhs`
+//!
+//! # Orphan Rule Limitations
+//!
+//! Due to Rust's orphan rule, the following pattern is **not implementable**:
+//! - `Neg for Result<T, E>` - Result type negation operation
+//!
+//! # Alternative for Result Negation
+//!
+//! Use the `.map()` method:
+//!
+//! ```text
+//! let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(5.0));
+//! let neg: Result<NegativeF64, FloatError> = a.map(|x| -x);
+//! assert!(neg.is_ok());
+//! assert_eq!(neg.unwrap().get(), -5.0);
+//!
+//! // Error propagation
+//! let err: Result<PositiveF64, FloatError> = Err(FloatError::NaN);
+//! let neg_err: Result<NegativeF64, FloatError> = err.map(|x| -x);
+//! assert!(neg_err.is_err());
+//! ```
 
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
