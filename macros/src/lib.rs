@@ -20,7 +20,7 @@ use comparison::generate_comparison_traits;
 use config::TypeConfig;
 use finite_float::generate_finite_float_struct;
 use float_conversion::{generate_as_f64_methods, generate_try_into_f32_methods};
-use result_arithmetic::{generate_result_arithmetic_impls, generate_result_neg_impls};
+use result_arithmetic::generate_result_arithmetic_impls;
 use types::{generate_new_const_methods, generate_type_aliases};
 
 /// Generates common definitions (Bounded struct and constants)

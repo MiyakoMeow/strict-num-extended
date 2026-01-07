@@ -83,8 +83,8 @@ where
 /// Generates arithmetic operations for Result types.
 ///
 /// Supports two patterns (pattern 3 violates orphan rule):
-/// 1. `Lhs op Result<Rhs, FloatError>` -> Result<Output, FloatError>
-/// 2. `Result<Lhs, FloatError> op Rhs` -> Result<Output, FloatError>
+/// 1. `Lhs op Result<Rhs, FloatError>` -> Result<Output, `FloatError`>
+/// 2. `Result<Lhs, FloatError> op Rhs` -> Result<Output, `FloatError`>
 ///
 /// Error propagation strategy:
 /// - Safe operations: wrap concrete result in Ok(...)
@@ -192,90 +192,4 @@ fn generate_pattern_result_lhs_op_rhs(
             }
         },
     )
-}
-
-/// Pattern 3: Result<Lhs, `FloatError`> op Result<Rhs, `FloatError`>
-fn generate_pattern_result_lhs_op_result_rhs(
-    config: &TypeConfig,
-    ops: &[(ArithmeticOp, &str, &str, TokenStream2)],
-) -> TokenStream2 {
-    generate_result_arithmetic_for_ops(
-        config,
-        ops,
-        |lhs_alias, rhs_alias, output_alias, trait_ident, method_ident, _op_symbol, result, _op| {
-            if result.is_safe {
-                // Safe operation: base returns concrete type, wrap in Ok
-                quote! {
-                    impl #trait_ident<Result<#rhs_alias, FloatError>> for Result<#lhs_alias, FloatError> {
-                        type Output = Result<#output_alias, FloatError>;
-
-                        fn #method_ident(self, rhs: Result<#rhs_alias, FloatError>) -> Self::Output {
-                            match (self, rhs) {
-                                (Ok(a), Ok(b)) => Ok(a.#method_ident(b)),
-                                (Err(e), _) | (_, Err(e)) => Err(e),
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Fallible operation: base returns Result, directly propagate
-                quote! {
-                    impl #trait_ident<Result<#rhs_alias, FloatError>> for Result<#lhs_alias, FloatError> {
-                        type Output = Result<#output_alias, FloatError>;
-
-                        fn #method_ident(self, rhs: Result<#rhs_alias, FloatError>) -> Self::Output {
-                            match (self, rhs) {
-                                (Ok(a), Ok(b)) => a.#method_ident(b),
-                                (Err(e), _) | (_, Err(e)) => Err(e),
-                            }
-                        }
-                    }
-                }
-            }
-        },
-    )
-}
-
-/// Generates unary negation operation implementations for Result types.
-///
-/// Generates `impl Neg for Result<T, FloatError>` for all types that support negation.
-pub fn generate_result_neg_impls(config: &TypeConfig) -> TokenStream2 {
-    let mut impls = Vec::new();
-
-    for type_def in &config.constraint_types {
-        let type_name = &type_def.type_name;
-
-        // Find the constraint definition
-        let Some(constraint_def) = config
-            .constraints
-            .iter()
-            .find(|c| c.name == type_def.constraint_name)
-        else {
-            continue;
-        };
-
-        // Skip if no corresponding negation type
-        let Some(neg_constraint_name) = &constraint_def.neg_constraint_name else {
-            continue;
-        };
-
-        for float_type in &type_def.float_types {
-            let type_alias = make_type_alias(type_name, float_type);
-            let neg_type_alias = make_type_alias(neg_constraint_name, float_type);
-
-            impls.push(quote! {
-                impl Neg for Result<#type_alias, FloatError> {
-                    type Output = Result<#neg_type_alias, FloatError>;
-
-                    fn neg(self) -> Self::Output {
-                        self.map(|a| -a)
-                    }
-                }
-            });
-        }
-    }
-
-    quote! {
-        #(#impls)*
-    }
 }

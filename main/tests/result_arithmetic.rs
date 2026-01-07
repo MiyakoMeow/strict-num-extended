@@ -1,6 +1,6 @@
 //! Result arithmetic operations tests
 //!
-//! Tests for type-safe arithmetic operations with Result<T, FloatError> types.
+//! Tests for type-safe arithmetic operations with Result<T, `FloatError`> types.
 
 // Strict floating-point comparisons, unwrap usage, and variable shadowing in test code are justified
 #![allow(clippy::unwrap_used, clippy::shadow_unrelated)]
@@ -125,7 +125,6 @@ mod test_concrete_lhs_result_rhs {
 }
 
 mod test_result_both_sides {
-    use super::*;
 
     // Note: Pattern 3 (Result op Result) violates orphan rule and is not implemented.
     // Users can use .and_then() or pattern matching instead:
@@ -133,7 +132,6 @@ mod test_result_both_sides {
 }
 
 mod test_result_negation {
-    use super::*;
 
     // Note: Result negation violates orphan rule and is not implemented.
     // Users can use .map() instead:
@@ -255,7 +253,7 @@ mod test_result_chaining {
         // ((a * b) + c) = ((5 * 3) + (-2)) = 13
         let step1 = a * b;
         assert!(step1.is_ok());
-        let result = step1.and_then(|val| Ok(val + c));
+        let result = step1.map(|val| val + c);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), 13.0);
     }
