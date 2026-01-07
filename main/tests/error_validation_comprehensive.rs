@@ -1,16 +1,16 @@
-//! 全面的错误验证测试
+//! Comprehensive error validation tests
 //!
-//! 测试目标:
-//! 1. 覆盖所有错误类型
-//! 2. 测试边界情况和特殊值
-//! 3. 验证错误消息准确性
-//! 4. 确保编译时和运行时一致性
+//! Test objectives:
+//! 1. Cover all error types
+//! 2. Test edge cases and special values
+//! 3. Verify error message accuracy
+//! 4. Ensure compile-time and runtime consistency
 
 #![allow(clippy::unwrap_used)]
 
 use strict_num_extended::*;
 
-// ========== NaN 错误测试 ==========
+// ========== NaN Error Tests ==========
 
 mod test_nan_errors {
     use super::*;
@@ -36,24 +36,24 @@ mod test_nan_errors {
 
     #[test]
     fn test_nan_in_all_types() {
-        // PositiveF64 应该拒绝 NaN
+        // PositiveF64 should reject NaN
         assert!(matches!(PositiveF64::new(f64::NAN), Err(FloatError::NaN)));
 
-        // NegativeF64 应该拒绝 NaN
+        // NegativeF64 should reject NaN
         assert!(matches!(NegativeF64::new(f64::NAN), Err(FloatError::NaN)));
 
-        // NonZeroF64 应该拒绝 NaN
+        // NonZeroF64 should reject NaN
         assert!(matches!(NonZeroF64::new(f64::NAN), Err(FloatError::NaN)));
 
-        // NormalizedF64 应该拒绝 NaN
+        // NormalizedF64 should reject NaN
         assert!(matches!(NormalizedF64::new(f64::NAN), Err(FloatError::NaN)));
 
-        // SymmetricF64 应该拒绝 NaN
+        // SymmetricF64 should reject NaN
         assert!(matches!(SymmetricF64::new(f64::NAN), Err(FloatError::NaN)));
     }
 }
 
-// ========== 无穷大错误测试 ==========
+// ========== Infinity Error Tests ==========
 
 mod test_infinity_errors {
     use super::*;
@@ -95,42 +95,42 @@ mod test_infinity_errors {
 
     #[test]
     fn test_overflow_infinity() {
-        // f32::MAX * 2.0 溢出产生 +∞
+        // f32::MAX * 2.0 overflows to +∞
         let overflow = f32::MAX * 2.0;
         assert!(matches!(FinF32::new(overflow), Err(FloatError::PosInf)));
 
-        // f32::MIN * 2.0 溢出产生 -∞
+        // f32::MIN * 2.0 underflows to -∞
         let underflow = f32::MIN * 2.0;
         assert!(matches!(FinF32::new(underflow), Err(FloatError::NegInf)));
     }
 
     #[test]
     fn test_infinity_in_all_types() {
-        // PositiveF64 应该拒绝 +∞
+        // PositiveF64 should reject +∞
         assert!(matches!(
             PositiveF64::new(f64::INFINITY),
             Err(FloatError::PosInf)
         ));
 
-        // NegativeF64 应该拒绝 -∞
+        // NegativeF64 should reject -∞
         assert!(matches!(
             NegativeF64::new(f64::NEG_INFINITY),
             Err(FloatError::NegInf)
         ));
 
-        // NonZeroF64 应该拒绝 +∞
+        // NonZeroF64 should reject +∞
         assert!(matches!(
             NonZeroF64::new(f64::INFINITY),
             Err(FloatError::PosInf)
         ));
 
-        // NormalizedF64 应该拒绝 +∞
+        // NormalizedF64 should reject +∞
         assert!(matches!(
             NormalizedF64::new(f64::INFINITY),
             Err(FloatError::PosInf)
         ));
 
-        // SymmetricF64 应该拒绝 +∞
+        // SymmetricF64 should reject +∞
         assert!(matches!(
             SymmetricF64::new(f64::INFINITY),
             Err(FloatError::PosInf)
@@ -138,22 +138,22 @@ mod test_infinity_errors {
     }
 }
 
-// ========== 零值变体测试 ==========
+// ========== Zero Variant Tests ==========
 
 mod test_zero_variants {
     use super::*;
 
     #[test]
     fn test_positive_zero() {
-        // Positive 应该接受 +0.0
+        // Positive should accept +0.0
         assert!(PositiveF32::new(0.0).is_ok());
         assert!(PositiveF64::new(0.0).is_ok());
 
-        // Negative 应该接受 +0.0
+        // Negative should accept +0.0
         assert!(NegativeF32::new(0.0).is_ok());
         assert!(NegativeF64::new(0.0).is_ok());
 
-        // NonZero 应该拒绝 +0.0
+        // NonZero should reject +0.0
         assert!(matches!(NonZeroF32::new(0.0), Err(FloatError::OutOfRange)));
         assert!(matches!(NonZeroF64::new(0.0), Err(FloatError::OutOfRange)));
     }
@@ -164,22 +164,22 @@ mod test_zero_variants {
         assert_eq!(-0.0f32, 0.0f32);
         assert_eq!(-0.0f64, 0.0f64);
 
-        // Positive 应该接受 -0.0（因为 -0.0 == 0.0）
+        // Positive should accept -0.0 (since -0.0 == 0.0)
         assert!(PositiveF32::new(-0.0).is_ok());
         assert!(PositiveF64::new(-0.0).is_ok());
 
-        // Negative 应该接受 -0.0
+        // Negative should accept -0.0
         assert!(NegativeF32::new(-0.0).is_ok());
         assert!(NegativeF64::new(-0.0).is_ok());
 
-        // NonZero 应该拒绝 -0.0（因为 -0.0 == 0.0，而 val != 0.0 为 false）
+        // NonZero should reject -0.0 (since -0.0 == 0.0, and val != 0.0 is false)
         assert!(matches!(NonZeroF32::new(-0.0), Err(FloatError::OutOfRange)));
         assert!(matches!(NonZeroF64::new(-0.0), Err(FloatError::OutOfRange)));
     }
 
     #[test]
     fn test_zero_equality() {
-        // 验证 +0.0 和 -0.0 在类型中是相等的
+        // Verify that +0.0 and -0.0 are equal within the type
         let pos_zero = PositiveF32::new(0.0).unwrap();
         let neg_zero = PositiveF32::new(-0.0).unwrap();
         assert_eq!(pos_zero.get(), neg_zero.get());
@@ -187,7 +187,7 @@ mod test_zero_variants {
 
     #[test]
     fn test_nonzero_rejects_both_zeros() {
-        // NonZeroPositive 应该拒绝 +0.0 和 -0.0
+        // NonZeroPositive should reject both +0.0 and -0.0
         assert!(matches!(
             NonZeroPositiveF32::new(0.0),
             Err(FloatError::OutOfRange)
@@ -208,7 +208,7 @@ mod test_zero_variants {
     }
 }
 
-// ========== 除零错误测试 ==========
+// ========== Division by Zero Error Tests ==========
 
 mod test_division_by_zero_errors {
     use super::*;
@@ -225,7 +225,7 @@ mod test_division_by_zero_errors {
     #[test]
     fn test_division_by_negative_zero() {
         let a = PositiveF64::new(10.0).unwrap();
-        // 使用 unsafe 创建 -0.0
+        // Use unsafe to create -0.0
         let zero_neg = unsafe { PositiveF64::new_unchecked(-0.0) };
 
         let result = a / zero_neg;
@@ -250,7 +250,8 @@ mod test_division_by_zero_errors {
 
     #[test]
     fn test_nonzero_types_no_division_by_zero() {
-        // NonZero 类型理论上不会除零，因为零值在创建时就被拒绝了
+        // NonZero types theoretically cannot divide by zero, since zero values
+        // are rejected at creation time
         let a = PositiveF64::new(10.0).unwrap();
         let b = NonZeroPositiveF64::new(2.0).unwrap();
 
@@ -260,14 +261,14 @@ mod test_division_by_zero_errors {
     }
 }
 
-// ========== 精度损失测试 ==========
+// ========== Precision Loss Tests ==========
 
 mod test_precision_loss {
     use super::*;
 
     #[test]
     fn test_exact_conversion() {
-        // 整数和简单分数应该精确转换
+        // Integers and simple fractions should convert exactly
         assert!(FinF64::new(3.0).unwrap().try_into_f32().is_ok());
         assert!(FinF64::new(0.5).unwrap().try_into_f32().is_ok());
         assert!(FinF64::new(-1.5).unwrap().try_into_f32().is_ok());
@@ -276,40 +277,40 @@ mod test_precision_loss {
 
     #[test]
     fn test_precision_loss_detection() {
-        // 高精度小数会损失精度
+        // High-precision decimals lose precision
         let precise = FinF64::new(1.234_567_890_123_456_7).unwrap();
         assert!(precise.try_into_f32().is_err());
 
-        // 验证返回的错误类型
+        // Verify the returned error type
         let result = precise.try_into_f32();
         assert!(matches!(result, Err(FloatError::OutOfRange)));
     }
 
     #[test]
     fn test_range_overflow() {
-        // 超出 f32 范围的大数
+        // Large numbers outside f32 range
         let huge = FinF64::new(1e40).unwrap();
         assert!(huge.try_into_f32().is_err());
 
-        // 验证返回的错误类型
+        // Verify the returned error type
         let result = huge.try_into_f32();
         assert!(matches!(result, Err(FloatError::OutOfRange)));
     }
 
     #[test]
     fn test_range_underflow() {
-        // 超出 f32 范围的小数（负数大数）
+        // Small numbers outside f32 range (negative large numbers)
         let tiny = FinF64::new(-1e40).unwrap();
         assert!(tiny.try_into_f32().is_err());
 
-        // 验证返回的错误类型
+        // Verify the returned error type
         let result = tiny.try_into_f32();
         assert!(matches!(result, Err(FloatError::OutOfRange)));
     }
 
     #[test]
     fn test_roundtrip_conversion() {
-        // 精确值应该能够往返转换
+        // Exact values should be able to round-trip
         let val_f64 = FinF64::new(2.5).unwrap();
         let val_f32 = val_f64.try_into_f32().unwrap();
         let back_f64: FinF64 = val_f32.into();
@@ -318,28 +319,28 @@ mod test_precision_loss {
 
     #[test]
     fn test_pi_conversion() {
-        // f64::π 转换到 f32 会损失精度
+        // f64::π to f32 conversion loses precision
         let pi_f64 = FinF64::new(std::f64::consts::PI).unwrap();
         assert!(pi_f64.try_into_f32().is_err());
 
-        // f32::π 本身是有效的（不需要转换）
+        // f32::π itself is valid (no conversion needed)
         let pi_f32 = FinF32::new(std::f32::consts::PI).unwrap();
         assert!(pi_f32.get().is_finite());
     }
 
     #[test]
     fn test_f32_boundary_conversion() {
-        // f32::MAX 可以精确转换
+        // f32::MAX can convert exactly
         let max = FinF64::new(f32::MAX as f64).unwrap();
         assert!(max.try_into_f32().is_ok());
 
-        // f32::MIN 可以精确转换
+        // f32::MIN can convert exactly
         let min = FinF64::new(f32::MIN as f64).unwrap();
         assert!(min.try_into_f32().is_ok());
     }
 }
 
-// ========== 溢出/下溢测试 ==========
+// ========== Overflow/Underflow Tests ==========
 
 mod test_overflow_underflow {
     use super::*;
@@ -350,7 +351,7 @@ mod test_overflow_underflow {
         let b = PositiveF64::new(1e308).unwrap();
 
         let result = a + b;
-        // 应该返回 PosInf 错误
+        // Should return PosInf error
         assert!(matches!(result, Err(FloatError::PosInf)));
     }
 
@@ -359,9 +360,9 @@ mod test_overflow_underflow {
         let a = NegativeF64::new(-1e308).unwrap();
         let b = PositiveF64::new(1e308).unwrap();
 
-        // Negative - Positive 结果类型是 Fin（通过运算符重载推导）
+        // Negative - Positive result type is Fin (deduced via operator overloading)
         let result = a - b;
-        // 应该返回 NegInf 错误
+        // Should return NegInf error
         assert!(matches!(result, Err(FloatError::NegInf)));
     }
 
@@ -371,24 +372,24 @@ mod test_overflow_underflow {
         let b = PositiveF64::new(1e200).unwrap();
 
         let result = a * b;
-        // 应该返回 PosInf 错误
+        // Should return PosInf error
         assert!(matches!(result, Err(FloatError::PosInf)));
     }
 
     #[test]
     fn test_f32_overflow() {
-        // f32 版本的溢出测试
-        // f32::MAX 约 3.4e38，使用足够大的值导致溢出
+        // f32 version of overflow test
+        // f32::MAX ≈ 3.4e38, use large enough values to cause overflow
         let a = PositiveF32::new(2e38).unwrap();
         let b = PositiveF32::new(2e38).unwrap();
 
         let result = a + b;
-        // 2e38 + 2e38 = 4e38 > f32::MAX，应该溢出
+        // 2e38 + 2e38 = 4e38 > f32::MAX, should overflow
         assert!(matches!(result, Err(FloatError::PosInf)));
     }
 }
 
-// ========== 边界值测试 ==========
+// ========== Boundary Value Tests ==========
 
 mod test_boundary_values {
     use super::*;
@@ -425,7 +426,7 @@ mod test_boundary_values {
 
     #[test]
     fn test_finite_boundaries() {
-        // Fin 应该接受所有有限值
+        // Fin should accept all finite values
         assert!(FinF32::new(f32::MIN).is_ok());
         assert!(FinF32::new(f32::MAX).is_ok());
         assert!(FinF64::new(f64::MIN).is_ok());
@@ -464,7 +465,7 @@ mod test_boundary_values {
     }
 }
 
-// ========== 错误消息测试 ==========
+// ========== Error Message Tests ==========
 
 mod test_error_messages {
     use super::*;
@@ -508,7 +509,7 @@ mod test_error_messages {
     }
 }
 
-// ========== NoneOperand 错误测试 ==========
+// ========== NoneOperand Error Tests ==========
 
 mod test_none_operand_errors {
     use super::*;
@@ -518,16 +519,16 @@ mod test_none_operand_errors {
         const A: PositiveF64 = PositiveF64::new_const(5.0);
         let none: Option<NegativeF64> = None;
 
-        // 加法（安全操作）返回 None
+        // Addition (safe operation) returns None
         let add_result: Option<FinF64> = A + none;
         assert!(add_result.is_none());
 
-        // 乘法（危险操作）返回 Err
+        // Multiplication (fallible operation) returns Err
         let none_pos: Option<PositiveF64> = None;
         let mul_result: Result<PositiveF64, FloatError> = A * none_pos;
         assert!(matches!(mul_result, Err(FloatError::NoneOperand)));
 
-        // 除法（危险操作）返回 Err
+        // Division (fallible operation) returns Err
         let div_result: Result<PositiveF64, FloatError> = A / none_pos;
         assert!(matches!(div_result, Err(FloatError::NoneOperand)));
     }
@@ -549,31 +550,31 @@ mod test_none_operand_errors {
     }
 }
 
-// ========== TryFrom 一致性测试 ==========
+// ========== TryFrom Consistency Tests ==========
 
 mod test_tryfrom_consistency {
     use super::*;
 
     #[test]
     fn test_try_from_primitive_consistency() {
-        // TryFrom<f32> 应该与 new() 返回相同的错误
+        // TryFrom<f32> should return the same error as new()
         let result_new = PositiveF32::new(-1.0);
         let result_try: Result<PositiveF32, _> = PositiveF32::try_from(-1.0f32);
 
         match (result_new, result_try) {
             (Err(FloatError::OutOfRange), Err(FloatError::OutOfRange)) => {}
-            _ => panic!("TryFrom 和 new() 应该返回相同的错误类型"),
+            _ => panic!("TryFrom and new() should return the same error type"),
         }
     }
 
     #[test]
     fn test_try_from_f64_to_f32_consistency() {
-        // TryFrom<f32> for F32 类型应该调用 new() 并返回相同的错误
-        // 使用 f32::MAX，这是一个有效值
+        // TryFrom<f32> for F32 types should call new() and return the same error
+        // Use f32::MAX, which is a valid value
         let result_new = PositiveF32::new(f32::MAX);
         let result_try: Result<PositiveF32, _> = PositiveF32::try_from(f32::MAX);
 
-        // 两者都应该成功
+        // Both should succeed
         assert!(result_new.is_ok());
         assert!(result_try.is_ok());
     }
