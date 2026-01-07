@@ -71,86 +71,18 @@
 //! // Or use combinators from libraries like itertools
 //! ```
 
-use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
-use quote::{format_ident, quote};
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 
-use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
-
-/// Generates type alias identifier
-fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
-    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
-}
-
-/// Generates Option arithmetic operation implementations for given operators
-fn generate_option_arithmetic_for_ops<F>(
-    config: &TypeConfig,
-    ops: &[(ArithmeticOp, &str, &str, TokenStream2)],
-    mut impl_generator: F,
-) -> TokenStream2
-where
-    F: FnMut(
-        Ident,
-        Ident,
-        Ident,
-        Ident,
-        Ident,
-        TokenStream2,
-        &ArithmeticResult,
-        ArithmeticOp,
-    ) -> TokenStream2,
-{
-    let mut impls = Vec::new();
-
-    for lhs_type in &config.constraint_types {
-        for rhs_type in &config.constraint_types {
-            for (op, trait_name, method_name, op_symbol) in ops {
-                let trait_ident = Ident::new(trait_name, Span::call_site());
-                let method_ident = Ident::new(method_name, Span::call_site());
-
-                // Get arithmetic result from precomputed table
-                let key = (
-                    *op,
-                    lhs_type.type_name.to_string(),
-                    rhs_type.type_name.to_string(),
-                );
-                let result = config
-                    .arithmetic_results
-                    .get(&key)
-                    .expect("Arithmetic result not found");
-
-                for float_type in &lhs_type.float_types {
-                    let lhs_alias = make_type_alias(&lhs_type.type_name, float_type);
-                    let rhs_alias = make_type_alias(&rhs_type.type_name, float_type);
-                    let output_alias = make_type_alias(&result.output_type, float_type);
-
-                    let impl_code = impl_generator(
-                        lhs_alias,
-                        rhs_alias,
-                        output_alias,
-                        trait_ident.clone(),
-                        method_ident.clone(),
-                        op_symbol.clone(),
-                        result,
-                        *op,
-                    );
-
-                    impls.push(impl_code);
-                }
-            }
-        }
-    }
-
-    quote! {
-        #(#impls)*
-    }
-}
+use crate::config::{ArithmeticOp, TypeConfig, get_standard_arithmetic_ops};
+use crate::generator::generate_arithmetic_for_all_types;
 
 /// Generates `Lhs op Option<Rhs>` pattern arithmetic operation implementations
 fn generate_pattern_lhs_op_option_rhs(
     config: &TypeConfig,
     ops: &[(ArithmeticOp, &str, &str, TokenStream2)],
 ) -> TokenStream2 {
-    generate_option_arithmetic_for_ops(
+    generate_arithmetic_for_all_types(
         config,
         ops,
         |lhs_alias, rhs_alias, output_alias, trait_ident, method_ident, _op_symbol, result, _op| {
@@ -252,12 +184,6 @@ fn generate_pattern_lhs_op_option_rhs(
 /// assert_eq!(result.unwrap_err(), FloatError::NoneOperand);
 /// ```
 pub fn generate_option_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
-    let ops = [
-        (ArithmeticOp::Add, "Add", "add", quote! { + }),
-        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
-        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
-        (ArithmeticOp::Div, "Div", "div", quote! { / }),
-    ];
-
+    let ops = get_standard_arithmetic_ops();
     generate_pattern_lhs_op_option_rhs(config, &ops)
 }

@@ -3,10 +3,11 @@
 //! Automatically generates standard library trait implementations for all type conversions
 
 use crate::config::TypeConfig;
-use crate::generator::for_all_constraint_float_types;
+use crate::generator::{
+    filter_constraint_types_by_float, find_constraint_def, for_all_constraint_float_types,
+};
 use proc_macro2::Ident;
-use quote::format_ident;
-use quote::quote;
+use quote::{format_ident, quote};
 
 /// Generate all From/TryFrom implementations
 pub fn generate_conversion_traits(config: &TypeConfig) -> proc_macro2::TokenStream {
@@ -111,12 +112,8 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
     for float_type in &["f32", "f64"] {
         let float_ident = Ident::new(float_type, proc_macro2::Span::call_site());
 
-        // Collect all constraint types for this float type
-        let types: Vec<_> = config
-            .constraint_types
-            .iter()
-            .filter(|tt| tt.float_types.contains(&float_ident))
-            .collect();
+        // Use helper function to filter constraint types that include this float type
+        let types = filter_constraint_types_by_float(config, &float_ident);
 
         // Generate From or TryFrom for each pair of types
         for src_type in &types {
@@ -136,17 +133,9 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
                     float_type.to_string().to_uppercase()
                 );
 
-                // Find constraint definitions
-                let src_constraint = config
-                    .constraints
-                    .iter()
-                    .find(|c| c.name.eq(&src_type.constraint_name))
-                    .expect("Source constraint not found");
-                let dst_constraint = config
-                    .constraints
-                    .iter()
-                    .find(|c| c.name.eq(&dst_type.constraint_name))
-                    .expect("Destination constraint not found");
+                // Use helper function to find constraint definitions
+                let src_constraint = find_constraint_def(config, &src_type.constraint_name);
+                let dst_constraint = find_constraint_def(config, &dst_type.constraint_name);
 
                 // Check if subset relationship
                 let is_safe = is_subset_constraint(

@@ -1,15 +1,9 @@
 //! Type aliases and constant construction methods module
 
-use proc_macro2::Ident;
-use quote::{format_ident, quote};
+use quote::quote;
 
 use crate::config::TypeConfig;
-use crate::generator::{build_validation_expr, for_all_constraint_float_types};
-
-/// Generates type alias identifier for type and floating-point type
-fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
-    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
-}
+use crate::generator::{build_validation_expr, for_all_constraint_float_types, make_type_alias};
 
 /// Generates type aliases.
 pub fn generate_type_aliases(config: &TypeConfig) -> proc_macro2::TokenStream {

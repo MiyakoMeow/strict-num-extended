@@ -2,14 +2,180 @@
 //!
 //! Contains helper functions and re-exports all code generation functionality.
 
-use proc_macro2::{Ident, TokenStream as TokenStream2};
-use quote::quote;
+use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
+use quote::{format_ident, quote};
 
-use crate::config::{ConstraintDef, TypeConfig};
+use crate::config::{ArithmeticOp, ArithmeticResult, ConstraintDef, TypeConfig};
 
 // ============================================================================
 // Helper functions (shared by multiple modules)
 // ============================================================================
+
+/// Generates type alias identifier from type name and floating-point type
+///
+/// # Examples
+///
+/// - `make_type_alias("Positive", "f32")` → `PositiveF32`
+/// - `make_type_alias("Negative", "f64")` → `NegativeF64`
+///
+/// # Arguments
+///
+/// * `type_name` - Type name (e.g., `Positive`, `Negative`)
+/// * `float_type` - Floating-point type (e.g., `f32`, `f64`)
+///
+/// # Returns
+///
+/// The combined type alias identifier
+pub fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
+    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
+}
+
+/// Finds constraint definition by constraint name
+///
+/// # Arguments
+///
+/// * `config` - Type configuration
+/// * `constraint_name` - Constraint name (e.g., `Positive`, `Negative`)
+///
+/// # Returns
+///
+/// Reference to the found constraint definition
+///
+/// # Panics
+///
+/// Panics if the corresponding constraint definition is not found
+pub fn find_constraint_def<'a>(
+    config: &'a TypeConfig,
+    constraint_name: &Ident,
+) -> &'a ConstraintDef {
+    config
+        .constraints
+        .iter()
+        .find(|c| &c.name == constraint_name)
+        .expect("Constraint not found")
+}
+
+/// Filters constraint types that include the specified floating-point type
+///
+/// # Arguments
+///
+/// * `config` - Type configuration
+/// * `float_type` - Floating-point type identifier (e.g., `f32`, `f64`)
+///
+/// # Returns
+///
+/// Collection of all constraint types that include this floating-point type
+///
+/// # Examples
+///
+/// ```ignore
+/// let f32_types = filter_constraint_types_by_float(config, &format_ident!("f32"));
+/// ```
+pub fn filter_constraint_types_by_float<'a>(
+    config: &'a TypeConfig,
+    float_type: &Ident,
+) -> Vec<&'a crate::config::TypeDef> {
+    config
+        .constraint_types
+        .iter()
+        .filter(|tt| tt.float_types.contains(float_type))
+        .collect()
+}
+
+/// Generates arithmetic operation implementations for all constraint type combinations
+///
+/// This function encapsulates the common logic of iterating through lhs × rhs × `float_types`
+/// combinations and looking up result types from the precomputed arithmetic results table.
+///
+/// # Arguments
+///
+/// * `config` - Type configuration
+/// * `ops` - Operator definition array, format: (operator, trait name, method name, operator symbol)
+/// * `impl_generator` - User-provided implementation generator function
+///
+/// # Returns
+///
+/// `TokenStream` of all generated arithmetic operation implementations
+///
+/// # Examples
+///
+/// ```ignore
+/// let ops = [
+///     (ArithmeticOp::Add, "Add", "add", quote! { + }),
+///     (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
+/// ];
+///
+/// generate_arithmetic_for_all_types(config, &ops, |lhs, rhs, output, trait_ident, method_ident, op_symbol, result, op| {
+///     // Generate specific trait implementation
+///     quote! {
+///         impl #trait_ident for #lhs {
+///             // ...
+///         }
+///     }
+/// })
+/// ```
+pub fn generate_arithmetic_for_all_types<F>(
+    config: &TypeConfig,
+    ops: &[(ArithmeticOp, &str, &str, TokenStream2)],
+    mut impl_generator: F,
+) -> TokenStream2
+where
+    F: FnMut(
+        Ident,
+        Ident,
+        Ident,
+        Ident,
+        Ident,
+        TokenStream2,
+        &ArithmeticResult,
+        ArithmeticOp,
+    ) -> TokenStream2,
+{
+    let mut impls = Vec::new();
+
+    for lhs_type in &config.constraint_types {
+        for rhs_type in &config.constraint_types {
+            for (op, trait_name, method_name, op_symbol) in ops {
+                let trait_ident = Ident::new(trait_name, Span::call_site());
+                let method_ident = Ident::new(method_name, Span::call_site());
+
+                // Get arithmetic result from precomputed table
+                let key = (
+                    *op,
+                    lhs_type.type_name.to_string(),
+                    rhs_type.type_name.to_string(),
+                );
+                let result = config
+                    .arithmetic_results
+                    .get(&key)
+                    .expect("Arithmetic result not found");
+
+                for float_type in &lhs_type.float_types {
+                    let lhs_alias = make_type_alias(&lhs_type.type_name, float_type);
+                    let rhs_alias = make_type_alias(&rhs_type.type_name, float_type);
+                    let output_alias = make_type_alias(&result.output_type, float_type);
+
+                    let impl_code = impl_generator(
+                        lhs_alias,
+                        rhs_alias,
+                        output_alias,
+                        trait_ident.clone(),
+                        method_ident.clone(),
+                        op_symbol.clone(),
+                        result,
+                        *op,
+                    );
+
+                    impls.push(impl_code);
+                }
+            }
+        }
+    }
+
+    quote! {
+        #(#impls)*
+    }
+}
 
 /// Iterate over all constraint types and float types, generating code for each combination.
 ///

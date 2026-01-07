@@ -1,10 +1,9 @@
 //! F32/F64 conversion method generator module
 
-use proc_macro2::Ident;
 use quote::{format_ident, quote};
 
 use crate::config::TypeConfig;
-use crate::generator::for_all_constraint_float_types;
+use crate::generator::{for_all_constraint_float_types, make_type_alias};
 
 /// Generates `try_into_f32` methods for all XXXF64 types
 pub fn generate_try_into_f32_methods(config: &TypeConfig) -> proc_macro2::TokenStream {
@@ -93,9 +92,4 @@ pub fn generate_as_f64_methods(config: &TypeConfig) -> proc_macro2::TokenStream 
     quote! {
         #(#impls)*
     }
-}
-
-/// Generates type alias identifier for a type and floating-point type
-fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
-    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
 }

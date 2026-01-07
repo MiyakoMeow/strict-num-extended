@@ -5,23 +5,11 @@
 //! - `signum()`: Sign function that always returns Symmetric type
 
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
-use quote::{format_ident, quote};
+use quote::quote;
 
-use crate::config::{ConstraintDef, TypeConfig};
-
-/// Generates type alias identifier for type and floating-point type
-fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
-    format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
-}
-
-/// Finds constraint definition by type name
-fn find_constraint_def<'a>(config: &'a TypeConfig, type_name: &Ident) -> &'a ConstraintDef {
-    config
-        .constraints
-        .iter()
-        .find(|c| &c.name == type_name)
-        .expect("Constraint not found")
-}
+use crate::config::ConstraintDef;
+use crate::config::TypeConfig;
+use crate::generator::{find_constraint_def, make_type_alias};
 
 /// Checks if bounds represent Symmetric type [-1, 1]
 fn is_symmetric_bounds(constraint_def: &ConstraintDef) -> bool {

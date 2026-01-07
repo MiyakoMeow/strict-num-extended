@@ -47,6 +47,34 @@ pub enum ArithmeticOp {
     Div,
 }
 
+/// Gets standard arithmetic operator definition array
+///
+/// Contains four basic arithmetic operations (addition, subtraction, multiplication, division)
+/// and their corresponding:
+/// - Operator enum
+/// - Trait name (e.g., "Add")
+/// - Method name (e.g., "add")
+/// - Operator symbol (e.g., quote! { + })
+///
+/// # Returns
+///
+/// An array containing all standard arithmetic operation definitions
+pub fn get_standard_arithmetic_ops() -> [(
+    ArithmeticOp,
+    &'static str,
+    &'static str,
+    proc_macro2::TokenStream,
+); 4] {
+    use quote::quote;
+
+    [
+        (ArithmeticOp::Add, "Add", "add", quote! { + }),
+        (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
+        (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
+        (ArithmeticOp::Div, "Div", "div", quote! { / }),
+    ]
+}
+
 /// Result of arithmetic operation type inference.
 #[derive(Debug, Clone)]
 pub struct ArithmeticResult {
