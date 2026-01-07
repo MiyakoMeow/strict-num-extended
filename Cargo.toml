@@ -24,6 +24,10 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 
+# External optional dependencies
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+
 [workspace.lints.rust]
 missing_docs = "warn"
 unused_crate_dependencies = "allow"

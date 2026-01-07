@@ -7,6 +7,7 @@ pub fn generate_finite_float_struct() -> proc_macro2::TokenStream {
     quote! {
         /// Generic finite floating-point structure
         #[derive(Clone, Copy)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct FiniteFloat<T, B> {
             value: T,
             _marker: PhantomData<B>,
