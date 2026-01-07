@@ -3,10 +3,9 @@
 //! Automatically generates standard library trait implementations for all type conversions
 
 use crate::config::TypeConfig;
-use crate::generator::for_all_constraint_float_types;
+use crate::generator::{find_constraint_def, for_all_constraint_float_types};
 use proc_macro2::Ident;
-use quote::format_ident;
-use quote::quote;
+use quote::{format_ident, quote};
 
 /// Generate all From/TryFrom implementations
 pub fn generate_conversion_traits(config: &TypeConfig) -> proc_macro2::TokenStream {
@@ -136,17 +135,9 @@ fn generate_constraint_to_constraint_traits(config: &TypeConfig) -> proc_macro2:
                     float_type.to_string().to_uppercase()
                 );
 
-                // Find constraint definitions
-                let src_constraint = config
-                    .constraints
-                    .iter()
-                    .find(|c| c.name.eq(&src_type.constraint_name))
-                    .expect("Source constraint not found");
-                let dst_constraint = config
-                    .constraints
-                    .iter()
-                    .find(|c| c.name.eq(&dst_type.constraint_name))
-                    .expect("Destination constraint not found");
+                // 使用辅助函数查找约束定义
+                let src_constraint = find_constraint_def(config, &src_type.constraint_name);
+                let dst_constraint = find_constraint_def(config, &dst_type.constraint_name);
 
                 // Check if subset relationship
                 let is_safe = is_subset_constraint(

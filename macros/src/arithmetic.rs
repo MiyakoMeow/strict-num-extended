@@ -1,74 +1,10 @@
 //! Arithmetic operations module
 
-use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
-use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig};
-use crate::generator::make_type_alias;
-
-/// Generates arithmetic operations for given ops using a generator function.
-fn generate_arithmetic_for_ops<F>(
-    config: &TypeConfig,
-    ops: &[(ArithmeticOp, &str, &str, TokenStream2)],
-    mut impl_generator: F,
-) -> TokenStream2
-where
-    F: FnMut(
-        Ident,
-        Ident,
-        Ident,
-        Ident,
-        Ident,
-        TokenStream2,
-        &ArithmeticResult,
-        ArithmeticOp,
-    ) -> TokenStream2,
-{
-    let mut impls = Vec::new();
-
-    for lhs_type in &config.constraint_types {
-        for rhs_type in &config.constraint_types {
-            for (op, trait_name, method_name, op_symbol) in ops {
-                let trait_ident = Ident::new(trait_name, Span::call_site());
-                let method_ident = Ident::new(method_name, Span::call_site());
-
-                // Get the arithmetic result from the precomputed table
-                let key = (
-                    *op,
-                    lhs_type.type_name.to_string(),
-                    rhs_type.type_name.to_string(),
-                );
-                let result = config
-                    .arithmetic_results
-                    .get(&key)
-                    .expect("Arithmetic result not found");
-
-                for float_type in &lhs_type.float_types {
-                    let lhs_alias = make_type_alias(&lhs_type.type_name, float_type);
-                    let rhs_alias = make_type_alias(&rhs_type.type_name, float_type);
-                    let output_alias = make_type_alias(&result.output_type, float_type);
-
-                    let impl_code = impl_generator(
-                        lhs_alias,
-                        rhs_alias,
-                        output_alias,
-                        trait_ident.clone(),
-                        method_ident.clone(),
-                        op_symbol.clone(),
-                        result,
-                        *op,
-                    );
-
-                    impls.push(impl_code);
-                }
-            }
-        }
-    }
-
-    quote! {
-        #(#impls)*
-    }
-}
+use crate::config::{ArithmeticOp, TypeConfig};
+use crate::generator::{find_constraint_def, generate_arithmetic_for_all_types, make_type_alias};
 
 /// Generates type-safe arithmetic operation implementations.
 ///
@@ -82,7 +18,7 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
         (ArithmeticOp::Div, "Div", "div", quote! { / }),
     ];
 
-    generate_arithmetic_for_ops(
+    generate_arithmetic_for_all_types(
         config,
         &ops,
         |lhs_alias, rhs_alias, output_alias, trait_ident, method_ident, op_symbol, result, op| {
@@ -142,14 +78,8 @@ pub fn generate_neg_impls(config: &TypeConfig) -> TokenStream2 {
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
 
-        // Find the constraint definition
-        let Some(constraint_def) = config
-            .constraints
-            .iter()
-            .find(|c| c.name == type_def.constraint_name)
-        else {
-            continue;
-        };
+        // 使用辅助函数查找约束定义
+        let constraint_def = find_constraint_def(config, &type_def.constraint_name);
 
         // Skip if no corresponding negation type
         let Some(neg_constraint_name) = &constraint_def.neg_constraint_name else {

@@ -2,10 +2,10 @@
 //!
 //! Contains helper functions and re-exports all code generation functionality.
 
-use proc_macro2::{Ident, TokenStream as TokenStream2};
+use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 
-use crate::config::{ConstraintDef, TypeConfig};
+use crate::config::{ArithmeticOp, ArithmeticResult, ConstraintDef, TypeConfig};
 
 // ============================================================================
 // Helper functions (shared by multiple modules)
@@ -28,6 +28,126 @@ use crate::config::{ConstraintDef, TypeConfig};
 /// 组合后的类型别名标识符
 pub fn make_type_alias(type_name: &Ident, float_type: &Ident) -> Ident {
     format_ident!("{}{}", type_name, float_type.to_string().to_uppercase())
+}
+
+/// 根据约束名称查找约束定义
+///
+/// # 参数
+///
+/// * `config` - 类型配置
+/// * `constraint_name` - 约束名称（如 `Positive`, `Negative`）
+///
+/// # 返回值
+///
+/// 找到的约束定义的引用
+///
+/// # Panics
+///
+/// 如果找不到对应的约束定义，会 panic
+pub fn find_constraint_def<'a>(
+    config: &'a TypeConfig,
+    constraint_name: &Ident,
+) -> &'a ConstraintDef {
+    config
+        .constraints
+        .iter()
+        .find(|c| &c.name == constraint_name)
+        .expect("Constraint not found")
+}
+
+/// 为所有约束类型组合生成算术运算实现
+///
+/// 这个函数封装了遍历 lhs × rhs × `float_types` 组合的通用逻辑，
+/// 并从预计算的算术结果表中查找结果类型。
+///
+/// # 参数
+///
+/// * `config` - 类型配置
+/// * `ops` - 运算符定义数组，格式为 (运算符, trait名称, 方法名称, 运算符符号)
+/// * `impl_generator` - 用户提供的实现生成器函数
+///
+/// # 返回值
+///
+/// 生成的所有算术运算实现的 `TokenStream`
+///
+/// # 示例
+///
+/// ```ignore
+/// let ops = [
+///     (ArithmeticOp::Add, "Add", "add", quote! { + }),
+///     (ArithmeticOp::Sub, "Sub", "sub", quote! { - }),
+/// ];
+///
+/// generate_arithmetic_for_all_types(config, &ops, |lhs, rhs, output, trait_ident, method_ident, op_symbol, result, op| {
+///     // 生成具体的 trait 实现
+///     quote! {
+///         impl #trait_ident for #lhs {
+///             // ...
+///         }
+///     }
+/// })
+/// ```
+pub fn generate_arithmetic_for_all_types<F>(
+    config: &TypeConfig,
+    ops: &[(ArithmeticOp, &str, &str, TokenStream2)],
+    mut impl_generator: F,
+) -> TokenStream2
+where
+    F: FnMut(
+        Ident,
+        Ident,
+        Ident,
+        Ident,
+        Ident,
+        TokenStream2,
+        &ArithmeticResult,
+        ArithmeticOp,
+    ) -> TokenStream2,
+{
+    let mut impls = Vec::new();
+
+    for lhs_type in &config.constraint_types {
+        for rhs_type in &config.constraint_types {
+            for (op, trait_name, method_name, op_symbol) in ops {
+                let trait_ident = Ident::new(trait_name, Span::call_site());
+                let method_ident = Ident::new(method_name, Span::call_site());
+
+                // 从预计算表中获取算术结果
+                let key = (
+                    *op,
+                    lhs_type.type_name.to_string(),
+                    rhs_type.type_name.to_string(),
+                );
+                let result = config
+                    .arithmetic_results
+                    .get(&key)
+                    .expect("Arithmetic result not found");
+
+                for float_type in &lhs_type.float_types {
+                    let lhs_alias = make_type_alias(&lhs_type.type_name, float_type);
+                    let rhs_alias = make_type_alias(&rhs_type.type_name, float_type);
+                    let output_alias = make_type_alias(&result.output_type, float_type);
+
+                    let impl_code = impl_generator(
+                        lhs_alias,
+                        rhs_alias,
+                        output_alias,
+                        trait_ident.clone(),
+                        method_ident.clone(),
+                        op_symbol.clone(),
+                        result,
+                        *op,
+                    );
+
+                    impls.push(impl_code);
+                }
+            }
+        }
+    }
+
+    quote! {
+        #(#impls)*
+    }
 }
 
 /// Iterate over all constraint types and float types, generating code for each combination.
