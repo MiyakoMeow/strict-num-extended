@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.3.0](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.2.0...strict-num-extended-macros-v0.3.0) - 2026-01-07
+
+### Bug Fixes
+- rearrange duplicate logic ([#48](https://github.com/MiyakoMeow/strict-num-extended/pull/48))
+- rm extra doc tests ([#47](https://github.com/MiyakoMeow/strict-num-extended/pull/47))
+- doc warning ([#43](https://github.com/MiyakoMeow/strict-num-extended/pull/43))
+- enhance unsafe checking ([#41](https://github.com/MiyakoMeow/strict-num-extended/pull/41))
+- **(test)** type judge ([#34](https://github.com/MiyakoMeow/strict-num-extended/pull/34))
+- clippy ([#30](https://github.com/MiyakoMeow/strict-num-extended/pull/30))
+- simplify range def ([#27](https://github.com/MiyakoMeow/strict-num-extended/pull/27))
+
+
+### Features
+- impl sin/cos/tan & move DivideZero into NaN ([#49](https://github.com/MiyakoMeow/strict-num-extended/pull/49))
+- impl From/TryFrom convertion ([#39](https://github.com/MiyakoMeow/strict-num-extended/pull/39))
+- option arithmetic ([#38](https://github.com/MiyakoMeow/strict-num-extended/pull/38))
+- result arithmetic ([#37](https://github.com/MiyakoMeow/strict-num-extended/pull/37))
+- [**breaking**] modulize & more impl & rm trait & impl result ([#36](https://github.com/MiyakoMeow/strict-num-extended/pull/36))
+- [**breaking**] impl type-safe calculate ([#32](https://github.com/MiyakoMeow/strict-num-extended/pull/32))
+
+
+### Other
+- unary ops (abs/sig) ([#46](https://github.com/MiyakoMeow/strict-num-extended/pull/46))
+- Neg implement ([#29](https://github.com/MiyakoMeow/strict-num-extended/pull/29))
+
+
+### Refactoring
+- re-impl float type ([#35](https://github.com/MiyakoMeow/strict-num-extended/pull/35))
+
 ## [0.2.0](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.1.1...strict-num-extended-macros-v0.2.0) - 2026-01-05
 
 ### Bug Fixes
