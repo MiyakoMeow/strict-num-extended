@@ -41,18 +41,22 @@ fn test_as_f32_type_clone() {
 
 #[test]
 fn test_try_into_f32_type_precision_loss() {
-    // Test precision loss detection
+    // Precision loss is now allowed
     let value_f64 = FinF64::new_const(1.234_567_890_123_456_7);
     let result: Result<FinF32, FloatError> = value_f64.try_into_f32_type();
-    assert!(result.is_err(), "Should fail due to precision loss");
+    assert!(result.is_ok(), "Should succeed (precision loss is allowed)");
 }
 
 #[test]
 fn test_try_into_f32_type_range_overflow() {
-    // Test range overflow detection
+    // Range overflow results in infinity, which is rejected
     let value_f64 = FinF64::new_const(1e40);
     let result: Result<FinF32, FloatError> = value_f64.try_into_f32_type();
-    assert!(result.is_err(), "Should fail due to F32 range overflow");
+    assert!(result.is_err(), "Should fail due to infinity");
+    assert!(
+        matches!(result, Err(FloatError::PosInf)),
+        "Should be PosInf error"
+    );
 }
 
 #[test]

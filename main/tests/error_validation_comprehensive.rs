@@ -273,36 +273,35 @@ mod test_precision_loss {
     }
 
     #[test]
-    fn test_precision_loss_detection() {
-        // High-precision decimals lose precision
+    fn test_precision_loss_allowed() {
+        // Precision loss is now allowed - only constraint validation is performed
         let precise = FinF64::new(1.234_567_890_123_456_7).unwrap();
-        assert!(precise.try_into_f32_type().is_err());
-
-        // Verify the returned error type
-        let result = precise.try_into_f32_type();
-        assert!(matches!(result, Err(FloatError::OutOfRange)));
+        // Conversion succeeds (though precision is lost)
+        assert!(precise.try_into_f32_type().is_ok());
     }
 
     #[test]
     fn test_range_overflow() {
-        // Large numbers outside f32 range
+        // Large numbers outside f32 range become infinity
         let huge = FinF64::new(1e40).unwrap();
+        // Conversion fails because infinity is rejected by FinF32::new()
         assert!(huge.try_into_f32_type().is_err());
 
-        // Verify the returned error type
+        // Verify the returned error type is PosInf
         let result = huge.try_into_f32_type();
-        assert!(matches!(result, Err(FloatError::OutOfRange)));
+        assert!(matches!(result, Err(FloatError::PosInf)));
     }
 
     #[test]
     fn test_range_underflow() {
-        // Small numbers outside f32 range (negative large numbers)
+        // Small numbers outside f32 range become negative infinity
         let tiny = FinF64::new(-1e40).unwrap();
+        // Conversion fails because negative infinity is rejected by FinF32::new()
         assert!(tiny.try_into_f32_type().is_err());
 
-        // Verify the returned error type
+        // Verify the returned error type is NegInf
         let result = tiny.try_into_f32_type();
-        assert!(matches!(result, Err(FloatError::OutOfRange)));
+        assert!(matches!(result, Err(FloatError::NegInf)));
     }
 
     #[test]
@@ -316,9 +315,9 @@ mod test_precision_loss {
 
     #[test]
     fn test_pi_conversion() {
-        // f64::π to f32 conversion loses precision
+        // f64::π to f32 conversion succeeds (precision loss is allowed)
         let pi_f64 = FinF64::new(std::f64::consts::PI).unwrap();
-        assert!(pi_f64.try_into_f32_type().is_err());
+        assert!(pi_f64.try_into_f32_type().is_ok());
 
         // f32::π itself is valid (no conversion needed)
         let pi_f32 = FinF32::new(std::f32::consts::PI).unwrap();

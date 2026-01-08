@@ -150,26 +150,14 @@ pub fn generate_try_into_f32_type_methods(config: &TypeConfig) -> proc_macro2::T
                 ///
                 /// # Errors
                 ///
-                /// Returns `Err(FloatError)` if:
-                /// - The value is outside F32 range
-                /// - Precision would be lost in the conversion
-                /// - The converted value does not satisfy the target constraint
+                /// Returns `Err(FloatError)` if the converted value does not satisfy
+                /// the target constraint (e.g., NaN, infinity, or out of range).
                 #[must_use = "Return value may contain an error and should not be ignored"]
                 pub fn try_into_f32_type(self) -> Result<#f32_type_alias, FloatError> {
                     let value_f64 = self.value;
                     let value_f32 = value_f64 as f32;
 
-                    // Check range: F32 is finite if within representable range
-                    if !value_f32.is_finite() {
-                        return Err(FloatError::OutOfRange);
-                    }
-
-                    // Check precision: round-trip conversion should preserve value
-                    if value_f32 as f64 != value_f64 {
-                        return Err(FloatError::OutOfRange);
-                    }
-
-                    // Use new() to validate constraints (runtime check)
+                    // Use new() to validate all constraints (runtime check)
                     #f32_type_alias::new(value_f32)
                 }
             }
