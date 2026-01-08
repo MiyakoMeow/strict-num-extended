@@ -546,7 +546,7 @@ fn generate_valid_example_for_type(type_name: &Ident, constraint_def: &Constrain
                 "1.0".to_string()
             }
         }
-        "NonZero" | _ => "3.14".to_string(),
+        _ => "3.14".to_string(),
     }
 }
 
