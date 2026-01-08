@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.4.0](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.3.1...strict-num-extended-macros-v0.4.0) - 2026-01-08
+
+### Bug Fixes
+- **(rustdoc)** remove or hide inner type ([#60](https://github.com/MiyakoMeow/strict-num-extended/pull/60))
+
+
+### Features
+- auto-gen doc & doc-test ([#61](https://github.com/MiyakoMeow/strict-num-extended/pull/61))
+- [**breaking**] reimpl f32/f64 conversion ([#56](https://github.com/MiyakoMeow/strict-num-extended/pull/56))
+- split types ([#53](https://github.com/MiyakoMeow/strict-num-extended/pull/53))
+
+
+### Other
+- dead code ([#58](https://github.com/MiyakoMeow/strict-num-extended/pull/58))
+- .value() ([#55](https://github.com/MiyakoMeow/strict-num-extended/pull/55))
+
 ## [0.3.1](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.3.0...strict-num-extended-macros-v0.3.1) - 2026-01-07
 
 ### Features
