@@ -26,7 +26,11 @@ use conversion::generate_conversion_traits;
 use finite_float::{
     generate_concrete_impls, generate_concrete_serde_impls, generate_concrete_structs,
 };
-use float_conversion::{generate_as_f64_methods, generate_try_into_f32_methods};
+use float_conversion::{
+    generate_as_f32_primitive_methods, generate_as_f32_type_methods,
+    generate_as_f64_primitive_methods, generate_as_f64_type_methods,
+    generate_try_into_f32_type_methods,
+};
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
 use unary_ops::{
@@ -160,9 +164,12 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     // Users should use .map() instead: result.map(|x| -x)
     // all_code.push(generate_result_neg_impls(&config));
 
-    // Generate F32/F64 conversion methods (try_into_f32 for F64 types, as_f64 for F32 types)
-    all_code.push(generate_try_into_f32_methods(&config));
-    all_code.push(generate_as_f64_methods(&config));
+    // Generate F32/F64 conversion methods
+    all_code.push(generate_as_f32_primitive_methods(&config));
+    all_code.push(generate_as_f64_primitive_methods(&config));
+    all_code.push(generate_as_f32_type_methods(&config));
+    all_code.push(generate_as_f64_type_methods(&config));
+    all_code.push(generate_try_into_f32_type_methods(&config));
 
     // Generate From/TryFrom traits
     all_code.push(generate_conversion_traits(&config));

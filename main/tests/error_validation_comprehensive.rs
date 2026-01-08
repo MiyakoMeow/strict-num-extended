@@ -266,59 +266,58 @@ mod test_precision_loss {
     #[test]
     fn test_exact_conversion() {
         // Integers and simple fractions should convert exactly
-        assert!(FinF64::new(3.0).unwrap().try_into_f32().is_ok());
-        assert!(FinF64::new(0.5).unwrap().try_into_f32().is_ok());
-        assert!(FinF64::new(-1.5).unwrap().try_into_f32().is_ok());
-        assert!(FinF64::new(2.0).unwrap().try_into_f32().is_ok());
+        assert!(FinF64::new(3.0).unwrap().try_into_f32_type().is_ok());
+        assert!(FinF64::new(0.5).unwrap().try_into_f32_type().is_ok());
+        assert!(FinF64::new(-1.5).unwrap().try_into_f32_type().is_ok());
+        assert!(FinF64::new(2.0).unwrap().try_into_f32_type().is_ok());
     }
 
     #[test]
-    fn test_precision_loss_detection() {
-        // High-precision decimals lose precision
+    fn test_precision_loss_allowed() {
+        // Precision loss is now allowed - only constraint validation is performed
         let precise = FinF64::new(1.234_567_890_123_456_7).unwrap();
-        assert!(precise.try_into_f32().is_err());
-
-        // Verify the returned error type
-        let result = precise.try_into_f32();
-        assert!(matches!(result, Err(FloatError::OutOfRange)));
+        // Conversion succeeds (though precision is lost)
+        assert!(precise.try_into_f32_type().is_ok());
     }
 
     #[test]
     fn test_range_overflow() {
-        // Large numbers outside f32 range
+        // Large numbers outside f32 range become infinity
         let huge = FinF64::new(1e40).unwrap();
-        assert!(huge.try_into_f32().is_err());
+        // Conversion fails because infinity is rejected by FinF32::new()
+        assert!(huge.try_into_f32_type().is_err());
 
-        // Verify the returned error type
-        let result = huge.try_into_f32();
-        assert!(matches!(result, Err(FloatError::OutOfRange)));
+        // Verify the returned error type is PosInf
+        let result = huge.try_into_f32_type();
+        assert!(matches!(result, Err(FloatError::PosInf)));
     }
 
     #[test]
     fn test_range_underflow() {
-        // Small numbers outside f32 range (negative large numbers)
+        // Small numbers outside f32 range become negative infinity
         let tiny = FinF64::new(-1e40).unwrap();
-        assert!(tiny.try_into_f32().is_err());
+        // Conversion fails because negative infinity is rejected by FinF32::new()
+        assert!(tiny.try_into_f32_type().is_err());
 
-        // Verify the returned error type
-        let result = tiny.try_into_f32();
-        assert!(matches!(result, Err(FloatError::OutOfRange)));
+        // Verify the returned error type is NegInf
+        let result = tiny.try_into_f32_type();
+        assert!(matches!(result, Err(FloatError::NegInf)));
     }
 
     #[test]
     fn test_roundtrip_conversion() {
         // Exact values should be able to round-trip
         let val_f64 = FinF64::new(2.5).unwrap();
-        let val_f32 = val_f64.try_into_f32().unwrap();
+        let val_f32 = val_f64.try_into_f32_type().unwrap();
         let back_f64: FinF64 = val_f32.into();
         assert_eq!(back_f64.get(), 2.5);
     }
 
     #[test]
     fn test_pi_conversion() {
-        // f64::π to f32 conversion loses precision
+        // f64::π to f32 conversion succeeds (precision loss is allowed)
         let pi_f64 = FinF64::new(std::f64::consts::PI).unwrap();
-        assert!(pi_f64.try_into_f32().is_err());
+        assert!(pi_f64.try_into_f32_type().is_ok());
 
         // f32::π itself is valid (no conversion needed)
         let pi_f32 = FinF32::new(std::f32::consts::PI).unwrap();
@@ -329,11 +328,11 @@ mod test_precision_loss {
     fn test_f32_boundary_conversion() {
         // f32::MAX can convert exactly
         let max = FinF64::new(f32::MAX as f64).unwrap();
-        assert!(max.try_into_f32().is_ok());
+        assert!(max.try_into_f32_type().is_ok());
 
         // f32::MIN can convert exactly
         let min = FinF64::new(f32::MIN as f64).unwrap();
-        assert!(min.try_into_f32().is_ok());
+        assert!(min.try_into_f32_type().is_ok());
     }
 }
 
