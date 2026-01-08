@@ -41,8 +41,8 @@ use unary_ops::{
 /// Generates common definitions (constants)
 fn generate_common_definitions() -> proc_macro2::TokenStream {
     quote! {
-        use std::marker::PhantomData;
-        use std::ops::{Add, Sub, Mul, Div, Neg};
+        use core::marker::PhantomData;
+        use core::ops::{Add, Sub, Mul, Div, Neg};
 
         // ========== f64 boundary bit representation constants ==========
         const F64_MIN_BITS: i64 = f64::MIN.to_bits() as i64;
@@ -82,8 +82,8 @@ fn generate_error_type() -> proc_macro2::TokenStream {
             NoneOperand,
         }
 
-        impl std::fmt::Display for FloatError {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        impl core::fmt::Display for FloatError {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
                     FloatError::NaN => write!(f, "value is NaN (Not a Number)"),
                     FloatError::PosInf => write!(f, "value is positive infinity"),
@@ -94,6 +94,7 @@ fn generate_error_type() -> proc_macro2::TokenStream {
             }
         }
 
+        #[cfg(feature = "std")]
         impl std::error::Error for FloatError {}
     }
 }

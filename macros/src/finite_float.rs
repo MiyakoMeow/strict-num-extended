@@ -21,7 +21,7 @@ pub fn generate_concrete_structs(config: &TypeConfig) -> proc_macro2::TokenStrea
                 #[derive(Clone, Copy)]
                 pub struct #struct_name {
                     value: #float_type,
-                    _constraint: std::marker::PhantomData<#constraint_name>,
+                    _constraint: core::marker::PhantomData<#constraint_name>,
                 }
             }
         });
@@ -66,7 +66,7 @@ pub fn generate_concrete_impls(config: &TypeConfig) -> proc_macro2::TokenStream 
                     if #validate_expr {
                         Ok(Self {
                             value,
-                            _constraint: std::marker::PhantomData,
+                            _constraint: core::marker::PhantomData,
                         })
                     } else {
                         Err(FloatError::OutOfRange)
@@ -83,7 +83,7 @@ pub fn generate_concrete_impls(config: &TypeConfig) -> proc_macro2::TokenStream 
                 pub const unsafe fn new_unchecked(value: #float_type) -> Self {
                     Self {
                         value,
-                        _constraint: std::marker::PhantomData,
+                        _constraint: core::marker::PhantomData,
                     }
                 }
 
