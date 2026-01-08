@@ -252,6 +252,7 @@ pub fn generate_sin_impls(config: &TypeConfig) -> TokenStream2 {
             let output_alias = make_type_alias(&output_type, float_type);
 
             impls.push(quote! {
+                #[cfg(feature = "std")]
                 impl #type_alias {
                     /// Computes the sine of the value.
                     ///
@@ -317,6 +318,7 @@ pub fn generate_cos_impls(config: &TypeConfig) -> TokenStream2 {
             let output_alias = make_type_alias(&output_type, float_type);
 
             impls.push(quote! {
+                #[cfg(feature = "std")]
                 impl #type_alias {
                     /// Computes the cosine of the value.
                     ///
@@ -382,6 +384,7 @@ pub fn generate_tan_impls(config: &TypeConfig) -> TokenStream2 {
             let output_alias = make_type_alias(&output_type, float_type);
 
             impls.push(quote! {
+                #[cfg(feature = "std")]
                 impl #type_alias {
                     /// Computes the tangent of the value.
                     ///

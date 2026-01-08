@@ -11,12 +11,13 @@ categories.workspace = true
 readme.workspace = true
 
 [features]
-default = []
+default = ["std"]
+std = ["strict-num-extended-macros/std"]
 serde = ["dep:serde", "strict-num-extended-macros/serde"]
 
 [dependencies]
 strict-num-extended-macros = { workspace = true }
-serde = { workspace = true, optional = true, features = ["derive"] }
+serde = { workspace = true, optional = true, features = ["derive"], default-features = false }
 
 [dev-dependencies]
 serde_json = { workspace = true }

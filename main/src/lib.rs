@@ -861,8 +861,12 @@
 //! assert_eq!(neg_fin.get(), -2.5);
 //! ```
 
+#![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::manual_range_contains)]
+
+#[cfg(feature = "std")]
+extern crate std;
 
 // Generate all code using proc_macro
 strict_num_extended_macros::generate_finite_float_types!([

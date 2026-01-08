@@ -27,7 +27,7 @@ pub fn generate_concrete_comparison_traits(config: &TypeConfig) -> proc_macro2::
             impl Eq for #struct_name {}
 
             impl Ord for #struct_name {
-                fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                     self.value
                         .partial_cmp(&other.value)
                         .expect("values should always be comparable")
@@ -35,19 +35,19 @@ pub fn generate_concrete_comparison_traits(config: &TypeConfig) -> proc_macro2::
             }
 
             impl PartialOrd for #struct_name {
-                fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                     Some(self.cmp(other))
                 }
             }
 
-            impl std::fmt::Display for #struct_name {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl core::fmt::Display for #struct_name {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                     write!(f, "{}", self.value)
                 }
             }
 
-            impl std::fmt::Debug for #struct_name {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl core::fmt::Debug for #struct_name {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                     write!(f, "FiniteFloat({:?})", self.value)
                 }
             }

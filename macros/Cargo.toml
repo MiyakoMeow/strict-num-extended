@@ -14,13 +14,15 @@ readme = "README.md"
 proc-macro = true
 
 [features]
-default = []
+default = ["std"]
+std = []
 serde = []
 
 [dependencies]
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { workspace = true }
+hashbrown = { workspace = true, optional = true }
 
 [lints]
 workspace = true

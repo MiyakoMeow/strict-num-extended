@@ -8,12 +8,16 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 jobs:
-  native:
+  # Test std mode on all platforms
+  std:
+    name: std ${{ matrix.os }}${{ matrix.features != '' && format(' + {0}', matrix.features) || '' }}
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        features: ["", "serde"]
     steps:
       - uses: actions/checkout@v6
       - name: Setup rustfmt and clippy
@@ -27,19 +31,69 @@ jobs:
           cache-on-failure: true
           workspaces: |
             . -> target
-      - name: Build crate
-        run: cargo build --verbose
       - name: Format Check
         run: cargo fmt --check
-      - name: Clippy Check
-        run: cargo clippy --all-targets --verbose -- -D warnings
-      - name: Clippy Check (--all-features)
-        run: cargo clippy --all-targets --all-features --verbose -- -D warnings
-      - name: Test crate
-        run: cargo test --verbose --all-targets
+      - name: Build
+        run: cargo build --verbose ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
+      - name: Clippy
+        run: cargo clippy --all-targets --verbose ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }} -- -D warnings
+      - name: Test
+        run: cargo test --verbose --all-targets ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
       - name: Test document
-        run: cargo test --verbose --doc
-      - name: Test crate (--all-features)
-        run: cargo test --verbose --all-targets --all-features
-      - name: Test document (--all-features)
-        run: cargo test --verbose --doc --all-features
+        run: cargo test --verbose --doc ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
+  # Test no_std mode on all platforms
+  no_std:
+    name: no_std ${{ matrix.os }}${{ matrix.features != '' && format(' + {0}', matrix.features) || '' }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        features: ["", "serde"]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup rustfmt and clippy
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: |
+            . -> target
+      - name: Build
+        run: cargo build --verbose --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
+      - name: Clippy
+        run: cargo clippy --all-targets --verbose --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }} -- -D warnings
+      - name: Test
+        run: cargo test --verbose --all-targets --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
+      - name: Test document
+        run: cargo test --verbose --doc --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
+  # Test WebAssembly target (best verification for no_std)
+  wasm32:
+    name: wasm32${{ matrix.features != '' && format(' + {0}', matrix.features) || '' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ["", "serde"]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: |
+            . -> target
+      - name: Build
+        run: cargo build --verbose --target wasm32-unknown-unknown --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
