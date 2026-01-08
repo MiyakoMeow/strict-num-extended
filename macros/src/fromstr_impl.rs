@@ -6,46 +6,52 @@ use crate::config::TypeConfig;
 use crate::generator::for_all_constraint_float_types;
 use quote::quote;
 
-/// Generate `FloatParseError` type and its trait implementations
+/// Generate `ParseFloatError` type and its trait implementations
 pub fn generate_parse_error_type() -> proc_macro2::TokenStream {
     quote! {
         /// String parsing error
         ///
-        /// Contains two possible error variants:
-        /// 1. String cannot be parsed as a floating-point number
-        /// 2. Parsing succeeded but validation failed (wraps FloatError)
+        /// Contains three possible error variants:
+        /// 1. Empty string after trimming whitespace
+        /// 2. String cannot be parsed as a floating-point number
+        /// 3. Parsing succeeded but validation failed (wraps FloatError)
         #[derive(Debug, Clone, PartialEq, Eq)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-        pub enum FloatParseError {
+        pub enum ParseFloatError {
+            /// String is empty after trimming whitespace
+            Empty,
             /// String cannot be parsed as a valid floating-point number
-            InvalidFloat,
+            Invalid,
             /// Parsing succeeded but value validation failed
             ValidationFailed(FloatError),
         }
 
-        impl core::fmt::Display for FloatParseError {
+        impl core::fmt::Display for ParseFloatError {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
-                    FloatParseError::InvalidFloat => {
+                    ParseFloatError::Empty => {
+                        write!(f, "failed to parse string: empty")
+                    }
+                    ParseFloatError::Invalid => {
                         write!(f, "failed to parse string as a floating-point number")
                     }
-                    FloatParseError::ValidationFailed(e) => write!(f, "{}", e),
+                    ParseFloatError::ValidationFailed(e) => write!(f, "{}", e),
                 }
             }
         }
 
         #[cfg(feature = "std")]
-        impl std::error::Error for FloatParseError {}
+        impl std::error::Error for ParseFloatError {}
     }
 }
 
-/// Generate `From` implementations for `FloatParseError`
+/// Generate `From` implementations for `ParseFloatError`
 pub fn generate_parse_error_from_impls() -> proc_macro2::TokenStream {
     quote! {
         // Implement From for ParseFloatError
-        impl From<core::num::ParseFloatError> for FloatParseError {
+        impl From<core::num::ParseFloatError> for ParseFloatError {
             fn from(_: core::num::ParseFloatError) -> Self {
-                FloatParseError::InvalidFloat
+                ParseFloatError::Invalid
             }
         }
     }
@@ -58,15 +64,21 @@ pub fn generate_fromstr_traits(config: &TypeConfig) -> proc_macro2::TokenStream 
 
         quote! {
             impl core::str::FromStr for #struct_name {
-                type Err = FloatParseError;
+                type Err = ParseFloatError;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    // 1. Parse using standard library (automatically supports scientific notation)
-                    // Using ? operator which uses From trait for error conversion
-                    let value: #float_type = s.parse()?;
+                    // 1. Trim whitespace and check for empty string
+                    let trimmed = s.trim();
+                    if trimmed.is_empty() {
+                        return Err(ParseFloatError::Empty);
+                    }
 
-                    // 2. Validate constraints (reuses existing new() logic)
-                    Self::new(value).map_err(FloatParseError::ValidationFailed)
+                    // 2. Parse using standard library (automatically supports scientific notation)
+                    // Using ? operator which uses From trait for error conversion
+                    let value: #float_type = trimmed.parse()?;
+
+                    // 3. Validate constraints (reuses existing new() logic)
+                    Self::new(value).map_err(ParseFloatError::ValidationFailed)
                 }
             }
         }

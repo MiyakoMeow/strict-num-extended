@@ -82,7 +82,7 @@ mod test_constraint_validation {
         let result: Result<PositiveF32, _> = "-1.0".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::OutOfRange))
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
         ));
     }
 
@@ -91,7 +91,7 @@ mod test_constraint_validation {
         let result: Result<NormalizedF64, _> = "1.5".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::OutOfRange))
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
         ));
     }
 
@@ -100,7 +100,7 @@ mod test_constraint_validation {
         let result: Result<NormalizedF32, _> = "-0.5".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::OutOfRange))
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
         ));
     }
 
@@ -109,7 +109,7 @@ mod test_constraint_validation {
         let result: Result<NonZeroF32, _> = "0.0".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::OutOfRange))
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
         ));
     }
 
@@ -118,7 +118,7 @@ mod test_constraint_validation {
         let result: Result<NonZeroPositiveF64, _> = "-1.0".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::OutOfRange))
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
         ));
     }
 
@@ -127,7 +127,7 @@ mod test_constraint_validation {
         let result: Result<SymmetricF32, _> = "1.5".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::OutOfRange))
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
         ));
     }
 }
@@ -140,7 +140,7 @@ mod test_special_values {
         let result: Result<FinF32, _> = "NaN".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::NaN))
+            Err(ParseFloatError::ValidationFailed(FloatError::NaN))
         ));
     }
 
@@ -149,7 +149,7 @@ mod test_special_values {
         let result: Result<FinF64, _> = "inf".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::PosInf))
+            Err(ParseFloatError::ValidationFailed(FloatError::PosInf))
         ));
     }
 
@@ -158,7 +158,7 @@ mod test_special_values {
         let result: Result<FinF32, _> = "-inf".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::NegInf))
+            Err(ParseFloatError::ValidationFailed(FloatError::NegInf))
         ));
     }
 
@@ -167,7 +167,7 @@ mod test_special_values {
         let result: Result<FinF64, _> = "Inf".parse();
         assert!(matches!(
             result,
-            Err(FloatParseError::ValidationFailed(FloatError::PosInf))
+            Err(ParseFloatError::ValidationFailed(FloatError::PosInf))
         ));
     }
 }
@@ -193,7 +193,7 @@ mod test_error_messages {
 
         let err = result.unwrap_err();
         let msg = format!("{}", err);
-        assert!(msg.contains("failed to parse"));
+        assert!(msg.contains("empty"));
     }
 
     #[test]
@@ -234,23 +234,32 @@ mod test_error_preserves_input {
     #[test]
     fn test_invalid_float_contains_parse_error() {
         let result: Result<FinF32, _> = "abc123".parse();
-        if let Err(FloatParseError::InvalidFloat) = result {
+        if let Err(ParseFloatError::Invalid) = result {
             // ParseFloatError is preserved
         } else {
-            panic!("Expected InvalidFloat error");
+            panic!("Expected Invalid error");
         }
     }
 
     #[test]
     fn test_invalid_float_preserves_special_chars() {
         let result: Result<FinF32, _> = "$%^&*".parse();
-        assert!(matches!(result, Err(FloatParseError::InvalidFloat)));
+        assert!(matches!(result, Err(ParseFloatError::Invalid)));
+    }
+
+    #[test]
+    fn test_empty_error() {
+        let result: Result<FinF32, _> = "".parse();
+        assert!(matches!(result, Err(ParseFloatError::Empty)));
+
+        let result_whitespace: Result<FinF32, _> = "   ".parse();
+        assert!(matches!(result_whitespace, Err(ParseFloatError::Empty)));
     }
 
     #[test]
     fn test_validation_failed_wraps_float_error() {
         let result: Result<PositiveF32, _> = "-1.0".parse();
-        if let Err(FloatParseError::ValidationFailed(FloatError::OutOfRange)) = result {
+        if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
             // 正确包装了 OutOfRange 错误
         } else {
             panic!("Expected ValidationFailed(OutOfRange) error");
@@ -260,7 +269,7 @@ mod test_error_preserves_input {
     #[test]
     fn test_nan_validation_failed() {
         let result: Result<FinF32, _> = "NaN".parse();
-        if let Err(FloatParseError::ValidationFailed(FloatError::NaN)) = result {
+        if let Err(ParseFloatError::ValidationFailed(FloatError::NaN)) = result {
             // 正确包装了 NaN 错误
         } else {
             panic!("Expected ValidationFailed(NaN) error");
@@ -270,7 +279,7 @@ mod test_error_preserves_input {
     #[test]
     fn test_infinity_validation_failed() {
         let result: Result<FinF64, _> = "inf".parse();
-        if let Err(FloatParseError::ValidationFailed(FloatError::PosInf)) = result {
+        if let Err(ParseFloatError::ValidationFailed(FloatError::PosInf)) = result {
             // 正确包装了 PosInf 错误
         } else {
             panic!("Expected ValidationFailed(PosInf) error");
@@ -347,14 +356,17 @@ mod test_edge_cases {
 
     #[test]
     fn test_parse_whitespace_rejected() {
-        // Standard library's from_str rejects strings with leading/trailing whitespace
+        // Our implementation now trims whitespace first
         let result: Result<FinF32, _> = " 3.14".parse();
-        assert!(matches!(result, Err(FloatParseError::InvalidFloat)));
+        assert!(result.is_ok());
 
         let result_trailing: Result<FinF32, _> = "3.14 ".parse();
-        assert!(matches!(
-            result_trailing,
-            Err(FloatParseError::InvalidFloat)
-        ));
+        assert!(result_trailing.is_ok());
+    }
+
+    #[test]
+    fn test_parse_only_whitespace() {
+        let result: Result<FinF32, _> = "   ".parse();
+        assert!(matches!(result, Err(ParseFloatError::Empty)));
     }
 }
