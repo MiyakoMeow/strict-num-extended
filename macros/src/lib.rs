@@ -11,6 +11,7 @@ mod arithmetic;
 mod comparison;
 mod config;
 mod conversion;
+mod doc_generator;
 mod finite_float;
 mod float_conversion;
 mod generator;
