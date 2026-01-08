@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.4.1](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.0...strict-num-extended-macros-v0.4.1) - 2026-01-08
+
+### Features
+- impl FromStr ([#69](https://github.com/MiyakoMeow/strict-num-extended/pull/69))
+- enhance no_std ([#66](https://github.com/MiyakoMeow/strict-num-extended/pull/66))
+- impl no_std ([#62](https://github.com/MiyakoMeow/strict-num-extended/pull/62))
+
+
+### Other
+- FiniteFloat trait ([#68](https://github.com/MiyakoMeow/strict-num-extended/pull/68))
+
 ## [0.4.0](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.3.1...strict-num-extended-macros-v0.4.0) - 2026-01-08
 
 ### Bug Fixes
