@@ -19,10 +19,14 @@ jobs:
         with:
           toolchain: stable
           components: llvm-tools-preview
-      - name: Install grcov & cargo-llvm-cov
+      - name: Install grcov
         uses: taiki-e/cache-cargo-install-action@v3
         with:
-          tool: grcov,cargo-llvm-cov
+          tool: grcov
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/cache-cargo-install-action@v3
+        with:
+          tool: cargo-llvm-cov
       - name: Run grcov for proc-macro generator code
         run: |
           cargo clean
