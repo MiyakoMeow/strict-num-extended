@@ -1,0 +1,32 @@
+name: Code Coverage
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+      - name: Install grcov
+        uses: taiki-e/cache-cargo-install-action@v3
+        with:
+          tool: grcov
+      - name: Run tests with coverage
+        run: |
+          cargo clean
+          CARGO_INCREMENTAL=0 RUSTFLAGS="-C instrument-coverage" cargo test --no-fail-fast
+      - name: Generate coverage report
+        run: |
+          grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./lcov.info

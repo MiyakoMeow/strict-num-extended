@@ -244,44 +244,44 @@
 //!
 //! For explicit conversions between F32 and F64 types, specialized methods are provided:
 //!
-//! ### `try_into_f32()` - F64 → F32 with Precision Detection
+//! ### `try_into_f32_type()` - F64 → F32 with Constraint Validation
 //!
-//! The `try_into_f32()` method converts F64 types to F32 with precision-aware validation:
+//! The `try_into_f32_type()` method converts F64 types to F32 with constraint validation:
 //!
 //! ```
 //! use strict_num_extended::*;
 //!
-//! // Success: value fits in F32
+//! // Success: value fits in F32 and satisfies constraint
 //! let f64_val = FinF64::new(3.0).unwrap();
-//! let f32_val: Result<FinF32, _> = f64_val.try_into_f32();
+//! let f32_val: Result<FinF32, _> = f64_val.try_into_f32_type();
 //! assert!(f32_val.is_ok());
 //!
-//! // Error: precision loss would occur
+//! // Success: precision loss is allowed
 //! let f64_precise = FinF64::new(1.234_567_890_123_456_7).unwrap();
-//! let f32_result: Result<FinF32, _> = f64_precise.try_into_f32();
-//! assert!(f32_result.is_err());  // Precision loss detected
+//! let f32_result: Result<FinF32, _> = f64_precise.try_into_f32_type();
+//! assert!(f32_result.is_ok());  // Truncated to f32, but still valid
 //!
-//! // Error: F32 range overflow
+//! // Error: F32 range overflow (becomes infinity)
 //! let f64_large = FinF64::new(1e40).unwrap();
-//! let f32_result: Result<FinF32, _> = f64_large.try_into_f32();
-//! assert!(f32_result.is_err());  // Overflow detected
+//! let f32_result: Result<FinF32, _> = f64_large.try_into_f32_type();
+//! assert!(f32_result.is_err());  // Infinity is rejected
 //! ```
 //!
-//! ### `as_f64()` - F32 → F64 Lossless Conversion
+//! ### `as_f64_type()` - F32 → F64 Lossless Conversion
 //!
-//! The `as_f64()` method converts F32 types to F64 without loss of precision:
+//! The `as_f64_type()` method converts F32 types to F64 without loss of precision:
 //!
 //! ```
 //! use strict_num_extended::*;
 //!
 //! let f32_val = FinF32::new(2.5).unwrap();
-//! let f64_val: FinF64 = f32_val.as_f64();  // Always succeeds
+//! let f64_val: FinF64 = f32_val.as_f64_type();  // Always succeeds
 //! assert_eq!(f64_val.get(), 2.5);
 //!
 //! // Roundtrip: F32 → F64 → F32
 //! let original_f32 = FinF32::new(2.5).unwrap();
-//! let f64_val: FinF64 = original_f32.as_f64();
-//! let back_to_f32: Result<FinF32, _> = f64_val.try_into_f32();
+//! let f64_val: FinF64 = original_f32.as_f64_type();
+//! let back_to_f32: Result<FinF32, _> = f64_val.try_into_f32_type();
 //! assert!(back_to_f32.is_ok());
 //! assert_eq!(back_to_f32.unwrap().get(), original_f32.get());
 //! ```
