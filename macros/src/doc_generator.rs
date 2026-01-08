@@ -1,15 +1,15 @@
-//! 文档生成辅助函数模块
+//! Documentation generation helper functions module
 //!
-//! 根据约束定义智能生成类型和方法的文档注释
+//! Intelligently generates type and method documentation comments based on constraint definitions
 
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
 use crate::config::{Bounds, ConstraintDef, Sign};
 
-/// 生成结构体定义的文档注释
+/// Generates documentation comments for struct definitions
 ///
-/// 为每个生成的结构体创建包含约束说明、数学公式和示例的完整文档
+/// Creates complete documentation with constraint descriptions, mathematical formulas, and examples for each generated struct
 pub fn generate_struct_doc(
     type_name: &Ident,
     float_type: &Ident,
@@ -19,11 +19,11 @@ pub fn generate_struct_doc(
     let type_name_str = type_name.to_string();
     let struct_name = format!("{}{}", type_name, float_type.to_string().to_uppercase());
 
-    // 生成约束描述
+    // Generate constraint description
     let constraint_desc = generate_constraint_description(constraint_def);
     let constraint_formula = generate_constraint_formula(constraint_def);
 
-    // 根据类型生成不同的描述
+    // Generate different descriptions based on type
     let type_description =
         generate_type_description(&struct_name, type_name, float_type, constraint_def);
 
@@ -37,7 +37,7 @@ pub fn generate_struct_doc(
     }
 }
 
-/// 生成约束的数学公式表达式
+/// Generates a mathematical formula expression for constraints
 pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
     match (
         constraint_def.sign,
@@ -151,7 +151,7 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
     }
 }
 
-/// 生成约束的文字描述
+/// Generates a text description of constraints
 pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String {
     match (
         constraint_def.sign,
@@ -166,7 +166,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 lower: Some(0.0),
                 upper: None,
             },
-        ) => "非负数".to_string(),
+        ) => "non-negative".to_string(),
         (
             Sign::Positive,
             true,
@@ -174,7 +174,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 lower: Some(0.0),
                 upper: None,
             },
-        ) => "正数".to_string(),
+        ) => "positive".to_string(),
         (
             Sign::Positive,
             false,
@@ -183,7 +183,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("范围 [{}, {}]", (*l).max(0.0), u)
+            format!("range [{}, {}]", (*l).max(0.0), u)
         }
         (
             Sign::Positive,
@@ -193,7 +193,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("范围 ({}, {}]", (*l).max(0.0), u)
+            format!("range ({}, {}]", (*l).max(0.0), u)
         }
 
         // Negative types
@@ -204,7 +204,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 lower: None,
                 upper: Some(0.0),
             },
-        ) => "非正数".to_string(),
+        ) => "non-positive".to_string(),
         (
             Sign::Negative,
             true,
@@ -212,7 +212,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 lower: None,
                 upper: Some(0.0),
             },
-        ) => "负数".to_string(),
+        ) => "negative".to_string(),
         (
             Sign::Negative,
             false,
@@ -221,7 +221,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("范围 [{}, {}]", l, (*u).min(0.0))
+            format!("range [{}, {}]", l, (*u).min(0.0))
         }
         (
             Sign::Negative,
@@ -231,7 +231,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("范围 [{}, {})", l, (*u).min(0.0))
+            format!("range [{}, {})", l, (*u).min(0.0))
         }
 
         // NonZero types
@@ -242,7 +242,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 lower: None,
                 upper: None,
             },
-        ) => "非零".to_string(),
+        ) => "non-zero".to_string(),
 
         // Bounded types
         (
@@ -253,7 +253,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("范围 [{}, {}]", l, u)
+            format!("range [{}, {}]", l, u)
         }
         (
             Sign::Any,
@@ -264,20 +264,20 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
             },
         ) => {
             if *l == 0.0 {
-                format!("范围 (0, {}]", u)
+                format!("range (0, {}]", u)
             } else if *u == 0.0 {
-                format!("范围 [{}, 0)", l)
+                format!("range [{}, 0)", l)
             } else {
-                format!("范围 [{}, {}], 排除零", l, u)
+                format!("range [{}, {}], excluding zero", l, u)
             }
         }
 
         // Default: finite numbers
-        _ => "有限数".to_string(),
+        _ => "finite".to_string(),
     }
 }
 
-/// 生成类型的额外描述信息
+/// Generates additional description information for types
 fn generate_type_description(
     struct_name: &str,
     type_name: &Ident,
@@ -530,18 +530,15 @@ fn generate_type_description(
     }
 }
 
-/// 生成有效的示例值
+/// Generates a valid example value for a specific type
 fn generate_valid_example_for_type(type_name: &Ident, constraint_def: &ConstraintDef) -> String {
     let type_str = type_name.to_string();
 
     match type_str.as_str() {
-        "Positive" => "42.0".to_string(),
-        "Negative" => "-42.0".to_string(),
-        "NonZero" => "3.14".to_string(),
+        "Positive" | "NonNegative" => "42.0".to_string(),
+        "Negative" | "NonPositive" => "-42.0".to_string(),
         "Normalized" => "0.5".to_string(),
         "Symmetric" => "0.0".to_string(),
-        "NonNegative" => "10.0".to_string(),
-        "NonPositive" => "-10.0".to_string(),
         "Bounded" => {
             if let (Some(l), Some(u)) = (constraint_def.bounds.lower, constraint_def.bounds.upper) {
                 format!("{}", (l + u) / 2.0)
@@ -549,11 +546,11 @@ fn generate_valid_example_for_type(type_name: &Ident, constraint_def: &Constrain
                 "1.0".to_string()
             }
         }
-        _ => "3.14".to_string(),
+        "NonZero" | _ => "3.14".to_string(),
     }
 }
 
-/// 为 `new()` 方法生成文档
+/// Generates documentation for the `new()` method
 pub fn generate_new_method_doc(
     struct_name: &Ident,
     float_type: &Ident,
@@ -587,7 +584,7 @@ pub fn generate_new_method_doc(
     }
 }
 
-/// 生成有效的示例值
+/// Generates a valid example value
 pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDef) -> String {
     match (constraint_def.sign, &constraint_def.bounds) {
         (
@@ -603,6 +600,13 @@ pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDe
                 lower: Some(l),
                 upper: Some(u),
             },
+        )
+        | (
+            Sign::Negative,
+            Bounds {
+                lower: Some(l),
+                upper: Some(u),
+            },
         ) => {
             format!("{}", (*l + *u) / 2.0)
         }
@@ -613,15 +617,6 @@ pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDe
                 lower: None,
             },
         ) => "-42.0".to_string(),
-        (
-            Sign::Negative,
-            Bounds {
-                lower: Some(l),
-                upper: Some(u),
-            },
-        ) => {
-            format!("{}", (*l + *u) / 2.0)
-        }
         (
             Sign::Any,
             Bounds {
@@ -647,17 +642,11 @@ pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDe
     }
 }
 
-/// 生成无效的示例值（用于展示错误）
+/// Generates an invalid example value (for demonstrating errors)
 pub fn generate_invalid_example(
     float_type: &Ident,
     constraint_def: &ConstraintDef,
 ) -> (String, &'static str) {
-    let _nan_value = if float_type == "f32" {
-        "f32::NAN"
-    } else {
-        "f64::NAN"
-    };
-
     match (
         constraint_def.sign,
         constraint_def.excludes_zero,
@@ -665,32 +654,18 @@ pub fn generate_invalid_example(
     ) {
         (
             Sign::Positive,
-            false,
+            _,
             Bounds {
                 lower: Some(0.0), ..
             },
-        ) => ("-1.0".to_string(), "负值"),
-        (
-            Sign::Positive,
-            true,
-            Bounds {
-                lower: Some(0.0), ..
-            },
-        ) => ("-1.0".to_string(), "负值"),
+        ) => ("-1.0".to_string(), "negative value"),
         (
             Sign::Negative,
-            false,
+            _,
             Bounds {
                 upper: Some(0.0), ..
             },
-        ) => ("1.0".to_string(), "正值"),
-        (
-            Sign::Negative,
-            true,
-            Bounds {
-                upper: Some(0.0), ..
-            },
-        ) => ("1.0".to_string(), "正值"),
+        ) => ("1.0".to_string(), "positive value"),
         (
             Sign::Any,
             true,
@@ -698,12 +673,12 @@ pub fn generate_invalid_example(
                 lower: None,
                 upper: None,
             },
-        ) => ("0.0".to_string(), "零值"),
+        ) => ("0.0".to_string(), "zero value"),
         (Sign::Any, false, Bounds { lower: Some(l), .. }) if *l > 0.0 => {
-            (format!("{}", *l - 1.0), "超出下界")
+            (format!("{}", *l - 1.0), "out of lower bound")
         }
         (Sign::Any, false, Bounds { upper: Some(u), .. }) if *u < 0.0 => {
-            (format!("{}", *u + 1.0), "超出上界")
+            (format!("{}", *u + 1.0), "out of upper bound")
         }
         _ => (
             format!("{}::NAN", float_type.to_string().to_lowercase()),
