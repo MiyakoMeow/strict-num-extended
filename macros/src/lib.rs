@@ -37,7 +37,7 @@ use unary_ops::{
     generate_tan_impls,
 };
 
-/// Generates common definitions (Bounded struct and constants)
+/// Generates common definitions (constants)
 fn generate_common_definitions() -> proc_macro2::TokenStream {
     quote! {
         use std::marker::PhantomData;
@@ -59,11 +59,6 @@ fn generate_common_definitions() -> proc_macro2::TokenStream {
         // Use minimum positive normal number instead of EPSILON
         const F32_MIN_POSITIVE_BITS: i64 = (f32::MIN_POSITIVE as f64).to_bits() as i64;
         const F32_NEG_MIN_POSITIVE_BITS: i64 = ((-f32::MIN_POSITIVE) as f64).to_bits() as i64;
-
-        /// Boundary marker type (using i64 to encode f64 boundaries)
-        #[derive(Debug, Clone, Copy)]
-        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-        pub struct Bounded<const MIN_BITS: i64, const MAX_BITS: i64, const EXCLUDE_ZERO: bool = false>;
     }
 }
 
@@ -107,9 +102,9 @@ fn generate_constraint_markers(config: &TypeConfig) -> proc_macro2::TokenStream 
     let markers = config.constraints.iter().map(|constraint| {
         let name = &constraint.name;
         quote! {
-            #[doc = concat!("Constraint marker: ", stringify!(#name))]
+            #[doc(hidden)]
             #[derive(Debug, Clone, Copy)]
-            pub struct #name;
+            pub(crate) struct #name;
         }
     });
 
