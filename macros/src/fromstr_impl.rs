@@ -9,6 +9,7 @@ use quote::quote;
 /// Generate `FloatParseError` type and its trait implementations
 pub fn generate_parse_error_type() -> proc_macro2::TokenStream {
     quote! {
+        #[cfg(feature = "std")]
         /// String parsing error
         ///
         /// Contains two possible error variants:
@@ -26,6 +27,7 @@ pub fn generate_parse_error_type() -> proc_macro2::TokenStream {
             ValidationFailed(FloatError),
         }
 
+        #[cfg(feature = "std")]
         impl core::fmt::Display for FloatParseError {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
@@ -48,6 +50,7 @@ pub fn generate_fromstr_traits(config: &TypeConfig) -> proc_macro2::TokenStream 
         let struct_name = crate::generator::make_type_alias(type_name, float_type);
 
         quote! {
+            #[cfg(feature = "std")]
             impl core::str::FromStr for #struct_name {
                 type Err = FloatParseError;
 
