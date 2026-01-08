@@ -1,10 +1,10 @@
-//! `FromStr` trait 实现测试
+//! `FromStr` trait implementation tests
 //!
-//! 测试目标：
-//! 1. 测试解析有效值的各种格式
-//! 2. 测试科学计数法支持
-//! 3. 测试错误处理和有意义的错误信息
-//! 4. 验证原始字符串在错误中保留
+//! Test objectives:
+//! 1. Test parsing various formats of valid values
+//! 2. Test scientific notation support
+//! 3. Test error handling and meaningful error messages
+//! 4. Verify that the original string is preserved in errors
 
 #![allow(clippy::unwrap_used)]
 
@@ -14,6 +14,7 @@ mod test_basic_parsing {
     use super::*;
 
     #[test]
+    #[allow(clippy::approx_constant)]
     fn test_parse_simple_decimal() {
         let value: FinF32 = "3.14".parse().unwrap();
         assert_eq!(value.get(), 3.14);
@@ -26,6 +27,7 @@ mod test_basic_parsing {
     }
 
     #[test]
+    #[allow(clippy::approx_constant)]
     fn test_parse_negative() {
         let value: FinF32 = "-3.14".parse().unwrap();
         assert_eq!(value.get(), -3.14);
@@ -349,11 +351,14 @@ mod test_edge_cases {
 
     #[test]
     fn test_parse_whitespace_rejected() {
-        // 标准库的 from_str 会拒绝前后有空格的字符串
+        // Standard library's from_str rejects strings with leading/trailing whitespace
         let result: Result<FinF32, _> = " 3.14".parse();
         assert!(matches!(result, Err(FloatParseError::InvalidFloat { .. })));
 
-        let result: Result<FinF32, _> = "3.14 ".parse();
-        assert!(matches!(result, Err(FloatParseError::InvalidFloat { .. })));
+        let result_trailing: Result<FinF32, _> = "3.14 ".parse();
+        assert!(matches!(
+            result_trailing,
+            Err(FloatParseError::InvalidFloat { .. })
+        ));
     }
 }

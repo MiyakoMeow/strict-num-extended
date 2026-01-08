@@ -9,20 +9,20 @@ use quote::quote;
 /// Generate `FloatParseError` type and its trait implementations
 pub fn generate_parse_error_type() -> proc_macro2::TokenStream {
     quote! {
-        /// 字符串解析错误
+        /// String parsing error
         ///
-        /// 包含两种可能的错误：
-        /// 1. 字符串无法解析为浮点数
-        /// 2. 解析成功但验证失败（包装 FloatError）
+        /// Contains two possible error variants:
+        /// 1. String cannot be parsed as a floating-point number
+        /// 2. Parsing succeeded but validation failed (wraps FloatError)
         #[derive(Debug, Clone, PartialEq, Eq)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub enum FloatParseError {
-            /// 字符串无法解析为有效的浮点数
+            /// String cannot be parsed as a valid floating-point number
             InvalidFloat {
-                /// 原始输入字符串
+                /// Original input string
                 input: String,
             },
-            /// 解析成功但值验证失败
+            /// Parsing succeeded but value validation failed
             ValidationFailed(FloatError),
         }
 
@@ -52,12 +52,12 @@ pub fn generate_fromstr_traits(config: &TypeConfig) -> proc_macro2::TokenStream 
                 type Err = FloatParseError;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    // 1. 使用标准库解析（自动支持科学计数法）
+                    // 1. Parse using standard library (automatically supports scientific notation)
                     let value = #float_type::from_str(s).map_err(|_| FloatParseError::InvalidFloat {
                         input: s.to_string(),
                     })?;
 
-                    // 2. 验证约束（复用现有 new() 逻辑）
+                    // 2. Validate constraints (reuses existing new() logic)
                     Self::new(value).map_err(FloatParseError::ValidationFailed)
                 }
             }
