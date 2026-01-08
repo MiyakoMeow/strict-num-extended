@@ -22,7 +22,7 @@ serde = []
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { workspace = true }
-hashbrown = { workspace = true, optional = true }
+hashbrown = { workspace = true }
 
 [lints]
 workspace = true
