@@ -206,10 +206,9 @@ fn test_deserialize_struct_with_finite_floats() {
 #[test]
 fn test_deserialize_struct_with_validation_failure() {
     #[derive(serde::Deserialize)]
-    #[allow(dead_code)]
     struct Data {
-        x: FinF32,
-        y: PositiveF64,
+        _x: FinF32,
+        _y: PositiveF64,
     }
 
     // y field is negative, should fail

@@ -16,7 +16,6 @@ mod float_conversion;
 mod generator;
 mod option_arithmetic;
 mod result_arithmetic;
-mod types;
 mod unary_ops;
 
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls};
