@@ -1325,3 +1325,163 @@ mod test_float_error {
         assert!(format!("{:?}", err).contains("NegInf"));
     }
 }
+
+/// Tests for `FiniteFloat` trait
+mod test_finite_float_trait {
+    use super::*;
+
+    #[test]
+    fn test_finite_float_trait_basic() {
+        // Test polymorphic usage: create heterogeneous collection
+        let floats: Vec<Box<dyn FiniteFloat>> = vec![
+            // Can mix different types
+            Box::new(FinF32::new(1.0f32).unwrap()),
+            Box::new(FinF64::new(2.0).unwrap()),
+            Box::new(PositiveF32::new(0.5f32).unwrap()),
+            Box::new(NegativeF64::new(-1.5).unwrap()),
+        ];
+
+        // All values can be converted to f64
+        assert!((floats.first().unwrap().as_f64() - 1.0).abs() < f64::EPSILON);
+        assert!((floats.get(1).unwrap().as_f64() - 2.0).abs() < f64::EPSILON);
+        assert!((floats.get(2).unwrap().as_f64() - 0.5).abs() < f64::EPSILON);
+        assert!((floats.get(3).unwrap().as_f64() - (-1.5)).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_finite_float_new_from_f32() {
+        // Test f32 types accept f32
+        let f32_val: FinF32 = FiniteFloat::new(3.125f32).unwrap();
+        assert!((f32_val.as_f64() - 3.125).abs() < f64::EPSILON);
+
+        // Test PositiveF32
+        let pos_f32: PositiveF32 = FiniteFloat::new(42.0f32).unwrap();
+        assert!((pos_f32.as_f64() - 42.0).abs() < f64::EPSILON);
+
+        // Test NormalizedF32
+        let norm_f32: NormalizedF32 = FiniteFloat::new(0.75f32).unwrap();
+        assert!((norm_f32.as_f64() - 0.75).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_finite_float_new_from_f64() {
+        // Test f64 types accept f64
+        let f64_val: FinF64 = FiniteFloat::new(2.5).unwrap();
+        assert!((f64_val.as_f64() - 2.5).abs() < f64::EPSILON);
+
+        // Test PositiveF64
+        let pos_f64: PositiveF64 = FiniteFloat::new(100.0).unwrap();
+        assert!((pos_f64.as_f64() - 100.0).abs() < f64::EPSILON);
+
+        // Test SymmetricF64
+        let sym_f64: SymmetricF64 = FiniteFloat::new(0.5).unwrap();
+        assert!((sym_f64.as_f64() - 0.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_finite_float_f32_from_f64() {
+        // f32 types can be created from f64 (with type conversion)
+        let f32_val: FinF32 = FiniteFloat::new(1.5).unwrap();
+        assert!((f32_val.as_f64() - 1.5).abs() < f64::EPSILON);
+
+        // NormalizedF32 created from f64
+        let norm_f32: NormalizedF32 = FiniteFloat::new(0.25).unwrap();
+        assert!((norm_f32.as_f64() - 0.25).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_finite_float_f64_from_f32() {
+        // f64 types can be created from f32
+        let f64_val: FinF64 = FiniteFloat::new(2.25f32).unwrap();
+        assert!((f64_val.as_f64() - 2.25).abs() < f64::EPSILON);
+
+        // PositiveF64 created from f32
+        let pos_f64: PositiveF64 = FiniteFloat::new(50.0f32).unwrap();
+        assert!((pos_f64.as_f64() - 50.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_finite_float_constraint_validation() {
+        // Test that constraint validation still works
+
+        // Positive does not accept negative values
+        let result: Result<PositiveF32, _> = FiniteFloat::new(-1.0f32);
+        assert!(result.is_err());
+
+        // Normalized does not accept out-of-range values
+        let result: Result<NormalizedF64, _> = FiniteFloat::new(2.0);
+        assert!(result.is_err());
+
+        // Symmetric does not accept out-of-range values
+        let result: Result<SymmetricF32, _> = FiniteFloat::new(1.5f32);
+        assert!(result.is_err());
+
+        // Fin does not accept NaN
+        let result: Result<FinF64, _> = FiniteFloat::new(f64::NAN);
+        assert!(result.is_err());
+
+        // Fin does not accept Infinity
+        let result: Result<FinF32, _> = FiniteFloat::new(f32::INFINITY);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_finite_float_all_types() {
+        // Test that all generated types implement FiniteFloat trait
+
+        // F32 types
+        let _: FinF32 = FiniteFloat::new(1.0f32).unwrap();
+        let _: PositiveF32 = FiniteFloat::new(0.5f32).unwrap();
+        let _: NegativeF32 = FiniteFloat::new(-0.5f32).unwrap();
+        let _: NonZeroF32 = FiniteFloat::new(1.0f32).unwrap();
+        let _: NormalizedF32 = FiniteFloat::new(0.5f32).unwrap();
+        let _: NegativeNormalizedF32 = FiniteFloat::new(-0.5f32).unwrap();
+        let _: NonZeroPositiveF32 = FiniteFloat::new(0.5f32).unwrap();
+        let _: NonZeroNegativeF32 = FiniteFloat::new(-0.5f32).unwrap();
+        let _: SymmetricF32 = FiniteFloat::new(0.5f32).unwrap();
+
+        // F64 types
+        let _: FinF64 = FiniteFloat::new(1.0).unwrap();
+        let _: PositiveF64 = FiniteFloat::new(0.5).unwrap();
+        let _: NegativeF64 = FiniteFloat::new(-0.5).unwrap();
+        let _: NonZeroF64 = FiniteFloat::new(1.0).unwrap();
+        let _: NormalizedF64 = FiniteFloat::new(0.5).unwrap();
+        let _: NegativeNormalizedF64 = FiniteFloat::new(-0.5).unwrap();
+        let _: NonZeroPositiveF64 = FiniteFloat::new(0.5).unwrap();
+        let _: NonZeroNegativeF64 = FiniteFloat::new(-0.5).unwrap();
+        let _: SymmetricF64 = FiniteFloat::new(0.5).unwrap();
+    }
+
+    #[test]
+    fn test_finite_float_trait_polymorphic_function() {
+        // Test polymorphic function usage
+
+        fn sum_as_f64(floats: &[Box<dyn FiniteFloat>]) -> f64 {
+            floats.iter().map(|f| f.as_f64()).sum()
+        }
+
+        let floats: Vec<Box<dyn FiniteFloat>> = vec![
+            Box::new(FinF32::new(1.0f32).unwrap()),
+            Box::new(FinF64::new(2.0).unwrap()),
+            Box::new(PositiveF32::new(3.0f32).unwrap()),
+        ];
+
+        let sum = sum_as_f64(&floats);
+        assert!((sum - 6.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_finite_float_trait_type_conversion() {
+        // Test type conversion using trait
+
+        // F32 -> F64
+        let f32_val: FinF32 = FiniteFloat::new(1.5f32).unwrap();
+        let f64_from_f32: f64 = f32_val.as_f64();
+        assert!((f64_from_f32 - 1.5).abs() < f64::EPSILON);
+
+        // F64 -> F64 ((no conversion needed))
+        let f64_val: FinF64 = FiniteFloat::new(2.25).unwrap();
+        let f64_as_f64: f64 = f64_val.as_f64();
+        assert!((f64_as_f64 - 2.25).abs() < f64::EPSILON);
+    }
+}
