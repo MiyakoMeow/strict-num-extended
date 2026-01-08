@@ -1333,19 +1333,19 @@ mod test_finite_float_trait {
     #[test]
     fn test_finite_float_trait_basic() {
         // Test polymorphic usage: create heterogeneous collection
-        let mut floats: Vec<Box<dyn FiniteFloat>> = Vec::new();
-
-        // Can mix different types
-        floats.push(Box::new(FinF32::new(1.0f32).unwrap()));
-        floats.push(Box::new(FinF64::new(2.0).unwrap()));
-        floats.push(Box::new(PositiveF32::new(0.5f32).unwrap()));
-        floats.push(Box::new(NegativeF64::new(-1.5).unwrap()));
+        let floats: Vec<Box<dyn FiniteFloat>> = vec![
+            // Can mix different types
+            Box::new(FinF32::new(1.0f32).unwrap()),
+            Box::new(FinF64::new(2.0).unwrap()),
+            Box::new(PositiveF32::new(0.5f32).unwrap()),
+            Box::new(NegativeF64::new(-1.5).unwrap()),
+        ];
 
         // All values can be converted to f64
-        assert!((floats[0].as_f64() - 1.0).abs() < f64::EPSILON);
-        assert!((floats[1].as_f64() - 2.0).abs() < f64::EPSILON);
-        assert!((floats[2].as_f64() - 0.5).abs() < f64::EPSILON);
-        assert!((floats[3].as_f64() - (-1.5)).abs() < f64::EPSILON);
+        assert!((floats.first().unwrap().as_f64() - 1.0).abs() < f64::EPSILON);
+        assert!((floats.get(1).unwrap().as_f64() - 2.0).abs() < f64::EPSILON);
+        assert!((floats.get(2).unwrap().as_f64() - 0.5).abs() < f64::EPSILON);
+        assert!((floats.get(3).unwrap().as_f64() - (-1.5)).abs() < f64::EPSILON);
     }
 
     #[test]
