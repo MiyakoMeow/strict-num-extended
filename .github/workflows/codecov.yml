@@ -14,19 +14,32 @@ jobs:
         with:
           toolchain: stable
           components: llvm-tools-preview
-      - name: Install grcov
+      - if: matrix.os == 'ubuntu-latest'
+        name: Cache APT packages
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: lcov
+          version: 1.0
+      - name: Install grcov & cargo-llvm-cov
         uses: taiki-e/cache-cargo-install-action@v3
         with:
-          tool: grcov
-      - name: Run tests with coverage
+          tool: grcov cargo-llvm-cov
+      - name: Run grcov for proc-macro generator code
         run: |
           cargo clean
           CARGO_INCREMENTAL=0 RUSTFLAGS="-C instrument-coverage" cargo test --no-fail-fast
-      - name: Generate coverage report
+          grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing --ignore "/*" -o generator.lcov
+      - name: Run cargo-llvm-cov for generated code
         run: |
-          grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+          cargo clean
+          cargo llvm-cov --no-report --lcov --output-path generated.lcov
+      - name: Merge coverage reports
+        run: |
+          # 合并两个lcov报告
+          lcov --add-tracefiles generator.lcov generated.lcov --output-file merged.lcov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./lcov.info
+          file: ./merged.lcov
+          flags: mixed_coverage
