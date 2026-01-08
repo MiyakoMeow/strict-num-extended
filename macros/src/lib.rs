@@ -10,7 +10,6 @@ use syn::parse_macro_input;
 mod arithmetic;
 mod comparison;
 mod config;
-mod constraint;
 mod conversion;
 mod finite_float;
 mod float_conversion;
@@ -23,7 +22,6 @@ mod unary_ops;
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls};
 use comparison::{generate_comparison_traits, generate_concrete_comparison_traits};
 use config::TypeConfig;
-use constraint::generate_constraint_markers;
 use conversion::generate_conversion_traits;
 use finite_float::{
     generate_concrete_impls, generate_concrete_serde_impls, generate_concrete_structs,
@@ -101,6 +99,22 @@ fn generate_error_type() -> proc_macro2::TokenStream {
     }
 }
 
+/// Generates zero-sized constraint marker types dynamically from config
+fn generate_constraint_markers(config: &TypeConfig) -> proc_macro2::TokenStream {
+    let markers = config.constraints.iter().map(|constraint| {
+        let name = &constraint.name;
+        quote! {
+            #[doc = concat!("Constraint marker: ", stringify!(#name))]
+            #[derive(Debug, Clone, Copy)]
+            pub struct #name;
+        }
+    });
+
+    quote! {
+        #(#markers)*
+    }
+}
+
 /// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
 pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
@@ -110,7 +124,7 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let mut all_code = vec![
         generate_common_definitions(),
         generate_error_type(),
-        generate_constraint_markers(),
+        generate_constraint_markers(&config),
         generate_concrete_structs(&config),
         generate_comparison_traits(),
     ];
