@@ -39,8 +39,9 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: ./generator.lcov,./generated.lcov # optional
-          verbose: true # optional (default = false)
-          fail_ci_if_error: true # optional (default = false)
+          files: ./generator.lcov,./generated.lcov
+          flags: generator,main
+          verbose: true
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
