@@ -15,6 +15,7 @@ mod doc_generator;
 mod finite_float;
 mod finite_float_trait;
 mod float_conversion;
+mod fromstr_impl;
 mod generator;
 mod option_arithmetic;
 mod result_arithmetic;
@@ -32,6 +33,9 @@ use float_conversion::{
     generate_as_f32_primitive_methods, generate_as_f32_type_methods,
     generate_as_f64_primitive_methods, generate_as_f64_type_methods,
     generate_try_into_f32_type_methods,
+};
+use fromstr_impl::{
+    generate_fromstr_traits, generate_parse_error_from_impls, generate_parse_error_type,
 };
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
@@ -126,6 +130,8 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let mut all_code = vec![
         generate_common_definitions(),
         generate_error_type(),
+        generate_parse_error_type(),
+        generate_parse_error_from_impls(),
         generate_constraint_markers(&config),
         generate_concrete_structs(&config),
         generate_comparison_traits(),
@@ -171,6 +177,9 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
 
     // Generate From/TryFrom traits
     all_code.push(generate_conversion_traits(&config));
+
+    // Generate FromStr trait implementations
+    all_code.push(generate_fromstr_traits(&config));
 
     // Generate FiniteFloat trait and implementations
     all_code.push(generate_finite_float_trait(&config));
