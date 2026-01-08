@@ -38,7 +38,6 @@ jobs:
           cargo llvm-cov --lcov --output-path generated.lcov
       - name: Merge coverage reports
         run: |
-          # 合并两个lcov报告
           lcov --add-tracefile generator.lcov --add-tracefile generated.lcov --output-file merged.lcov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
