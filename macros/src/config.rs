@@ -2,11 +2,7 @@
 //!
 //! Defines configuration structures for procedural macros and `TokenStream` parsing logic.
 
-#[cfg(feature = "std")]
 use std::collections::HashMap;
-
-#[cfg(not(feature = "std"))]
-use hashbrown::HashMap;
 
 use proc_macro2::{Ident, Span};
 use syn::{Expr, Lit, parse::Parse, parse::ParseStream};

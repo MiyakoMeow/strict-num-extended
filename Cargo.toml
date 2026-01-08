@@ -27,7 +27,6 @@ syn = { version = "2.0", features = ["full"] }
 # External optional dependencies
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1" }
-hashbrown = "0.15"
 
 [workspace.lints.rust]
 missing_docs = "warn"

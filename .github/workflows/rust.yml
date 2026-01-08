@@ -97,3 +97,32 @@ jobs:
             . -> target
       - name: Build
         run: cargo build --verbose --target wasm32-unknown-unknown --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
+  # Test embedded no_std targets (ARM Cortex-M series)
+  embedded:
+    name: embedded ${{ matrix.target }}${{ matrix.features != '' && format(' + {0}', matrix.features) || '' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - thumbv7m-none-eabi     # ARM Cortex-M3
+          - thumbv7em-none-eabihf   # ARM Cortex-M4F
+          - thumbv6m-none-eabi      # ARM Cortex-M0
+        features: ["", "serde"]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: |
+            . -> target
+      - name: Build
+        run: cargo build --verbose --target ${{ matrix.target }} --no-default-features ${{ matrix.features != '' && format('--features {0}', matrix.features) || '' }}
