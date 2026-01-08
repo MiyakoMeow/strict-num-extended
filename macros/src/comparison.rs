@@ -2,46 +2,59 @@
 
 use quote::quote;
 
-/// Generates comparison and formatting trait implementations.
+use crate::config::TypeConfig;
+use crate::generator::{for_all_constraint_float_types, make_type_alias};
+
+/// Generates comparison and formatting trait implementations for concrete types.
 pub fn generate_comparison_traits() -> proc_macro2::TokenStream {
+    // This is now a placeholder that returns empty code
+    // Comparison traits are generated for each concrete type in arithmetic.rs and other modules
+    quote! {}
+}
+
+/// Generates comparison and formatting traits for all concrete types
+pub fn generate_concrete_comparison_traits(config: &TypeConfig) -> proc_macro2::TokenStream {
+    let impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
+        let struct_name = make_type_alias(type_name, float_type);
+
+        quote! {
+            impl PartialEq for #struct_name {
+                fn eq(&self, other: &Self) -> bool {
+                    self.value == other.value
+                }
+            }
+
+            impl Eq for #struct_name {}
+
+            impl Ord for #struct_name {
+                fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                    self.value
+                        .partial_cmp(&other.value)
+                        .expect("values should always be comparable")
+                }
+            }
+
+            impl PartialOrd for #struct_name {
+                fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                    Some(self.cmp(other))
+                }
+            }
+
+            impl std::fmt::Display for #struct_name {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{}", self.value)
+                }
+            }
+
+            impl std::fmt::Debug for #struct_name {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "FiniteFloat({:?})", self.value)
+                }
+            }
+        }
+    });
+
     quote! {
-        use std::cmp::Ordering;
-        use std::fmt;
-
-        // Comparison operation implementations
-        impl<T: PartialEq, B> PartialEq for FiniteFloat<T, B> {
-            fn eq(&self, other: &Self) -> bool {
-                self.value == other.value
-            }
-        }
-
-        impl<T: PartialEq, B> Eq for FiniteFloat<T, B> {}
-
-        impl<T: PartialOrd, B> Ord for FiniteFloat<T, B> {
-            fn cmp(&self, other: &Self) -> Ordering {
-                self.value
-                    .partial_cmp(&other.value)
-                    .expect("FiniteFloat values should always be comparable")
-            }
-        }
-
-        impl<T: PartialOrd, B> PartialOrd for FiniteFloat<T, B> {
-            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-                Some(self.cmp(other))
-            }
-        }
-
-        // Formatting implementations
-        impl<T: fmt::Display, B> fmt::Display for FiniteFloat<T, B> {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.value)
-            }
-        }
-
-        impl<T: fmt::Debug, B> fmt::Debug for FiniteFloat<T, B> {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "FiniteFloat({:?})", self.value)
-            }
-        }
+        #(#impls)*
     }
 }
