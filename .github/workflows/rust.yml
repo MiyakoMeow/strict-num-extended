@@ -36,14 +36,10 @@ jobs:
       - name: Clippy Check (--all-features)
         run: cargo clippy --all-targets --all-features --verbose -- -D warnings
       - name: Test crate
-        run: |
-          cargo test --all-targets --verbose
+        run: cargo test --verbose --all-targets
       - name: Test document
-        run: |
-          cargo test --doc --verbose
+        run: cargo test --verbose --doc
       - name: Test crate (--all-features)
-        run: |
-          cargo test --all-targets --all-features --verbose
+        run: cargo test --verbose --all-targets --all-features
       - name: Test document (--all-features)
-        run: |
-          cargo test --doc --all-features --verbose
+        run: cargo test --verbose --doc --all-features
