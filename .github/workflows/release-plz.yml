@@ -33,6 +33,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # Job 2: Create Release (triggered after merging PR)
+
   release-plz-release:
     name: Release-plz release
     runs-on: ubuntu-latest

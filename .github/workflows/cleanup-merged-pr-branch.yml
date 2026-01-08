@@ -8,9 +8,11 @@ jobs:
   delete-branch:
     name: Delete merged PR head branch
     runs-on: ubuntu-latest
-    if: >-
-      ${{ github.event.pull_request.merged == true &&
-          github.event.pull_request.head.repo.full_name == github.repository }}
+    if: |-
+      ${{
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      }}
     steps:
       - name: Delete merged branch
         run: |
