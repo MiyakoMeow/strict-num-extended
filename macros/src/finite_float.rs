@@ -114,6 +114,21 @@ pub fn generate_concrete_impls(config: &TypeConfig) -> proc_macro2::TokenStream 
                     self.value
                 }
 
+                /// Gets the inner value (alias for `get()`)
+                ///
+                /// # Example
+                ///
+                /// ```
+                /// use strict_num_extended::FinF32;
+                ///
+                /// let finite = FinF32::new(2.5);
+                /// assert_eq!(finite.unwrap().value(), 2.5);
+                /// ```
+                #[must_use]
+                pub const fn value(&self) -> #float_type {
+                    self.value
+                }
+
                 /// Creates a value at compile time
                 ///
                 /// # Panics
