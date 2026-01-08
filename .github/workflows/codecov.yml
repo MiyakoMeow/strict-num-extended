@@ -43,6 +43,7 @@ jobs:
           flags: generator
           verbose: true
           fail_ci_if_error: true
+          disable_search: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload main coverage to Codecov
@@ -52,5 +53,6 @@ jobs:
           flags: main
           verbose: true
           fail_ci_if_error: true
+          disable_search: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
