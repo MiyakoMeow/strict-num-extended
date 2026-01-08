@@ -17,7 +17,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           components: llvm-tools-preview
       - name: Install grcov
         uses: taiki-e/cache-cargo-install-action@v3
@@ -35,7 +35,7 @@ jobs:
       - name: Run cargo-llvm-cov for generated code
         run: |
           cargo clean
-          cargo llvm-cov --workspace --all-features --lcov --output-path generated.lcov
+          cargo llvm-cov --workspace --all-features --doctests --lcov --output-path generated.lcov
       - name: Upload generator coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
