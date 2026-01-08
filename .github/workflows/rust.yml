@@ -38,8 +38,12 @@ jobs:
       - name: Test crate
         run: |
           cargo test --all-targets --verbose
+      - name: Test document
+        run: |
           cargo test --doc --verbose
       - name: Test crate (--all-features)
         run: |
           cargo test --all-targets --all-features --verbose
+      - name: Test document (--all-features)
+        run: |
           cargo test --doc --all-features --verbose
