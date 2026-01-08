@@ -15,7 +15,9 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
       - name: Install grcov
-        run: cargo install grcov
+        uses: taiki-e/cache-cargo-install-action@v3
+        with:
+          tool: grcov
       - name: Run tests with coverage
         run: |
           cargo clean
