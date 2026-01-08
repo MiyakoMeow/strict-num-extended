@@ -251,24 +251,12 @@ fn build_bound_check(
 ) -> TokenStream2 {
     let is_f32 = *float_type == "f32";
 
-    // Determine whether to use strict comparison and whether to substitute with MIN_POSITIVE
-    let (use_strict, use_min_positive) = match (is_lower, excludes_zero, bound == 0.0) {
-        // Either bound, excludes zero, bound is zero -> use MIN_POSITIVE
-        (_, true, true) => (false, true),
-        // Otherwise use non-strict comparison without substitution
-        _ => (false, false),
-    };
+    // For strict inequalities with excludes_zero and bound at zero, use strict comparison
+    // Otherwise use non-strict comparison
+    let use_strict = excludes_zero && bound == 0.0;
 
-    // Special handling for MIN_POSITIVE substitution
-    let bound_value = if use_min_positive {
-        // Use MIN_POSITIVE instead of 0.0 for strict comparison
-        if is_f32 {
-            quote! { (f32::MIN_POSITIVE as f64) }
-        } else {
-            quote! { f64::MIN_POSITIVE }
-        }
-    } else if is_f32 {
-        // f32 needs conversion to f64
+    // Determine the bound value to use (no substitution for strict inequalities)
+    let bound_value = if is_f32 {
         quote! { (#bound as f64) }
     } else {
         quote! { #bound }
@@ -284,11 +272,13 @@ fn build_bound_check(
     // Generate the appropriate comparison expression
     if is_lower {
         if use_strict {
+            // For > x with excludes_zero and x == 0, use > to exclude 0.0 and -0.0
             quote! { #value_expr > #bound_value }
         } else {
             quote! { #value_expr >= #bound_value }
         }
     } else if use_strict {
+        // For < x with excludes_zero and x == 0, use < to exclude 0.0 and -0.0
         quote! { #value_expr < #bound_value }
     } else {
         quote! { #value_expr <= #bound_value }

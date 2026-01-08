@@ -6,6 +6,7 @@ use crate::config::TypeConfig;
 use crate::generator::{build_validation_expr, for_all_constraint_float_types, make_type_alias};
 
 /// Generates type aliases.
+#[allow(dead_code)]
 pub fn generate_type_aliases(config: &TypeConfig) -> proc_macro2::TokenStream {
     // Generate regular type aliases
     let aliases = for_all_constraint_float_types(
@@ -36,6 +37,7 @@ pub fn generate_type_aliases(config: &TypeConfig) -> proc_macro2::TokenStream {
 }
 
 /// Generates `new_const` methods.
+#[allow(dead_code)]
 pub fn generate_new_const_methods(config: &TypeConfig) -> proc_macro2::TokenStream {
     let impls = for_all_constraint_float_types(config, |type_name, float_type, constraint_def| {
         let type_alias = make_type_alias(type_name, float_type);

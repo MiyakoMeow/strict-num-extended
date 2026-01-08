@@ -20,14 +20,15 @@ mod types;
 mod unary_ops;
 
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls};
-use comparison::generate_comparison_traits;
+use comparison::{generate_comparison_traits, generate_concrete_comparison_traits};
 use config::TypeConfig;
 use conversion::generate_conversion_traits;
-use finite_float::generate_finite_float_struct;
+use finite_float::{
+    generate_concrete_impls, generate_concrete_serde_impls, generate_concrete_structs,
+};
 use float_conversion::{generate_as_f64_methods, generate_try_into_f32_methods};
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
-use types::{generate_new_const_methods, generate_type_aliases};
 use unary_ops::{
     generate_abs_impls, generate_cos_impls, generate_signum_impls, generate_sin_impls,
     generate_tan_impls,
@@ -98,6 +99,22 @@ fn generate_error_type() -> proc_macro2::TokenStream {
     }
 }
 
+/// Generates zero-sized constraint marker types dynamically from config
+fn generate_constraint_markers(config: &TypeConfig) -> proc_macro2::TokenStream {
+    let markers = config.constraints.iter().map(|constraint| {
+        let name = &constraint.name;
+        quote! {
+            #[doc = concat!("Constraint marker: ", stringify!(#name))]
+            #[derive(Debug, Clone, Copy)]
+            pub struct #name;
+        }
+    });
+
+    quote! {
+        #(#markers)*
+    }
+}
+
 /// Main macro: generates finite floating-point types with automatic `is_finite()` checking.
 #[proc_macro]
 pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
@@ -107,15 +124,15 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let mut all_code = vec![
         generate_common_definitions(),
         generate_error_type(),
-        generate_finite_float_struct(),
+        generate_constraint_markers(&config),
+        generate_concrete_structs(&config),
         generate_comparison_traits(),
     ];
 
-    // Generate type aliases
-    all_code.push(generate_type_aliases(&config));
-
-    // Generate new_const methods
-    all_code.push(generate_new_const_methods(&config));
+    // Generate concrete struct implementations (includes new, get, new_unchecked, new_const)
+    all_code.push(generate_concrete_impls(&config));
+    all_code.push(generate_concrete_serde_impls(&config));
+    all_code.push(generate_concrete_comparison_traits(&config));
 
     // Generate type-safe arithmetic operations
     all_code.push(generate_arithmetic_impls(&config));
