@@ -191,7 +191,7 @@ fn generate_f32_to_f64_from(config: &TypeConfig) -> proc_macro2::TokenStream {
             impl From<#f32_alias> for #f64_alias {
                 #[inline]
                 fn from(value: #f32_alias) -> Self {
-                    value.as_f64()
+                    value.as_f64_type()
                 }
             }
         }
@@ -216,7 +216,7 @@ fn generate_f64_to_f32_tryfrom(config: &TypeConfig) -> proc_macro2::TokenStream 
 
                 #[inline]
                 fn try_from(value: #f64_alias) -> Result<Self, Self::Error> {
-                    value.try_into_f32()
+                    value.try_into_f32_type()
                 }
             }
         }
