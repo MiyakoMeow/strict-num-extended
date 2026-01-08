@@ -107,9 +107,9 @@ fn generate_constraint_markers(config: &TypeConfig) -> proc_macro2::TokenStream 
     let markers = config.constraints.iter().map(|constraint| {
         let name = &constraint.name;
         quote! {
-            #[doc = concat!("Constraint marker: ", stringify!(#name))]
+            #[doc(hidden)]
             #[derive(Debug, Clone, Copy)]
-            pub struct #name;
+            pub(crate) struct #name;
         }
     });
 
