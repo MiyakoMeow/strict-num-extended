@@ -35,7 +35,7 @@ jobs:
       - name: Run cargo-llvm-cov for generated code
         run: |
           cargo clean
-          cargo llvm-cov --no-report --lcov --output-path generated.lcov
+          cargo llvm-cov --lcov --output-path generated.lcov
       - name: Merge coverage reports
         run: |
           # 合并两个lcov报告
