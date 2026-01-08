@@ -15,9 +15,9 @@ mod doc_generator;
 mod finite_float;
 mod finite_float_trait;
 mod float_conversion;
+mod fromstr_impl;
 mod generator;
 mod option_arithmetic;
-mod parse_trait;
 mod result_arithmetic;
 mod unary_ops;
 
@@ -34,8 +34,8 @@ use float_conversion::{
     generate_as_f64_primitive_methods, generate_as_f64_type_methods,
     generate_try_into_f32_type_methods,
 };
+use fromstr_impl::{generate_fromstr_traits, generate_parse_error_type};
 use option_arithmetic::generate_option_arithmetic_impls;
-use parse_trait::generate_fromstr_traits;
 use result_arithmetic::generate_result_arithmetic_impls;
 use unary_ops::{
     generate_abs_impls, generate_cos_impls, generate_signum_impls, generate_sin_impls,
@@ -100,37 +100,6 @@ fn generate_error_type() -> proc_macro2::TokenStream {
 
         #[cfg(feature = "std")]
         impl std::error::Error for FloatError {}
-
-        /// 字符串解析错误
-        ///
-        /// 包含两种可能的错误：
-        /// 1. 字符串无法解析为浮点数
-        /// 2. 解析成功但验证失败（包装 FloatError）
-        #[derive(Debug, Clone, PartialEq, Eq)]
-        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-        pub enum FloatParseError {
-            /// 字符串无法解析为有效的浮点数
-            InvalidFloat {
-                /// 原始输入字符串
-                input: String,
-            },
-            /// 解析成功但值验证失败
-            ValidationFailed(FloatError),
-        }
-
-        impl core::fmt::Display for FloatParseError {
-            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                match self {
-                    FloatParseError::InvalidFloat { input } => {
-                        write!(f, "failed to parse '{}' as a floating-point number", input)
-                    }
-                    FloatParseError::ValidationFailed(e) => write!(f, "{}", e),
-                }
-            }
-        }
-
-        #[cfg(feature = "std")]
-        impl std::error::Error for FloatParseError {}
     }
 }
 
@@ -159,6 +128,7 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     let mut all_code = vec![
         generate_common_definitions(),
         generate_error_type(),
+        generate_parse_error_type(),
         generate_constraint_markers(&config),
         generate_concrete_structs(&config),
         generate_comparison_traits(),
