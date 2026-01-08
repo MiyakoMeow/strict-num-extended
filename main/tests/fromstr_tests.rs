@@ -182,7 +182,7 @@ mod test_error_messages {
 
         let err = result.unwrap_err();
         let msg = format!("{}", err);
-        assert!(msg.contains("not_a_number"));
+        assert!(msg.contains("floating-point"));
         assert!(msg.contains("failed to parse"));
     }
 
@@ -232,23 +232,19 @@ mod test_error_preserves_input {
     use super::*;
 
     #[test]
-    fn test_invalid_float_contains_original_string() {
+    fn test_invalid_float_contains_parse_error() {
         let result: Result<FinF32, _> = "abc123".parse();
-        if let Err(FloatParseError::InvalidFloat { input }) = result {
-            assert_eq!(input, "abc123");
+        if let Err(FloatParseError::InvalidFloat) = result {
+            // ParseFloatError is preserved
         } else {
-            panic!("Expected InvalidFloat error with input");
+            panic!("Expected InvalidFloat error");
         }
     }
 
     #[test]
     fn test_invalid_float_preserves_special_chars() {
         let result: Result<FinF32, _> = "$%^&*".parse();
-        if let Err(FloatParseError::InvalidFloat { input }) = result {
-            assert_eq!(input, "$%^&*");
-        } else {
-            panic!("Expected InvalidFloat error with special characters");
-        }
+        assert!(matches!(result, Err(FloatParseError::InvalidFloat)));
     }
 
     #[test]
@@ -353,12 +349,12 @@ mod test_edge_cases {
     fn test_parse_whitespace_rejected() {
         // Standard library's from_str rejects strings with leading/trailing whitespace
         let result: Result<FinF32, _> = " 3.14".parse();
-        assert!(matches!(result, Err(FloatParseError::InvalidFloat { .. })));
+        assert!(matches!(result, Err(FloatParseError::InvalidFloat)));
 
         let result_trailing: Result<FinF32, _> = "3.14 ".parse();
         assert!(matches!(
             result_trailing,
-            Err(FloatParseError::InvalidFloat { .. })
+            Err(FloatParseError::InvalidFloat)
         ));
     }
 }

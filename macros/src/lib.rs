@@ -34,7 +34,9 @@ use float_conversion::{
     generate_as_f64_primitive_methods, generate_as_f64_type_methods,
     generate_try_into_f32_type_methods,
 };
-use fromstr_impl::{generate_fromstr_traits, generate_parse_error_type};
+use fromstr_impl::{
+    generate_fromstr_traits, generate_parse_error_from_impls, generate_parse_error_type,
+};
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
 use unary_ops::{
@@ -129,6 +131,7 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
         generate_common_definitions(),
         generate_error_type(),
         generate_parse_error_type(),
+        generate_parse_error_from_impls(),
         generate_constraint_markers(&config),
         generate_concrete_structs(&config),
         generate_comparison_traits(),
