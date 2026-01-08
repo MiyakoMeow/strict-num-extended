@@ -1,10 +1,13 @@
 # strict-num-extended
 
+[![CI](https://github.com/MiyakoMeow/strict-num-extended/actions/workflows/rust.yml/badge.svg)](https://github.com/MiyakoMeow/strict-num-extended/actions/workflows/rust.yml)
+[![Cargo Deny](https://github.com/MiyakoMeow/strict-num-extended/actions/workflows/cargo-deny.yml/badge.svg)](https://github.com/MiyakoMeow/strict-num-extended/actions/workflows/cargo-deny.yml)
 [![Crates.io](https://img.shields.io/crates/v/strict-num-extended)](https://crates.io/crates/strict-num-extended)
+[![Downloads](https://img.shields.io/crates/d/strict-num-extended)](https://crates.io/crates/strict-num-extended)
 [![Documentation](https://docs.rs/strict-num-extended/badge.svg)](https://docs.rs/strict-num-extended)
+[![codecov](https://codecov.io/gh/MiyakoMeow/strict-num-extended/graph/badge.svg)](https://codecov.io/gh/MiyakoMeow/strict-num-extended)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Rust Edition: 2024](https://img.shields.io/badge/Rust-Edition%202024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/index.html)
-[![codecov](https://codecov.io/gh/MiyakoMeow/strict-num-extended/graph/badge.svg)](https://codecov.io/gh/MiyakoMeow/strict-num-extended)
 
 Type-safe finite floating-point numbers for Rust.
 
