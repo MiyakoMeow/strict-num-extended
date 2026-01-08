@@ -13,6 +13,7 @@ mod config;
 mod conversion;
 mod doc_generator;
 mod finite_float;
+mod finite_float_trait;
 mod float_conversion;
 mod generator;
 mod option_arithmetic;
@@ -26,6 +27,7 @@ use conversion::generate_conversion_traits;
 use finite_float::{
     generate_concrete_impls, generate_concrete_serde_impls, generate_concrete_structs,
 };
+use finite_float_trait::{generate_finite_float_impls, generate_finite_float_trait};
 use float_conversion::{
     generate_as_f32_primitive_methods, generate_as_f32_type_methods,
     generate_as_f64_primitive_methods, generate_as_f64_type_methods,
@@ -169,6 +171,10 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
 
     // Generate From/TryFrom traits
     all_code.push(generate_conversion_traits(&config));
+
+    // Generate FiniteFloat trait and implementations
+    all_code.push(generate_finite_float_trait(&config));
+    all_code.push(generate_finite_float_impls(&config));
 
     // Combine all code
     let expanded = quote! {
