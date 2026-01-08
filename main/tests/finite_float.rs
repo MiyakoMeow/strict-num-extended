@@ -1332,16 +1332,16 @@ mod test_finite_float_trait {
 
     #[test]
     fn test_finite_float_trait_basic() {
-        // 测试多态使用：创建异构集合
+        // Test polymorphic usage: create heterogeneous collection
         let mut floats: Vec<Box<dyn FiniteFloat>> = Vec::new();
 
-        // 可以混合不同类型
+        // Can mix different types
         floats.push(Box::new(FinF32::new(1.0f32).unwrap()));
         floats.push(Box::new(FinF64::new(2.0).unwrap()));
         floats.push(Box::new(PositiveF32::new(0.5f32).unwrap()));
         floats.push(Box::new(NegativeF64::new(-1.5).unwrap()));
 
-        // 所有值都能转换为 f64
+        // All values can be converted to f64
         assert!((floats[0].as_f64() - 1.0).abs() < f64::EPSILON);
         assert!((floats[1].as_f64() - 2.0).abs() < f64::EPSILON);
         assert!((floats[2].as_f64() - 0.5).abs() < f64::EPSILON);
@@ -1350,86 +1350,86 @@ mod test_finite_float_trait {
 
     #[test]
     fn test_finite_float_new_from_f32() {
-        // 测试 f32 类型接受 f32
+        // Test f32 types accept f32
         let f32_val: FinF32 = FiniteFloat::new(3.125f32).unwrap();
         assert!((f32_val.as_f64() - 3.125).abs() < f64::EPSILON);
 
-        // 测试 PositiveF32
+        // Test PositiveF32
         let pos_f32: PositiveF32 = FiniteFloat::new(42.0f32).unwrap();
         assert!((pos_f32.as_f64() - 42.0).abs() < f64::EPSILON);
 
-        // 测试 NormalizedF32
+        // Test NormalizedF32
         let norm_f32: NormalizedF32 = FiniteFloat::new(0.75f32).unwrap();
         assert!((norm_f32.as_f64() - 0.75).abs() < f64::EPSILON);
     }
 
     #[test]
     fn test_finite_float_new_from_f64() {
-        // 测试 f64 类型接受 f64
+        // Test f64 types accept f64
         let f64_val: FinF64 = FiniteFloat::new(2.5).unwrap();
         assert!((f64_val.as_f64() - 2.5).abs() < f64::EPSILON);
 
-        // 测试 PositiveF64
+        // Test PositiveF64
         let pos_f64: PositiveF64 = FiniteFloat::new(100.0).unwrap();
         assert!((pos_f64.as_f64() - 100.0).abs() < f64::EPSILON);
 
-        // 测试 SymmetricF64
+        // Test SymmetricF64
         let sym_f64: SymmetricF64 = FiniteFloat::new(0.5).unwrap();
         assert!((sym_f64.as_f64() - 0.5).abs() < f64::EPSILON);
     }
 
     #[test]
     fn test_finite_float_f32_from_f64() {
-        // f32 类型可以从 f64 创建（会有类型转换）
+        // f32 types can be created from f64 (with type conversion)
         let f32_val: FinF32 = FiniteFloat::new(1.5).unwrap();
         assert!((f32_val.as_f64() - 1.5).abs() < f64::EPSILON);
 
-        // NormalizedF32 从 f64 创建
+        // NormalizedF32 created from f64
         let norm_f32: NormalizedF32 = FiniteFloat::new(0.25).unwrap();
         assert!((norm_f32.as_f64() - 0.25).abs() < f64::EPSILON);
     }
 
     #[test]
     fn test_finite_float_f64_from_f32() {
-        // f64 类型可以从 f32 创建
+        // f64 types can be created from f32
         let f64_val: FinF64 = FiniteFloat::new(2.25f32).unwrap();
         assert!((f64_val.as_f64() - 2.25).abs() < f64::EPSILON);
 
-        // PositiveF64 从 f32 创建
+        // PositiveF64 created from f32
         let pos_f64: PositiveF64 = FiniteFloat::new(50.0f32).unwrap();
         assert!((pos_f64.as_f64() - 50.0).abs() < f64::EPSILON);
     }
 
     #[test]
     fn test_finite_float_constraint_validation() {
-        // 测试约束验证仍然有效
+        // Test that constraint validation still works
 
-        // Positive 不接受负数
+        // Positive does not accept negative values
         let result: Result<PositiveF32, _> = FiniteFloat::new(-1.0f32);
         assert!(result.is_err());
 
-        // Normalized 不接受超出范围的值
+        // Normalized does not accept out-of-range values
         let result: Result<NormalizedF64, _> = FiniteFloat::new(2.0);
         assert!(result.is_err());
 
-        // Symmetric 不接受超出范围的值
+        // Symmetric does not accept out-of-range values
         let result: Result<SymmetricF32, _> = FiniteFloat::new(1.5f32);
         assert!(result.is_err());
 
-        // Fin 不接受 NaN
+        // Fin does not accept NaN
         let result: Result<FinF64, _> = FiniteFloat::new(f64::NAN);
         assert!(result.is_err());
 
-        // Fin 不接受 Infinity
+        // Fin does not accept Infinity
         let result: Result<FinF32, _> = FiniteFloat::new(f32::INFINITY);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_finite_float_all_types() {
-        // 测试所有生成的类型都实现了 FiniteFloat trait
+        // Test that all generated types implement FiniteFloat trait
 
-        // F32 类型
+        // F32 types
         let _: FinF32 = FiniteFloat::new(1.0f32).unwrap();
         let _: PositiveF32 = FiniteFloat::new(0.5f32).unwrap();
         let _: NegativeF32 = FiniteFloat::new(-0.5f32).unwrap();
@@ -1440,7 +1440,7 @@ mod test_finite_float_trait {
         let _: NonZeroNegativeF32 = FiniteFloat::new(-0.5f32).unwrap();
         let _: SymmetricF32 = FiniteFloat::new(0.5f32).unwrap();
 
-        // F64 类型
+        // F64 types
         let _: FinF64 = FiniteFloat::new(1.0).unwrap();
         let _: PositiveF64 = FiniteFloat::new(0.5).unwrap();
         let _: NegativeF64 = FiniteFloat::new(-0.5).unwrap();
@@ -1454,7 +1454,7 @@ mod test_finite_float_trait {
 
     #[test]
     fn test_finite_float_trait_polymorphic_function() {
-        // 测试多态函数使用
+        // Test polymorphic function usage
 
         fn sum_as_f64(floats: &[Box<dyn FiniteFloat>]) -> f64 {
             floats.iter().map(|f| f.as_f64()).sum()
@@ -1472,14 +1472,14 @@ mod test_finite_float_trait {
 
     #[test]
     fn test_finite_float_trait_type_conversion() {
-        // 测试使用 trait 进行的类型转换
+        // Test type conversion using trait
 
         // F32 -> F64
         let f32_val: FinF32 = FiniteFloat::new(1.5f32).unwrap();
         let f64_from_f32: f64 = f32_val.as_f64();
         assert!((f64_from_f32 - 1.5).abs() < f64::EPSILON);
 
-        // F64 -> F64 (no conversion needed)
+        // F64 -> F64 ((no conversion needed))
         let f64_val: FinF64 = FiniteFloat::new(2.25).unwrap();
         let f64_as_f64: f64 = f64_val.as_f64();
         assert!((f64_as_f64 - 2.25).abs() < f64::EPSILON);
