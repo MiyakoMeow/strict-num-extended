@@ -36,11 +36,20 @@ jobs:
         run: |
           cargo clean
           cargo llvm-cov --lcov --output-path generated.lcov
-      - name: Upload coverage to Codecov
+      - name: Upload generator coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: ./generator.lcov,./generated.lcov
-          flags: generator,main
+          files: ./generator.lcov
+          flags: generator
+          verbose: true
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload main coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./generated.lcov
+          flags: main
           verbose: true
           fail_ci_if_error: true
         env:
