@@ -3,28 +3,28 @@
 use quote::quote;
 
 use crate::config::TypeConfig;
+use crate::doc_generator;
 use crate::generator::{build_validation_expr, for_all_constraint_float_types, make_type_alias};
 
 /// Generates concrete struct definitions for each constraint × float type combination
 pub fn generate_concrete_structs(config: &TypeConfig) -> proc_macro2::TokenStream {
-    let structs = for_all_constraint_float_types(config, |type_name, float_type, _| {
-        let struct_name = make_type_alias(type_name, float_type); // e.g., FinF32
-        let constraint_name = type_name; // e.g., Fin
+    let structs =
+        for_all_constraint_float_types(config, |type_name, float_type, constraint_def| {
+            let struct_name = make_type_alias(type_name, float_type); // e.g., FinF32
+            let constraint_name = type_name; // e.g., Fin
+            let struct_doc =
+                doc_generator::generate_struct_doc(type_name, float_type, constraint_def);
 
-        quote! {
-            #[doc = concat!(
-                stringify!(#struct_name), " - ",
-                stringify!(#type_name), " ",
-                stringify!(#float_type), " value"
-            )]
-            #[repr(transparent)]
-            #[derive(Clone, Copy)]
-            pub struct #struct_name {
-                value: #float_type,
-                _constraint: std::marker::PhantomData<#constraint_name>,
+            quote! {
+                #[doc = #struct_doc]
+                #[repr(transparent)]
+                #[derive(Clone, Copy)]
+                pub struct #struct_name {
+                    value: #float_type,
+                    _constraint: std::marker::PhantomData<#constraint_name>,
+                }
             }
-        }
-    });
+        });
 
     quote! {
         // Concrete struct definitions
@@ -37,24 +37,12 @@ pub fn generate_concrete_impls(config: &TypeConfig) -> proc_macro2::TokenStream 
     let impls = for_all_constraint_float_types(config, |type_name, float_type, constraint_def| {
         let struct_name = make_type_alias(type_name, float_type);
         let validate_expr = build_validation_expr(constraint_def, float_type);
+        let new_method_doc =
+            doc_generator::generate_new_method_doc(&struct_name, float_type, constraint_def);
 
         quote! {
             impl #struct_name {
-                /// Creates a new finite floating-point number
-                ///
-                /// # Example
-                ///
-                /// ```
-                /// use strict_num_extended::{FinF32, FloatError};
-                ///
-                /// let finite = FinF32::new(3.14)?;
-                /// assert_eq!(finite.get(), 3.14);
-                /// # Ok::<(), FloatError>(())
-                /// ```
-                ///
-                /// # Errors
-                ///
-                /// Returns `Err(FloatError)` if the value does not satisfy the constraint.
+                #[doc = #new_method_doc]
                 #[must_use]
                 pub fn new(value: #float_type) -> Result<Self, FloatError> {
                     let val_f64: f64 = value.into();
