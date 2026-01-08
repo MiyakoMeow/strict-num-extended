@@ -36,12 +36,11 @@ jobs:
         run: |
           cargo clean
           cargo llvm-cov --lcov --output-path generated.lcov
-      - name: Merge coverage reports
-        run: |
-          lcov --add-tracefile generator.lcov --add-tracefile generated.lcov --output-file merged.lcov
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./merged.lcov
-          flags: mixed_coverage
+          files: ./generator.lcov,./generated.lcov # optional
+          verbose: true # optional (default = false)
+          fail_ci_if_error: true # optional (default = false)
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
