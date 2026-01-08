@@ -9,20 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
       - name: Cache APT packages
         uses: awalsh128/cache-apt-pkgs-action@v1
         with:
           packages: lcov
           version: 1.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
       - name: Install grcov & cargo-llvm-cov
         uses: taiki-e/cache-cargo-install-action@v3
         with:
-          tool: grcov cargo-llvm-cov
+          tool: grcov,cargo-llvm-cov
       - name: Run grcov for proc-macro generator code
         run: |
           cargo clean
