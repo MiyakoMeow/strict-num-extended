@@ -50,7 +50,7 @@ pub fn generate_finite_float_trait(_config: &TypeConfig) -> TokenStream {
         ///
         /// # Example
         ///
-        /// ```ignore
+        /// ```
         /// use strict_num_extended::{FiniteFloat, FinF32, FinF64, PositiveF32};
         ///
         /// // Create a heterogeneous collection
@@ -73,7 +73,7 @@ pub fn generate_finite_float_trait(_config: &TypeConfig) -> TokenStream {
             ///
             /// # Examples
             ///
-            /// ```ignore
+            /// ```
             /// use strict_num_extended::{FiniteFloat, FinF32, FinF64};
             ///
             /// // Create from f32
@@ -90,11 +90,11 @@ pub fn generate_finite_float_trait(_config: &TypeConfig) -> TokenStream {
             ///
             /// # Examples
             ///
-            /// ```ignore
+            /// ```
             /// use strict_num_extended::{FiniteFloat, FinF32};
             ///
-            /// let val = FinF32::new(3.14f32).unwrap();
-            /// assert_eq!(val.as_f64(), 3.14);
+            /// let val = FinF32::new(2.5f32).unwrap();
+            /// assert_eq!(val.as_f64(), 2.5);
             /// ```
             fn as_f64(&self) -> f64;
         }
