@@ -19,14 +19,9 @@
 //! When the `serde` feature is enabled, all types implement `serde::Serialize` and
 //! `serde::Deserialize` traits:
 //!
-//! ```toml
-//! [dependencies]
-//! strict-num-extended = { version = "0.3", features = ["serde"] }
-//! ```
-//!
 //! Example usage with serde:
 //!
-//! ```ignore
+//! ```rust
 //! use strict_num_extended::FinF32;
 //! use serde_json;
 //!
