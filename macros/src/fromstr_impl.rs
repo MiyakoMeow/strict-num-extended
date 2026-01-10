@@ -54,6 +54,12 @@ pub fn generate_parse_error_from_impls() -> proc_macro2::TokenStream {
                 ParseFloatError::Invalid
             }
         }
+
+        impl From<FloatError> for ParseFloatError {
+            fn from(err: FloatError) -> Self {
+                ParseFloatError::ValidationFailed(err)
+            }
+        }
     }
 }
 
