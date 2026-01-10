@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.4.2](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.1...strict-num-extended-macros-v0.4.2) - 2026-01-10
+
+### Features
+- impl From<FloatError> for ParseFloatError ([#75](https://github.com/MiyakoMeow/strict-num-extended/pull/75))
+
+
+### Other
+- try reopen doc test ([#73](https://github.com/MiyakoMeow/strict-num-extended/pull/73))
+
 ## [0.4.1](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.0...strict-num-extended-macros-v0.4.1) - 2026-01-08
 
 ### Features
