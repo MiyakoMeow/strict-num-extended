@@ -1,0 +1,512 @@
+//! Tests for arithmetic operations between constrained types and primitive types
+
+// Strict floating-point comparisons, unwrap usage, and legacy numeric constants in test code are justified
+#![allow(clippy::unwrap_used, clippy::legacy_numeric_constants)]
+
+use strict_num_extended::*;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::f32::{INFINITY as F32_INFINITY, NAN as F32_NAN, NEG_INFINITY as F32_NEG_INFINITY};
+    use std::f64::{INFINITY, NAN, NEG_INFINITY};
+
+    // ========================================================================
+    // Basic Arithmetic Tests with f64
+    // ========================================================================
+
+    #[test]
+    fn test_finf64_add_f64() {
+        let a = FinF64::new(2.0).unwrap();
+        let result = a + 3.0f64;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_finf64_sub_f64() {
+        let a = FinF64::new(5.0).unwrap();
+        let result = a - 2.0f64;
+        assert_eq!(result.unwrap().get(), 3.0);
+    }
+
+    #[test]
+    fn test_finf64_mul_f64() {
+        let a = FinF64::new(3.0).unwrap();
+        let result = a * 4.0f64;
+        assert_eq!(result.unwrap().get(), 12.0);
+    }
+
+    #[test]
+    fn test_finf64_div_f64() {
+        let a = FinF64::new(10.0).unwrap();
+        let result = a / 2.0f64;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_finf64_div_zero_f64() {
+        let a = FinF64::new(5.0).unwrap();
+        assert!(matches!(a / 0.0f64, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f64_add_finf64() {
+        let a = 2.0f64;
+        let b = FinF64::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f64_sub_finf64() {
+        let a = 5.0f64;
+        let b = FinF64::new(2.0).unwrap();
+        let result = a - b;
+        assert_eq!(result.unwrap().get(), 3.0);
+    }
+
+    #[test]
+    fn test_f64_mul_finf64() {
+        let a = 3.0f64;
+        let b = FinF64::new(4.0).unwrap();
+        let result = a * b;
+        assert_eq!(result.unwrap().get(), 12.0);
+    }
+
+    #[test]
+    fn test_f64_div_finf64() {
+        let a = 10.0f64;
+        let b = FinF64::new(2.0).unwrap();
+        let result = a / b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    // ========================================================================
+    // Basic Arithmetic Tests with f32
+    // ========================================================================
+
+    #[test]
+    fn test_finf32_add_f32() {
+        let a = FinF32::new(2.0).unwrap();
+        let result = a + 3.0f32;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_finf32_sub_f32() {
+        let a = FinF32::new(5.0).unwrap();
+        let result = a - 2.0f32;
+        assert_eq!(result.unwrap().get(), 3.0);
+    }
+
+    #[test]
+    fn test_finf32_mul_f32() {
+        let a = FinF32::new(3.0).unwrap();
+        let result = a * 4.0f32;
+        assert_eq!(result.unwrap().get(), 12.0);
+    }
+
+    #[test]
+    fn test_finf32_div_f32() {
+        let a = FinF32::new(10.0).unwrap();
+        let result = a / 2.0f32;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_finf32_div_zero_f32() {
+        let a = FinF32::new(5.0).unwrap();
+        assert!(matches!(a / 0.0f32, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f32_add_finf32() {
+        let a = 2.0f32;
+        let b = FinF32::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f32_sub_finf32() {
+        let a = 5.0f32;
+        let b = FinF32::new(2.0).unwrap();
+        let result = a - b;
+        assert_eq!(result.unwrap().get(), 3.0);
+    }
+
+    #[test]
+    fn test_f32_mul_finf32() {
+        let a = 3.0f32;
+        let b = FinF32::new(4.0).unwrap();
+        let result = a * b;
+        assert_eq!(result.unwrap().get(), 12.0);
+    }
+
+    #[test]
+    fn test_f32_div_finf32() {
+        let a = 10.0f32;
+        let b = FinF32::new(2.0).unwrap();
+        let result = a / b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    // ========================================================================
+    // Positive Type Tests
+    // ========================================================================
+
+    #[test]
+    fn test_positivef64_add_f64() {
+        let a = PositiveF64::new(2.0).unwrap();
+        let result = a + 3.0f64;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_positivef64_mul_f64() {
+        let a = PositiveF64::new(2.0).unwrap();
+        let result = a * 3.0f64;
+        assert_eq!(result.unwrap().get(), 6.0);
+    }
+
+    #[test]
+    fn test_f64_add_positivef64() {
+        let a = 2.0f64;
+        let b = PositiveF64::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_positivef32_add_f32() {
+        let a = PositiveF32::new(2.0).unwrap();
+        let result = a + 3.0f32;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f32_add_positivef32() {
+        let a = 2.0f32;
+        let b = PositiveF32::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    // ========================================================================
+    // Normalized Type Tests
+    // ========================================================================
+
+    #[test]
+    fn test_normalizedf64_add_f64() {
+        let a = NormalizedF64::new(0.5).unwrap();
+        let result = a + 0.3f64;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    #[test]
+    fn test_f64_add_normalizedf64() {
+        let a = 0.5f64;
+        let b = NormalizedF64::new(0.3).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    #[test]
+    fn test_normalizedf32_add_f32() {
+        let a = NormalizedF32::new(0.5).unwrap();
+        let result = a + 0.3f32;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    #[test]
+    fn test_f32_add_normalizedf32() {
+        let a = 0.5f32;
+        let b = NormalizedF32::new(0.3).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    // ========================================================================
+    // NonZero Type Tests
+    // ========================================================================
+
+    #[test]
+    fn test_nonzero_f64_add_f64() {
+        let a = NonZeroF64::new(2.0).unwrap();
+        let result = a + 3.0f64;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f64_add_nonzero_f64() {
+        let a = 2.0f64;
+        let b = NonZeroF64::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_nonzero_f32_add_f32() {
+        let a = NonZeroF32::new(2.0).unwrap();
+        let result = a + 3.0f32;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f32_add_nonzero_f32() {
+        let a = 2.0f32;
+        let b = NonZeroF32::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    // ========================================================================
+    // Negative Type Tests
+    // ========================================================================
+
+    #[test]
+    fn test_negativef64_add_f64() {
+        let a = NegativeF64::new(-2.0).unwrap();
+        let result = a + (-3.0f64);
+        assert_eq!(result.unwrap().get(), -5.0);
+    }
+
+    #[test]
+    fn test_f64_add_negativef64() {
+        let a = -2.0f64;
+        let b = NegativeF64::new(-3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), -5.0);
+    }
+
+    #[test]
+    fn test_negativef32_add_f32() {
+        let a = NegativeF32::new(-2.0).unwrap();
+        let result = a + (-3.0f32);
+        assert_eq!(result.unwrap().get(), -5.0);
+    }
+
+    #[test]
+    fn test_f32_add_negativef32() {
+        let a = -2.0f32;
+        let b = NegativeF32::new(-3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), -5.0);
+    }
+
+    // ========================================================================
+    // NonZeroPositive Type Tests
+    // ========================================================================
+
+    #[test]
+    fn test_nonzero_positivef64_add_f64() {
+        let a = NonZeroPositiveF64::new(2.0).unwrap();
+        let result = a + 3.0f64;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f64_add_nonzero_positivef64() {
+        let a = 2.0f64;
+        let b = NonZeroPositiveF64::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_nonzero_positivef32_add_f32() {
+        let a = NonZeroPositiveF32::new(2.0).unwrap();
+        let result = a + 3.0f32;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    #[test]
+    fn test_f32_add_nonzero_positivef32() {
+        let a = 2.0f32;
+        let b = NonZeroPositiveF32::new(3.0).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 5.0);
+    }
+
+    // ========================================================================
+    // Symmetric Type Tests
+    // ========================================================================
+
+    #[test]
+    fn test_symmetricf64_add_f64() {
+        let a = SymmetricF64::new(0.5).unwrap();
+        let result = a + 0.3f64;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    #[test]
+    fn test_f64_add_symmetricf64() {
+        let a = 0.5f64;
+        let b = SymmetricF64::new(0.3).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    #[test]
+    fn test_symmetricf32_add_f32() {
+        let a = SymmetricF32::new(0.5).unwrap();
+        let result = a + 0.3f32;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    #[test]
+    fn test_f32_add_symmetricf32() {
+        let a = 0.5f32;
+        let b = SymmetricF32::new(0.3).unwrap();
+        let result = a + b;
+        assert_eq!(result.unwrap().get(), 0.8);
+    }
+
+    // ========================================================================
+    // Error Handling Tests - NaN, Infinity
+    // ========================================================================
+
+    #[test]
+    fn test_finf64_add_nan() {
+        let a = FinF64::new(2.0).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf64_add_infinity() {
+        let a = FinF64::new(2.0).unwrap();
+        assert!(matches!(a + INFINITY, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf64_add_neg_infinity() {
+        let a = FinF64::new(2.0).unwrap();
+        assert!(matches!(a + NEG_INFINITY, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf64_sub_nan() {
+        let a = FinF64::new(2.0).unwrap();
+        assert!(matches!(a - NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf64_mul_nan() {
+        let a = FinF64::new(2.0).unwrap();
+        assert!(matches!(a * NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf64_div_nan() {
+        let a = FinF64::new(2.0).unwrap();
+        assert!(matches!(a / NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f64_add_finf64_nan() {
+        let b = FinF64::new(3.0).unwrap();
+        assert!(matches!(NAN + b, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f64_sub_finf64_nan() {
+        let b = FinF64::new(3.0).unwrap();
+        assert!(matches!(NAN - b, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f64_mul_finf64_nan() {
+        let b = FinF64::new(3.0).unwrap();
+        assert!(matches!(NAN * b, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f64_div_finf64_nan() {
+        let b = FinF64::new(3.0).unwrap();
+        assert!(matches!(NAN / b, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf32_add_nan() {
+        let a = FinF32::new(2.0).unwrap();
+        assert!(matches!(a + F32_NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf32_add_infinity() {
+        let a = FinF32::new(2.0).unwrap();
+        assert!(matches!(a + F32_INFINITY, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_finf32_add_neg_infinity() {
+        let a = FinF32::new(2.0).unwrap();
+        assert!(matches!(a + F32_NEG_INFINITY, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f32_add_finf32_nan() {
+        let b = FinF32::new(3.0).unwrap();
+        assert!(matches!(F32_NAN + b, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_f32_add_finf32_infinity() {
+        let b = FinF32::new(3.0).unwrap();
+        assert!(matches!(F32_INFINITY + b, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_positivef64_add_nan() {
+        let a = PositiveF64::new(2.0).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_positivef32_add_nan() {
+        let a = PositiveF32::new(2.0).unwrap();
+        assert!(matches!(a + F32_NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_normalizedf64_add_nan() {
+        let a = NormalizedF64::new(0.5).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_nonzero_f64_add_nan() {
+        let a = NonZeroF64::new(2.0).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_negativef64_add_nan() {
+        let a = NegativeF64::new(-2.0).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_nonzero_positivef64_add_nan() {
+        let a = NonZeroPositiveF64::new(2.0).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_symmetricf64_add_nan() {
+        let a = SymmetricF64::new(0.5).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_negative_normalizedf64_add_nan() {
+        let a = NegativeNormalizedF64::new(-0.5).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+
+    #[test]
+    fn test_nonzero_negativef64_add_nan() {
+        let a = NonZeroNegativeF64::new(-2.0).unwrap();
+        assert!(matches!(a + NAN, Err(FloatError::NaN)));
+    }
+}
