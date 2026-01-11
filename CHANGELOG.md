@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.4.3](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.2...strict-num-extended-macros-v0.4.3) - 2026-01-11
+
+### Chore
+- split modules ([#78](https://github.com/MiyakoMeow/strict-num-extended/pull/78))
+
+
+### Features
+- raw float arithmetic ([#76](https://github.com/MiyakoMeow/strict-num-extended/pull/76))
+
 ## [0.4.2](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.1...strict-num-extended-macros-v0.4.2) - 2026-01-10
 
 ### Features
