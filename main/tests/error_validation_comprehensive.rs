@@ -36,11 +36,17 @@ mod test_nan_errors {
 
     #[test]
     fn test_nan_in_all_types() {
-        // PositiveF64 should reject NaN
-        assert!(matches!(PositiveF64::new(f64::NAN), Err(FloatError::NaN)));
+        // NonNegativeF64 should reject NaN
+        assert!(matches!(
+            NonNegativeF64::new(f64::NAN),
+            Err(FloatError::NaN)
+        ));
 
-        // NegativeF64 should reject NaN
-        assert!(matches!(NegativeF64::new(f64::NAN), Err(FloatError::NaN)));
+        // NonPositiveF64 should reject NaN
+        assert!(matches!(
+            NonPositiveF64::new(f64::NAN),
+            Err(FloatError::NaN)
+        ));
 
         // NonZeroF64 should reject NaN
         assert!(matches!(NonZeroF64::new(f64::NAN), Err(FloatError::NaN)));
@@ -106,15 +112,15 @@ mod test_infinity_errors {
 
     #[test]
     fn test_infinity_in_all_types() {
-        // PositiveF64 should reject +∞
+        // NonNegativeF64 should reject +∞
         assert!(matches!(
-            PositiveF64::new(f64::INFINITY),
+            NonNegativeF64::new(f64::INFINITY),
             Err(FloatError::PosInf)
         ));
 
-        // NegativeF64 should reject -∞
+        // NonPositiveF64 should reject -∞
         assert!(matches!(
-            NegativeF64::new(f64::NEG_INFINITY),
+            NonPositiveF64::new(f64::NEG_INFINITY),
             Err(FloatError::NegInf)
         ));
 
@@ -145,13 +151,13 @@ mod test_zero_variants {
 
     #[test]
     fn test_positive_zero() {
-        // Positive should accept +0.0
-        assert!(PositiveF32::new(0.0).is_ok());
-        assert!(PositiveF64::new(0.0).is_ok());
+        // NonNegative should accept +0.0
+        assert!(NonNegativeF32::new(0.0).is_ok());
+        assert!(NonNegativeF64::new(0.0).is_ok());
 
-        // Negative should accept +0.0
-        assert!(NegativeF32::new(0.0).is_ok());
-        assert!(NegativeF64::new(0.0).is_ok());
+        // NonPositive should accept +0.0
+        assert!(NonPositiveF32::new(0.0).is_ok());
+        assert!(NonPositiveF64::new(0.0).is_ok());
 
         // NonZero should reject +0.0
         assert!(matches!(NonZeroF32::new(0.0), Err(FloatError::OutOfRange)));
@@ -164,13 +170,13 @@ mod test_zero_variants {
         assert_eq!(-0.0f32, 0.0f32);
         assert_eq!(-0.0f64, 0.0f64);
 
-        // Positive should accept -0.0 (since -0.0 == 0.0)
-        assert!(PositiveF32::new(-0.0).is_ok());
-        assert!(PositiveF64::new(-0.0).is_ok());
+        // NonNegative should accept -0.0 (since -0.0 == 0.0)
+        assert!(NonNegativeF32::new(-0.0).is_ok());
+        assert!(NonNegativeF64::new(-0.0).is_ok());
 
-        // Negative should accept -0.0
-        assert!(NegativeF32::new(-0.0).is_ok());
-        assert!(NegativeF64::new(-0.0).is_ok());
+        // NonPositive should accept -0.0
+        assert!(NonPositiveF32::new(-0.0).is_ok());
+        assert!(NonPositiveF64::new(-0.0).is_ok());
 
         // NonZero should reject -0.0 (since -0.0 == 0.0, and val != 0.0 is false)
         assert!(matches!(NonZeroF32::new(-0.0), Err(FloatError::OutOfRange)));
@@ -180,29 +186,23 @@ mod test_zero_variants {
     #[test]
     fn test_zero_equality() {
         // Verify that +0.0 and -0.0 are equal within the type
-        let pos_zero = PositiveF32::new(0.0).unwrap();
-        let neg_zero = PositiveF32::new(-0.0).unwrap();
+        let pos_zero = NonNegativeF32::new(0.0).unwrap();
+        let neg_zero = NonNegativeF32::new(-0.0).unwrap();
         assert_eq!(pos_zero.get(), neg_zero.get());
     }
 
     #[test]
     fn test_nonzero_rejects_both_zeros() {
-        // NonZeroPositive should reject both +0.0 and -0.0
+        // Positive should reject both +0.0 and -0.0
+        assert!(matches!(PositiveF32::new(0.0), Err(FloatError::OutOfRange)));
         assert!(matches!(
-            NonZeroPositiveF32::new(0.0),
-            Err(FloatError::OutOfRange)
-        ));
-        assert!(matches!(
-            NonZeroPositiveF32::new(-0.0),
+            PositiveF32::new(-0.0),
             Err(FloatError::OutOfRange)
         ));
 
+        assert!(matches!(NegativeF32::new(0.0), Err(FloatError::OutOfRange)));
         assert!(matches!(
-            NonZeroNegativeF32::new(0.0),
-            Err(FloatError::OutOfRange)
-        ));
-        assert!(matches!(
-            NonZeroNegativeF32::new(-0.0),
+            NegativeF32::new(-0.0),
             Err(FloatError::OutOfRange)
         ));
     }
@@ -215,8 +215,8 @@ mod test_division_by_zero_errors {
 
     #[test]
     fn test_division_by_positive_zero() {
-        let a = PositiveF64::new(10.0).unwrap();
-        let zero = PositiveF64::new(0.0).unwrap();
+        let a = NonNegativeF64::new(10.0).unwrap();
+        let zero = NonNegativeF64::new(0.0).unwrap();
 
         let result = a / zero;
         assert!(matches!(result, Err(FloatError::NaN)));
@@ -224,9 +224,9 @@ mod test_division_by_zero_errors {
 
     #[test]
     fn test_division_by_negative_zero() {
-        let a = PositiveF64::new(10.0).unwrap();
+        let a = NonNegativeF64::new(10.0).unwrap();
         // Use unsafe to create -0.0
-        let zero_neg = unsafe { PositiveF64::new_unchecked(-0.0) };
+        let zero_neg = unsafe { NonNegativeF64::new_unchecked(-0.0) };
 
         let result = a / zero_neg;
         assert!(matches!(result, Err(FloatError::NaN)));
@@ -249,8 +249,8 @@ mod test_division_by_zero_errors {
     fn test_nonzero_types_no_division_by_zero() {
         // NonZero types theoretically cannot divide by zero, since zero values
         // are rejected at creation time
-        let a = PositiveF64::new(10.0).unwrap();
-        let b = NonZeroPositiveF64::new(2.0).unwrap();
+        let a = NonNegativeF64::new(10.0).unwrap();
+        let b = PositiveF64::new(2.0).unwrap();
 
         let result = a / b;
         assert!(result.is_ok());
@@ -343,8 +343,8 @@ mod test_overflow_underflow {
 
     #[test]
     fn test_addition_overflow() {
-        let a = PositiveF64::new(1e308).unwrap();
-        let b = PositiveF64::new(1e308).unwrap();
+        let a = NonNegativeF64::new(1e308).unwrap();
+        let b = NonNegativeF64::new(1e308).unwrap();
 
         let result = a + b;
         // Should return PosInf error
@@ -353,10 +353,10 @@ mod test_overflow_underflow {
 
     #[test]
     fn test_subtraction_underflow() {
-        let a = NegativeF64::new(-1e308).unwrap();
-        let b = PositiveF64::new(1e308).unwrap();
+        let a = NonPositiveF64::new(-1e308).unwrap();
+        let b = NonNegativeF64::new(1e308).unwrap();
 
-        // Negative - Positive result type is Fin (deduced via operator overloading)
+        // NonPositive - NonNegative result type is Fin (deduced via operator overloading)
         let result = a - b;
         // Should return NegInf error
         assert!(matches!(result, Err(FloatError::NegInf)));
@@ -364,8 +364,8 @@ mod test_overflow_underflow {
 
     #[test]
     fn test_multiplication_overflow() {
-        let a = PositiveF64::new(1e200).unwrap();
-        let b = PositiveF64::new(1e200).unwrap();
+        let a = NonNegativeF64::new(1e200).unwrap();
+        let b = NonNegativeF64::new(1e200).unwrap();
 
         let result = a * b;
         // Should return PosInf error
@@ -376,8 +376,8 @@ mod test_overflow_underflow {
     fn test_f32_overflow() {
         // f32 version of overflow test
         // f32::MAX ≈ 3.4e38, use large enough values to cause overflow
-        let a = PositiveF32::new(2e38).unwrap();
-        let b = PositiveF32::new(2e38).unwrap();
+        let a = NonNegativeF32::new(2e38).unwrap();
+        let b = NonNegativeF32::new(2e38).unwrap();
 
         let result = a + b;
         // 2e38 + 2e38 = 4e38 > f32::MAX, should overflow
@@ -431,22 +431,22 @@ mod test_boundary_values {
 
     #[test]
     fn test_positive_boundaries() {
-        // Positive: [0.0, +∞)
-        assert!(PositiveF32::new(0.0).is_ok());
-        assert!(PositiveF32::new(f32::MAX).is_ok());
+        // NonNegative: [0.0, +∞)
+        assert!(NonNegativeF32::new(0.0).is_ok());
+        assert!(NonNegativeF32::new(f32::MAX).is_ok());
         assert!(matches!(
-            PositiveF32::new(-0.001),
+            NonNegativeF32::new(-0.001),
             Err(FloatError::OutOfRange)
         ));
     }
 
     #[test]
     fn test_negative_boundaries() {
-        // Negative: (-∞, 0.0]
-        assert!(NegativeF32::new(0.0).is_ok());
-        assert!(NegativeF32::new(f32::MIN).is_ok());
+        // NonPositive: (-∞, 0.0]
+        assert!(NonPositiveF32::new(0.0).is_ok());
+        assert!(NonPositiveF32::new(f32::MIN).is_ok());
         assert!(matches!(
-            NegativeF32::new(0.001),
+            NonPositiveF32::new(0.001),
             Err(FloatError::OutOfRange)
         ));
     }
@@ -507,29 +507,29 @@ mod test_none_operand_errors {
 
     #[test]
     fn test_option_none_operand_all_operations() {
-        const A: PositiveF64 = PositiveF64::new_const(5.0);
-        let none: Option<NegativeF64> = None;
+        const A: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+        let none: Option<NonPositiveF64> = None;
 
         // Addition (safe operation) returns None
         let add_result: Option<FinF64> = A + none;
         assert!(add_result.is_none());
 
         // Multiplication (fallible operation) returns Err
-        let none_pos: Option<PositiveF64> = None;
-        let mul_result: Result<PositiveF64, FloatError> = A * none_pos;
+        let none_pos: Option<NonNegativeF64> = None;
+        let mul_result: Result<NonNegativeF64, FloatError> = A * none_pos;
         assert!(matches!(mul_result, Err(FloatError::NoneOperand)));
 
         // Division (fallible operation) returns Err
-        let div_result: Result<PositiveF64, FloatError> = A / none_pos;
+        let div_result: Result<NonNegativeF64, FloatError> = A / none_pos;
         assert!(matches!(div_result, Err(FloatError::NoneOperand)));
     }
 
     #[test]
     fn test_none_operand_error_message() {
-        const A: PositiveF64 = PositiveF64::new_const(5.0);
-        let none: Option<PositiveF64> = None;
+        const A: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+        let none: Option<NonNegativeF64> = None;
 
-        let result: Result<PositiveF64, FloatError> = A * none;
+        let result: Result<NonNegativeF64, FloatError> = A * none;
         assert!(matches!(result, Err(FloatError::NoneOperand)));
 
         if let Err(e) = result {
@@ -549,8 +549,8 @@ mod test_tryfrom_consistency {
     #[test]
     fn test_try_from_primitive_consistency() {
         // TryFrom<f32> should return the same error as new()
-        let result_new = PositiveF32::new(-1.0);
-        let result_try: Result<PositiveF32, _> = PositiveF32::try_from(-1.0f32);
+        let result_new = NonNegativeF32::new(-1.0);
+        let result_try: Result<NonNegativeF32, _> = NonNegativeF32::try_from(-1.0f32);
 
         match (result_new, result_try) {
             (Err(FloatError::OutOfRange), Err(FloatError::OutOfRange)) => {}
@@ -562,8 +562,8 @@ mod test_tryfrom_consistency {
     fn test_try_from_f64_to_f32_consistency() {
         // TryFrom<f32> for F32 types should call new() and return the same error
         // Use f32::MAX, which is a valid value
-        let result_new = PositiveF32::new(f32::MAX);
-        let result_try: Result<PositiveF32, _> = PositiveF32::try_from(f32::MAX);
+        let result_new = NonNegativeF32::new(f32::MAX);
+        let result_try: Result<NonNegativeF32, _> = NonNegativeF32::try_from(f32::MAX);
 
         // Both should succeed
         assert!(result_new.is_ok());

@@ -38,51 +38,63 @@ macro_rules! test_abs_approx {
     };
 }
 
-// Positive → Positive (reflexive)
-mod test_abs_positive {
+// NonNegative → NonNegative (reflexive)
+mod test_abs_nonnegative {
     use super::*;
 
-    test_abs!(test_abs_positive_f64, PositiveF64, 5.0, PositiveF64, 5.0);
+    test_abs!(
+        test_abs_nonnegative_f64,
+        NonNegativeF64,
+        5.0,
+        NonNegativeF64,
+        5.0
+    );
     test_abs_approx!(
-        test_abs_positive_f32,
-        PositiveF32,
+        test_abs_nonnegative_f32,
+        NonNegativeF32,
         2.5,
-        PositiveF32,
+        NonNegativeF32,
         2.5,
         f32
     );
 
     #[test]
-    fn test_abs_positive_zero() {
-        const ZERO: PositiveF64 = PositiveF64::new_const(0.0);
-        let abs_val: PositiveF64 = ZERO.abs();
+    fn test_abs_nonnegative_zero() {
+        const ZERO: NonNegativeF64 = NonNegativeF64::new_const(0.0);
+        let abs_val: NonNegativeF64 = ZERO.abs();
         assert_eq!(abs_val.get(), 0.0);
     }
 }
 
-// Negative → Positive
-mod test_abs_negative {
+// NonPositive → NonNegative
+mod test_abs_nonpositive {
     use super::*;
 
-    test_abs!(test_abs_negative_f64, NegativeF64, -5.0, PositiveF64, 5.0);
+    test_abs!(
+        test_abs_nonpositive_f64,
+        NonPositiveF64,
+        -5.0,
+        NonNegativeF64,
+        5.0
+    );
     test_abs_approx!(
-        test_abs_negative_f32,
-        NegativeF32,
+        test_abs_nonpositive_f32,
+        NonPositiveF32,
         -2.5,
-        PositiveF32,
+        NonNegativeF32,
         2.5,
         f32
     );
 
     #[test]
-    fn test_abs_negative_zero() {
-        const ZERO: NegativeF64 = NegativeF64::new_const(0.0);
-        let abs_val: PositiveF64 = ZERO.abs();
+    fn test_abs_nonpositive_zero() {
+        const ZERO: NonPositiveF64 = NonPositiveF64::new_const(0.0);
+        let abs_val: NonNegativeF64 = ZERO.abs();
         assert_eq!(abs_val.get(), 0.0);
     }
 }
 
-// NonZero → NonZeroPositive
+// NonZero → Positive
 mod test_abs_nonzero {
     use super::*;
 
@@ -90,21 +102,15 @@ mod test_abs_nonzero {
         test_abs_nonzero_negative,
         NonZeroF64,
         -5.0,
-        NonZeroPositiveF64,
+        PositiveF64,
         5.0
     );
-    test_abs!(
-        test_abs_nonzero_positive,
-        NonZeroF64,
-        3.0,
-        NonZeroPositiveF64,
-        3.0
-    );
+    test_abs!(test_abs_nonzero_positive, NonZeroF64, 3.0, PositiveF64, 3.0);
 
     #[test]
     fn test_abs_nonzero_small() {
         let val = NonZeroF32::new(-1e-10).unwrap();
-        let abs_val: NonZeroPositiveF32 = val.abs();
+        let abs_val: PositiveF32 = val.abs();
         assert_eq!(abs_val.get(), 1e-10);
     }
 }
@@ -167,42 +173,30 @@ mod test_abs_negative_normalized {
     }
 }
 
-// NonZeroPositive → NonZeroPositive (reflexive)
-mod test_abs_nonzero_positive {
+// Positive → Positive (reflexive)
+mod test_abs_positive {
     use super::*;
 
+    test_abs!(test_abs_positive_f64, PositiveF64, 10.0, PositiveF64, 10.0);
     test_abs!(
-        test_abs_nonzero_positive_f64,
-        NonZeroPositiveF64,
-        10.0,
-        NonZeroPositiveF64,
-        10.0
-    );
-    test_abs!(
-        test_abs_nonzero_positive_small,
-        NonZeroPositiveF32,
+        test_abs_positive_small,
+        PositiveF32,
         0.001,
-        NonZeroPositiveF32,
+        PositiveF32,
         0.001
     );
 }
 
-// NonZeroNegative → NonZeroPositive
-mod test_abs_nonzero_negative {
+// Negative → Positive
+mod test_abs_negative {
     use super::*;
 
+    test_abs!(test_abs_negative_f64, NegativeF64, -10.0, PositiveF64, 10.0);
     test_abs!(
-        test_abs_nonzero_negative_f64,
-        NonZeroNegativeF64,
-        -10.0,
-        NonZeroPositiveF64,
-        10.0
-    );
-    test_abs!(
-        test_abs_nonzero_negative_small,
-        NonZeroNegativeF32,
+        test_abs_negative_small,
+        NegativeF32,
         -0.001,
-        NonZeroPositiveF32,
+        PositiveF32,
         0.001
     );
 }
@@ -246,16 +240,16 @@ mod test_abs_symmetric {
 mod test_abs_fin {
     use super::*;
 
-    test_abs!(test_abs_fin_negative, FinF64, -2.5, PositiveF64, 2.5);
-    test_abs!(test_abs_fin_positive, FinF32, 1.5, PositiveF32, 1.5);
+    test_abs!(test_abs_fin_negative, FinF64, -2.5, NonNegativeF64, 2.5);
+    test_abs!(test_abs_fin_positive, FinF32, 1.5, NonNegativeF32, 1.5);
 
     #[test]
     fn test_abs_fin_large_values() {
         const LARGE_NEG: FinF64 = FinF64::new_const(-1e100);
         const LARGE_POS: FinF64 = FinF64::new_const(1e100);
 
-        let abs_neg: PositiveF64 = LARGE_NEG.abs();
-        let abs_pos: PositiveF64 = LARGE_POS.abs();
+        let abs_neg: NonNegativeF64 = LARGE_NEG.abs();
+        let abs_pos: NonNegativeF64 = LARGE_POS.abs();
 
         assert_eq!(abs_neg.get(), 1e100);
         assert_eq!(abs_pos.get(), 1e100);
@@ -264,7 +258,7 @@ mod test_abs_fin {
     #[test]
     fn test_abs_fin_zero() {
         const ZERO: FinF64 = FinF64::new_const(0.0);
-        let abs_val: PositiveF64 = ZERO.abs();
+        let abs_val: NonNegativeF64 = ZERO.abs();
         assert_eq!(abs_val.get(), 0.0);
     }
 }
@@ -289,17 +283,17 @@ macro_rules! test_signum {
 mod test_signum_type_inference {
     use super::*;
 
-    // Positive types → Normalized (signum in {0, 1})
+    // NonNegative types → Normalized (signum in {0, 1})
     test_signum!(
         test_signum_positive_to_normalized,
-        PositiveF64,
+        NonNegativeF64,
         5.0,
         NormalizedF64,
         1.0
     );
     test_signum!(
         test_signum_positive_zero,
-        PositiveF64,
+        NonNegativeF64,
         0.0,
         NormalizedF64,
         1.0
@@ -321,24 +315,24 @@ mod test_signum_type_inference {
     );
 
     test_signum!(
-        test_signum_nonzero_positive_to_normalized,
-        NonZeroPositiveF64,
+        test_signum_positive_f64_to_normalized,
+        PositiveF64,
         1e5,
         NormalizedF64,
         1.0
     );
 
-    // Negative types → NegativeNormalized (signum in {-1, 0})
+    // NonPositive types → NegativeNormalized (signum in {-1, 0})
     test_signum!(
         test_signum_negative_to_negative_normalized,
-        NegativeF64,
+        NonPositiveF64,
         -5.0,
         NegativeNormalizedF64,
         -1.0
     );
     test_signum!(
         test_signum_negative_zero_to_negative_normalized,
-        NegativeF64,
+        NonPositiveF64,
         0.0,
         NegativeNormalizedF64,
         1.0
@@ -360,8 +354,8 @@ mod test_signum_type_inference {
     );
 
     test_signum!(
-        test_signum_nonzero_negative_to_negative_normalized,
-        NonZeroNegativeF64,
+        test_signum_negative_f64_to_negative_normalized,
+        NegativeF64,
         -1e5,
         NegativeNormalizedF64,
         -1.0
@@ -372,20 +366,8 @@ mod test_signum_type_inference {
     test_signum!(test_signum_fin_negative, FinF64, -100.0, SymmetricF64, -1.0);
     test_signum!(test_signum_fin_zero, FinF64, 0.0, SymmetricF64, 1.0);
 
-    test_signum!(
-        test_signum_nonzero_positive,
-        NonZeroF64,
-        1e-10,
-        SymmetricF64,
-        1.0
-    );
-    test_signum!(
-        test_signum_nonzero_negative,
-        NonZeroF64,
-        -1e-10,
-        SymmetricF64,
-        -1.0
-    );
+    test_signum!(test_signum_positive, NonZeroF64, 1e-10, SymmetricF64, 1.0);
+    test_signum!(test_signum_negative, NonZeroF64, -1e-10, SymmetricF64, -1.0);
 
     test_signum!(
         test_signum_symmetric_positive,
@@ -416,8 +398,8 @@ mod test_signum_f32 {
 
     #[test]
     fn test_signum_f32_type_inference() {
-        const POS: PositiveF32 = PositiveF32::new_const(5.0);
-        const NEG: NegativeF32 = NegativeF32::new_const(-5.0);
+        const POS: NonNegativeF32 = NonNegativeF32::new_const(5.0);
+        const NEG: NonPositiveF32 = NonPositiveF32::new_const(-5.0);
         const ZERO: FinF32 = FinF32::new_const(0.0);
 
         // Type inference works for f32 too
@@ -438,16 +420,16 @@ mod test_signum_f32 {
 #[test]
 fn test_abs_and_signum_combined() {
     // Test that signum(abs(x)) == 1.0 for all x ≠ 0
-    const NEG_VAL: NegativeF64 = NegativeF64::new_const(-5.0);
-    let abs_val: PositiveF64 = NEG_VAL.abs();
+    const NEG_VAL: NonPositiveF64 = NonPositiveF64::new_const(-5.0);
+    let abs_val: NonNegativeF64 = NEG_VAL.abs();
     let sign: NormalizedF64 = abs_val.signum();
     assert_eq!(sign.get(), 1.0);
 
     // Test that abs(x) * signum(x) == x for all x
     const VAL: FinF64 = FinF64::new_const(-3.5);
-    let abs_of_val: PositiveF64 = VAL.abs();
+    let abs_of_val: NonNegativeF64 = VAL.abs();
     let sign_val: SymmetricF64 = VAL.signum();
-    // Note: Can't multiply Positive and Symmetric directly, but we can verify the logic
+    // Note: Can't multiply NonNegative and Symmetric directly, but we can verify the logic
     assert_eq!(abs_of_val.get(), 3.5);
     assert_eq!(sign_val.get(), -1.0);
 }
@@ -464,14 +446,14 @@ fn test_abs_idempotent() {
 #[test]
 fn test_signum_type_precision() {
     // Test that signum provides the most precise type
-    const POS: PositiveF64 = PositiveF64::new_const(5.0);
-    const NEG: NegativeF64 = NegativeF64::new_const(-5.0);
+    const POS: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+    const NEG: NonPositiveF64 = NonPositiveF64::new_const(-5.0);
     const FIN: FinF64 = FinF64::new_const(5.0);
 
-    // Positive → Normalized (more precise than Symmetric)
+    // NonNegative → Normalized (more precise than Symmetric)
     let sign_pos: NormalizedF64 = POS.signum();
 
-    // Negative → NegativeNormalized (more precise than Symmetric)
+    // NonPositive → NegativeNormalized (more precise than Symmetric)
     let sign_neg: NegativeNormalizedF64 = NEG.signum();
 
     // Fin → Symmetric (most general)

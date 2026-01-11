@@ -78,8 +78,26 @@ mod test_constraint_validation {
     use super::*;
 
     #[test]
-    fn test_positive_rejects_negative() {
-        let result: Result<PositiveF32, _> = "-1.0".parse();
+    fn test_nonnegative_rejects_negative() {
+        let result: Result<NonNegativeF32, _> = "-1.0".parse();
+        assert!(matches!(
+            result,
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
+        ));
+    }
+
+    #[test]
+    fn test_positive_rejects_zero() {
+        let result: Result<PositiveF32, _> = "0.0".parse();
+        assert!(matches!(
+            result,
+            Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
+        ));
+    }
+
+    #[test]
+    fn test_negative_rejects_zero() {
+        let result: Result<NegativeF32, _> = "0.0".parse();
         assert!(matches!(
             result,
             Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
@@ -114,8 +132,8 @@ mod test_constraint_validation {
     }
 
     #[test]
-    fn test_nonzero_positive_rejects_negative() {
-        let result: Result<NonZeroPositiveF64, _> = "-1.0".parse();
+    fn test_positive_rejects_negative() {
+        let result: Result<PositiveF64, _> = "-1.0".parse();
         assert!(matches!(
             result,
             Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange))
@@ -198,7 +216,27 @@ mod test_error_messages {
 
     #[test]
     fn test_out_of_range_error_message() {
-        let result: Result<PositiveF32, _> = "-1.0".parse();
+        let result: Result<NonNegativeF32, _> = "-1.0".parse();
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+        let msg = format!("{}", err);
+        assert!(msg.contains("outside the valid range"));
+    }
+
+    #[test]
+    fn test_positive_rejects_zero_message() {
+        let result: Result<PositiveF32, _> = "0.0".parse();
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+        let msg = format!("{}", err);
+        assert!(msg.contains("outside the valid range"));
+    }
+
+    #[test]
+    fn test_negative_rejects_zero_message() {
+        let result: Result<NegativeF32, _> = "0.0".parse();
         assert!(result.is_err());
 
         let err = result.unwrap_err();
@@ -258,9 +296,29 @@ mod test_error_preserves_input {
 
     #[test]
     fn test_validation_failed_wraps_float_error() {
-        let result: Result<PositiveF32, _> = "-1.0".parse();
+        let result: Result<NonNegativeF32, _> = "-1.0".parse();
         if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
             // 正确包装了 OutOfRange 错误
+        } else {
+            panic!("Expected ValidationFailed(OutOfRange) error");
+        }
+    }
+
+    #[test]
+    fn test_positive_zero_validation_failed() {
+        let result: Result<PositiveF32, _> = "0.0".parse();
+        if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
+            // Positive 应该拒绝 0.0
+        } else {
+            panic!("Expected ValidationFailed(OutOfRange) error");
+        }
+    }
+
+    #[test]
+    fn test_negative_zero_validation_failed() {
+        let result: Result<NegativeF32, _> = "0.0".parse();
+        if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
+            // Negative 应该拒绝 0.0
         } else {
             panic!("Expected ValidationFailed(OutOfRange) error");
         }
@@ -293,8 +351,8 @@ mod test_all_types {
     #[test]
     fn test_parse_all_f32_types() {
         assert!("3.14".parse::<FinF32>().is_ok());
-        assert!("3.14".parse::<PositiveF32>().is_ok());
-        assert!("-3.14".parse::<NegativeF32>().is_ok());
+        assert!("3.14".parse::<NonNegativeF32>().is_ok());
+        assert!("-3.14".parse::<NonPositiveF32>().is_ok());
         assert!("3.14".parse::<NonZeroF32>().is_ok());
         assert!("0.5".parse::<NormalizedF32>().is_ok());
         assert!("0.5".parse::<SymmetricF32>().is_ok());
@@ -311,15 +369,15 @@ mod test_all_types {
     }
 
     #[test]
-    fn test_parse_nonzero_positive_types() {
-        assert!("1.5".parse::<NonZeroPositiveF32>().is_ok());
-        assert!("1.5".parse::<NonZeroPositiveF64>().is_ok());
+    fn test_parse_positive_types() {
+        assert!("1.5".parse::<PositiveF32>().is_ok());
+        assert!("1.5".parse::<PositiveF64>().is_ok());
     }
 
     #[test]
-    fn test_parse_nonzero_negative_types() {
-        assert!("-1.5".parse::<NonZeroNegativeF32>().is_ok());
-        assert!("-1.5".parse::<NonZeroNegativeF64>().is_ok());
+    fn test_parse_negative_types() {
+        assert!("-1.5".parse::<NegativeF32>().is_ok());
+        assert!("-1.5".parse::<NegativeF64>().is_ok());
     }
 
     #[test]

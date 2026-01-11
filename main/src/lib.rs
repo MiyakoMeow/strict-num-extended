@@ -3,11 +3,11 @@
 //! This module provides finite floating-point types. All types guarantee finite values
 //! (excluding NaN and infinity) **automatically** - no need to manually specify `is_finite()`:
 //! - `FinF32` and `FinF64`: Finite floating-point numbers (excludes NaN and infinity)
-//! - `PositiveF32` and `PositiveF64`: Non-negative floating-point numbers (>= 0, finite)
+//! - `NonNegativeF32` and `NonNegativeF64`: Non-negative floating-point numbers (>= 0, finite)
 //! - `NonZeroF32` and `NonZeroF64`: Non-zero floating-point numbers (!= 0, excludes 0.0, -0.0, NaN, infinity)
-//! - `NonZeroPositiveF32` and `NonZeroPositiveF64`: Non-zero positive floating-point numbers (> 0, finite)
-//! - `NegativeF32` and `NegativeF64`: Non-positive floating-point numbers (<= 0, finite)
-//! - `NonZeroNegativeF32` and `NonZeroNegativeF64`: Non-zero negative floating-point numbers (< 0, finite)
+//! - `PositiveF32` and `PositiveF64`: Positive floating-point numbers (> 0, finite)
+//! - `NonPositiveF32` and `NonPositiveF64`: Non-positive floating-point numbers (<= 0, finite)
+//! - `NegativeF32` and `NegativeF64`: Negative floating-point numbers (< 0, finite)
 //! - `NormalizedF32` and `NormalizedF64`: Normalized floating-point numbers (0.0 <= value <= 1.0, finite)
 //! - `NegativeNormalizedF32` and `NegativeNormalizedF64`: Negative normalized floating-point numbers (-1.0 <= value <= 0.0, finite)
 //! - `SymmetricF32` and `SymmetricF64`: Symmetric floating-point numbers (-1.0 <= value <= 1.0, finite)
@@ -86,7 +86,7 @@
 //! ### Basic Usage
 //!
 //! ```
-//! use strict_num_extended::{FinF32, PositiveF32, NonZeroPositiveF32, SymmetricF32};
+//! use strict_num_extended::{FinF32, NonNegativeF32, PositiveF32, SymmetricF32};
 //!
 //! // Create finite floating-point numbers (no NaN or infinity)
 //! const FINITE: FinF32 = FinF32::new_const(3.14);
@@ -96,16 +96,16 @@
 //! assert!(FinF32::new(f32::NAN).is_err());
 //! assert!(FinF32::new(f32::INFINITY).is_err());
 //!
-//! // Positive numbers (>= 0)
-//! const POSITIVE: PositiveF32 = PositiveF32::new_const(42.0);
-//! assert!(POSITIVE >= PositiveF32::new_const(0.0));
+//! // Non-negative numbers (>= 0)
+//! const NON_NEGATIVE: NonNegativeF32 = NonNegativeF32::new_const(42.0);
+//! assert!(NON_NEGATIVE >= NonNegativeF32::new_const(0.0));
 //!
-//! // Non-zero positive numbers (> 0)
-//! const NONZERO_POS: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
-//! assert!(NONZERO_POS.get() > 0.0);
+//! // Positive numbers (> 0)
+//! const POSITIVE: PositiveF32 = PositiveF32::new_const(10.0);
+//! assert!(POSITIVE.get() > 0.0);
 //!
 //! // Arithmetic operations preserve constraints
-//! let result = (NONZERO_POS + NONZERO_POS).unwrap();
+//! let result = (POSITIVE + POSITIVE).unwrap();
 //! assert_eq!(result.get(), 20.0);
 //!
 //! // Symmetric numbers in range [-1.0, 1.0]
@@ -119,14 +119,14 @@
 //!
 //! ## Composable Constraints
 //!
-//! All constraints can be freely combined. For example, `NonZeroPositiveF32` combines
-//! `Positive` and `NonZero` constraints:
+//! All constraints can be freely combined. For example, `PositiveF32` combines
+//! `Positive` (> 0) constraint:
 //!
 //! ```
 //! use strict_num_extended::*;
 //!
 //! // Use predefined combined types
-//! let nonzero_pos: NonZeroPositiveF32 = NonZeroPositiveF32::new(10.0).unwrap();
+//! let positive: PositiveF32 = PositiveF32::new(10.0).unwrap();
 //! ```
 //!
 //! Additionally, `Option` versions are provided for handling potentially failing operations.
@@ -136,7 +136,7 @@
 //! ## Quick Overview
 //!
 //! ```
-//! use strict_num_extended::{FinF32, PositiveF32, NonZeroPositiveF32};
+//! use strict_num_extended::{FinF32, NonNegativeF32, PositiveF32};
 //!
 //! // Create finite floating-point numbers (no NaN or infinity)
 //! const FINITE: FinF32 = FinF32::new_const(3.14);
@@ -146,13 +146,13 @@
 //! assert!(FinF32::new(f32::NAN).is_err());
 //! assert!(FinF32::new(f32::INFINITY).is_err());
 //!
-//! // Positive numbers (>= 0)
-//! const POSITIVE: PositiveF32 = PositiveF32::new_const(42.0);
-//! assert!(POSITIVE >= PositiveF32::new_const(0.0));
+//! // Non-negative numbers (>= 0)
+//! const NON_NEGATIVE: NonNegativeF32 = NonNegativeF32::new_const(42.0);
+//! assert!(NON_NEGATIVE >= NonNegativeF32::new_const(0.0));
 //!
-//! // Non-zero positive numbers (> 0)
-//! const NONZERO_POS: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
-//! assert!(NONZERO_POS.get() > 0.0);
+//! // Positive numbers (> 0)
+//! const POSITIVE: PositiveF32 = PositiveF32::new_const(10.0);
+//! assert!(POSITIVE.get() > 0.0);
 //! ```
 //!
 //! ## Type Conversions
@@ -192,9 +192,9 @@
 //! let fin: FinF32 = normalized.into();  // Always succeeds
 //! assert_eq!(fin.get(), 0.5);
 //!
-//! // Positive → Fin
-//! let positive = PositiveF64::new(42.0).unwrap();
-//! let fin: FinF64 = positive.into();
+//! // NonNegative → Fin
+//! let non_negative = NonNegativeF64::new(42.0).unwrap();
+//! let fin: FinF64 = non_negative.into();
 //! ```
 //!
 //! ### Superset → Subset Conversions
@@ -306,10 +306,10 @@
 //! bounded type multiplication) return direct values:
 //!
 //! ```
-//! use strict_num_extended::NonZeroPositiveF32;
+//! use strict_num_extended::PositiveF32;
 //!
-//! const A: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
-//! const B: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(20.0);
+//! const A: PositiveF32 = PositiveF32::new_const(10.0);
+//! const B: PositiveF32 = PositiveF32::new_const(20.0);
 //!
 //! // Addition returns Result (overflow possible)
 //! let sum = (A + B).unwrap();
@@ -489,9 +489,9 @@
 //! use strict_num_extended::*;
 //!
 //! // Division by zero detection
-//! let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new(10.0).unwrap());
-//! const ZERO: PositiveF64 = PositiveF64::new_const(0.0);
-//! let result: Result<PositiveF64, FloatError> = a / ZERO;
+//! let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new(10.0).unwrap());
+//! const ZERO: NonNegativeF64 = NonNegativeF64::new_const(0.0);
+//! let result: Result<NonNegativeF64, FloatError> = a / ZERO;
 //! assert!(result.is_err());
 //! assert_eq!(result.unwrap_err(), FloatError::NaN);
 //! ```
@@ -626,12 +626,11 @@
 //! assert!(out_of_range.is_err());
 //! assert_eq!(out_of_range.unwrap_err(), FloatError::OutOfRange);
 //!
-//! // Division by zero
+//! // Division by zero is prevented at creation time
 //! let a = PositiveF64::new(10.0).unwrap();
-//! let zero = PositiveF64::new(0.0).unwrap();
-//! let result: Result<PositiveF64, FloatError> = a / zero;
-//! assert!(result.is_err());
-//! assert_eq!(result.unwrap_err(), FloatError::NaN);
+//! let zero_result = PositiveF64::new(0.0);
+//! assert!(zero_result.is_err());  // Cannot create zero value
+//! assert_eq!(zero_result.unwrap_err(), FloatError::OutOfRange);
 //! ```
 //!
 //! ## Practical Example: Safe Division Function
@@ -725,30 +724,30 @@
 //! let invalid = FinF32::new(f32::INFINITY); // Err(FloatError::PosInf)
 //! ```
 //!
-//! ## Positive Constraint
+//! ## `NonNegative` Constraint
 //!
-//! The `Positive` types require finite AND non-negative values (x ≥ 0):
-//!
-//! ```
-//! use strict_num_extended::PositiveF32;
-//!
-//! let valid = PositiveF32::new(0.0);      // Ok(value)
-//! let valid = PositiveF32::new(1.5);      // Ok(value)
-//! let invalid = PositiveF32::new(-1.0);   // Err(FloatError::OutOfRange) (negative)
-//! let invalid = PositiveF32::new(f32::INFINITY); // Err(FloatError::PosInf) (infinite)
-//! ```
-//!
-//! ## Negative Constraint
-//!
-//! The `Negative` types require finite AND non-positive values (x ≤ 0):
+//! The `NonNegative` types require finite AND non-negative values (x ≥ 0):
 //!
 //! ```
-//! use strict_num_extended::NegativeF32;
+//! use strict_num_extended::NonNegativeF32;
 //!
-//! let valid = NegativeF32::new(0.0);      // Ok(value)
-//! let valid = NegativeF32::new(-1.5);     // Ok(value)
-//! let invalid = NegativeF32::new(1.0);    // Err(FloatError::OutOfRange) (positive)
-//! let invalid = NegativeF32::new(f32::NEG_INFINITY); // Err(FloatError::NegInf) (infinite)
+//! let valid = NonNegativeF32::new(0.0);      // Ok(value)
+//! let valid = NonNegativeF32::new(1.5);      // Ok(value)
+//! let invalid = NonNegativeF32::new(-1.0);   // Err(FloatError::OutOfRange) (negative)
+//! let invalid = NonNegativeF32::new(f32::INFINITY); // Err(FloatError::PosInf) (infinite)
+//! ```
+//!
+//! ## `NonPositive` Constraint
+//!
+//! The `NonPositive` types require finite AND non-positive values (x ≤ 0):
+//!
+//! ```
+//! use strict_num_extended::NonPositiveF32;
+//!
+//! let valid = NonPositiveF32::new(0.0);      // Ok(value)
+//! let valid = NonPositiveF32::new(-1.5);     // Ok(value)
+//! let invalid = NonPositiveF32::new(1.0);    // Err(FloatError::OutOfRange) (positive)
+//! let invalid = NonPositiveF32::new(f32::NEG_INFINITY); // Err(FloatError::NegInf) (infinite)
 //! ```
 //!
 //! ## `NonZero` Constraint
@@ -762,6 +761,34 @@
 //! let valid = NonZeroF32::new(-1.0);      // Ok(value)
 //! let invalid = NonZeroF32::new(0.0);     // Err(FloatError::OutOfRange) (zero)
 //! let invalid = NonZeroF32::new(-0.0);    // Err(FloatError::OutOfRange) (negative zero)
+//! ```
+//!
+//! ## Positive Constraint
+//!
+//! The `Positive` types require finite AND positive values (x > 0):
+//!
+//! ```
+//! use strict_num_extended::PositiveF32;
+//!
+//! let valid = PositiveF32::new(1.0);       // Ok(value)
+//! let valid = PositiveF32::new(0.001);     // Ok(value)
+//! let invalid = PositiveF32::new(0.0);     // Err(FloatError::OutOfRange) (zero)
+//! let invalid = PositiveF32::new(-1.0);    // Err(FloatError::OutOfRange) (negative)
+//! let invalid = PositiveF32::new(f32::INFINITY); // Err(FloatError::PosInf) (infinite)
+//! ```
+//!
+//! ## Negative Constraint
+//!
+//! The `Negative` types require finite AND negative values (x < 0):
+//!
+//! ```
+//! use strict_num_extended::NegativeF32;
+//!
+//! let valid = NegativeF32::new(-1.0);      // Ok(value)
+//! let valid = NegativeF32::new(-0.001);    // Ok(value)
+//! let invalid = NegativeF32::new(0.0);     // Err(FloatError::OutOfRange) (zero)
+//! let invalid = NegativeF32::new(1.0);     // Err(FloatError::OutOfRange) (positive)
+//! let invalid = NegativeF32::new(f32::NEG_INFINITY); // Err(FloatError::NegInf) (infinite)
 //! ```
 //!
 //! ## Normalized Constraint
@@ -822,13 +849,13 @@
 //! Combined types enforce multiple constraints simultaneously:
 //!
 //! ```
-//! use strict_num_extended::NonZeroPositiveF32;
+//! use strict_num_extended::PositiveF32;
 //!
-//! // NonZeroPositive = Positive AND NonZero (equivalent to x > 0)
-//! let valid = NonZeroPositiveF32::new(1.0);     // Ok(value)
-//! let valid = NonZeroPositiveF32::new(0.001);   // Ok(value)
-//! let invalid = NonZeroPositiveF32::new(0.0);   // Err(FloatError::OutOfRange) (zero)
-//! let invalid = NonZeroPositiveF32::new(-1.0);  // Err(FloatError::OutOfRange) (negative)
+//! // Positive = NonNegative AND NonZero (equivalent to x > 0)
+//! let valid = PositiveF32::new(1.0);     // Ok(value)
+//! let valid = PositiveF32::new(0.001);   // Ok(value)
+//! let invalid = PositiveF32::new(0.0);   // Err(FloatError::OutOfRange) (zero)
+//! let invalid = PositiveF32::new(-1.0);  // Err(FloatError::OutOfRange) (negative)
 //! ```
 //!
 //! ## Unary Negation
@@ -838,15 +865,15 @@
 //! ```
 //! use strict_num_extended::*;
 //!
-//! // Positive ↔ Negative
-//! const POS: PositiveF64 = PositiveF64::new_const(5.0);
-//! let neg: NegativeF64 = -POS;
-//! assert_eq!(neg.get(), -5.0);
+//! // NonNegative ↔ NonPositive
+//! const NON_NEG: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+//! let non_pos: NonPositiveF64 = -NON_NEG;
+//! assert_eq!(non_pos.get(), -5.0);
 //!
-//! // NonZeroPositive ↔ NonZeroNegative
-//! const NZ_POS: NonZeroPositiveF32 = NonZeroPositiveF32::new_const(10.0);
-//! let nz_neg: NonZeroNegativeF32 = -NZ_POS;
-//! assert_eq!(nz_neg.get(), -10.0);
+//! // Positive ↔ Negative
+//! const POS: PositiveF32 = PositiveF32::new_const(10.0);
+//! let neg: NegativeF32 = -POS;
+//! assert_eq!(neg.get(), -10.0);
 //!
 //! // Normalized ↔ NegativeNormalized
 //! const NORM: NormalizedF64 = NormalizedF64::new_const(0.75);
@@ -869,12 +896,12 @@ extern crate std;
 // Generate all code using proc_macro
 strict_num_extended_macros::generate_finite_float_types!([
     (Fin, []),
-    (Positive, [">= 0.0"]),
-    (Negative, ["<= 0.0"]),
+    (NonNegative, [">= 0.0"]),
+    (NonPositive, ["<= 0.0"]),
     (NonZero, ["!= 0.0"]),
     (Normalized, [">= 0.0", "<= 1.0"]),
     (NegativeNormalized, [">= -1.0", "<= 0.0"]),
-    (NonZeroPositive, ["> 0.0"]),
-    (NonZeroNegative, ["< 0.0"]),
+    (Positive, ["> 0.0"]),
+    (Negative, ["< 0.0"]),
     (Symmetric, [">= -1.0", "<= 1.0"]),
 ]);

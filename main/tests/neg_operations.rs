@@ -57,62 +57,57 @@ macro_rules! test_double_neg_approx {
     };
 }
 
-/// Tests for Positive ↔ Negative conversion
-mod test_positive_negative {
+/// Tests for `NonNegative` ↔ `NonPositive` conversion
+mod test_nonnegative_nonpositive {
     use super::*;
 
     test_neg!(
-        test_positive_to_negative_f64,
-        PositiveF64,
+        test_nonnegative_to_nonpositive_f64,
+        NonNegativeF64,
         5.0,
-        NegativeF64,
+        NonPositiveF64,
         -5.0
     );
     test_neg_approx!(
-        test_negative_to_positive_f32,
-        NegativeF32,
+        test_nonpositive_to_nonnegative_f32,
+        NonPositiveF32,
         -2.5,
-        PositiveF32,
+        NonNegativeF32,
         2.5,
         f32
     );
 
     #[test]
     fn test_zero_negation() {
-        const POS_ZERO: PositiveF32 = PositiveF32::new_const(0.0);
-        let neg_zero: NegativeF32 = -POS_ZERO;
+        const POS_ZERO: NonNegativeF32 = NonNegativeF32::new_const(0.0);
+        let neg_zero: NonPositiveF32 = -POS_ZERO;
         assert_eq!(neg_zero.get(), -0.0);
 
         // Negate again to return to zero
-        let back: PositiveF32 = -neg_zero;
+        let back: NonNegativeF32 = -neg_zero;
         assert_eq!(back.get(), 0.0);
     }
 }
 
-/// Tests for `NonZeroPositive` ↔ `NonZeroNegative` conversion
-mod test_nonzero_positive_negative {
+/// Tests for `Positive` ↔ `Negative` conversion
+mod test_positive_negative {
     use super::*;
 
     test_neg!(
-        test_nonzero_positive_to_negative,
-        NonZeroPositiveF64,
+        test_positive_to_negative,
+        PositiveF64,
         10.0,
-        NonZeroNegativeF64,
+        NegativeF64,
         -10.0
     );
     test_neg!(
-        test_nonzero_negative_to_positive,
-        NonZeroNegativeF32,
+        test_negative_to_positive,
+        NegativeF32,
         -2.5,
-        NonZeroPositiveF32,
+        PositiveF32,
         2.5
     );
-    test_double_neg!(
-        test_double_negation,
-        NonZeroPositiveF32,
-        NonZeroNegativeF32,
-        10.0
-    );
+    test_double_neg!(test_double_negation, PositiveF32, NegativeF32, 10.0);
 }
 
 /// Tests for Normalized ↔ `NegativeNormalized` conversion
@@ -165,8 +160,20 @@ mod test_reflexive {
 mod test_edge_cases {
     use super::*;
 
-    test_neg!(test_large_values, PositiveF64, 1e100, NegativeF64, -1e100);
-    test_neg!(test_small_values, PositiveF32, 1e-30, NegativeF32, -1e-30);
+    test_neg!(
+        test_large_values,
+        NonNegativeF64,
+        1e100,
+        NonPositiveF64,
+        -1e100
+    );
+    test_neg!(
+        test_small_values,
+        NonNegativeF32,
+        1e-30,
+        NonPositiveF32,
+        -1e-30
+    );
     test_neg!(
         test_normalized_midpoint,
         NormalizedF64,

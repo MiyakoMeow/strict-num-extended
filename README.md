@@ -28,11 +28,11 @@ A Rust library providing zero-cost finite floating-point types through the type 
 | Type | Valid Range | Example |
 |------|-------------|---------|
 | `FinF32` / `FinF64` | All real numbers | `-∞ < x < ∞` |
-| `PositiveF32` / `PositiveF64` | `x ≥ 0` | `0.0, 1.5, 100.0` |
-| `NegativeF32` / `NegativeF64` | `x ≤ 0` | `0.0, -1.5, -100.0` |
+| `NonNegativeF32` / `NonNegativeF64` | `x ≥ 0` | `0.0, 1.5, 100.0` |
+| `NonPositiveF32` / `NonPositiveF64` | `x ≤ 0` | `0.0, -1.5, -100.0` |
 | `NonZeroF32` / `NonZeroF64` | `x ≠ 0` | `1.0, -1.0, 0.001` |
-| `NonZeroPositiveF32` / `NonZeroPositiveF64` | `x > 0` | `0.001, 1.0, 100.0` |
-| `NonZeroNegativeF32` / `NonZeroNegativeF64` | `x < 0` | `-0.001, -1.0, -100.0` |
+| `PositiveF32` / `PositiveF64` | `x > 0` | `0.001, 1.0, 100.0` |
+| `NegativeF32` / `NegativeF64` | `x < 0` | `-0.001, -1.0, -100.0` |
 | `NormalizedF32` / `NormalizedF64` | `0.0 ≤ x ≤ 1.0` | `0.0, 0.5, 1.0` |
 | `NegativeNormalizedF32` / `NegativeNormalizedF64` | `-1.0 ≤ x ≤ 0.0` | `-0.5, -0.75, -1.0` |
 | `SymmetricF32` / `SymmetricF64` | `-1.0 ≤ x ≤ 1.0` | `-1.0, 0.0, 0.5, 1.0` |

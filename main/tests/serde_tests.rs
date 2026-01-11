@@ -16,10 +16,10 @@ fn test_serialize_deserialize_fin_f32() {
 }
 
 #[test]
-fn test_serialize_deserialize_positive_f64() {
-    let original = PositiveF64::new(42.0).unwrap();
+fn test_serialize_deserialize_nonnegative_f64() {
+    let original = NonNegativeF64::new(42.0).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: PositiveF64 = serde_json::from_str(&json).unwrap();
+    let deserialized: NonNegativeF64 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
@@ -57,9 +57,9 @@ fn test_deserialize_fin_f32_from_json() {
 }
 
 #[test]
-fn test_deserialize_positive_f64_from_json() {
+fn test_deserialize_nonnegative_f64_from_json() {
     let json = "42.5";
-    let value: PositiveF64 = serde_json::from_str(json).unwrap();
+    let value: NonNegativeF64 = serde_json::from_str(json).unwrap();
     assert_eq!(value.get(), 42.5);
 }
 
@@ -83,9 +83,9 @@ fn test_deserialize_symmetric_f64_from_json() {
 // These values are rejected before being deserialized into f32/f64
 
 #[test]
-fn test_deserialize_positive_f64_negative_fails() {
+fn test_deserialize_nonnegative_f64_negative_fails() {
     let json = "-1.0";
-    let result: Result<PositiveF64, _> = serde_json::from_str(json);
+    let result: Result<NonNegativeF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err_msg = result.unwrap_err().to_string();
     assert!(err_msg.to_lowercase().contains("range"));
@@ -126,18 +126,18 @@ fn test_deserialize_symmetric_f64_out_of_range_fails() {
 }
 
 #[test]
-fn test_deserialize_nonzero_positive_f32_zero_fails() {
+fn test_deserialize_positive_f32_zero_fails() {
     let json = "0.0";
-    let result: Result<NonZeroPositiveF32, _> = serde_json::from_str(json);
+    let result: Result<PositiveF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err_msg = result.unwrap_err().to_string();
     assert!(err_msg.to_lowercase().contains("range"));
 }
 
 #[test]
-fn test_deserialize_nonzero_negative_f64_negative_zero_fails() {
+fn test_deserialize_negative_f64_negative_zero_fails() {
     let json = "-0.0";
-    let result: Result<NonZeroNegativeF64, _> = serde_json::from_str(json);
+    let result: Result<NegativeF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err_msg = result.unwrap_err().to_string();
     assert!(err_msg.to_lowercase().contains("range"));
@@ -174,17 +174,17 @@ fn test_deserialize_symmetric_boundary_negative_one() {
 }
 
 #[test]
-fn test_deserialize_positive_boundary_zero() {
+fn test_deserialize_nonnegative_boundary_zero() {
     let json = "0.0";
-    let value: PositiveF64 = serde_json::from_str(json).unwrap();
+    let value: NonNegativeF64 = serde_json::from_str(json).unwrap();
     assert_eq!(value.get(), 0.0);
 }
 
 #[test]
 fn test_deserialize_negative_boundary_zero() {
-    let json = "0.0";
+    let json = "-0.00001";
     let value: NegativeF32 = serde_json::from_str(json).unwrap();
-    assert_eq!(value.get(), 0.0);
+    assert_eq!(value.get(), -0.00001);
 }
 
 // ==================== Complex data structure tests ====================
@@ -194,7 +194,7 @@ fn test_deserialize_struct_with_finite_floats() {
     #[derive(serde::Deserialize)]
     struct Data {
         x: FinF32,
-        y: PositiveF64,
+        y: NonNegativeF64,
     }
 
     let json = r#"{"x": 987.654, "y": 42.0}"#;
@@ -208,7 +208,7 @@ fn test_deserialize_struct_with_validation_failure() {
     #[derive(serde::Deserialize)]
     struct Data {
         _x: FinF32,
-        _y: PositiveF64,
+        _y: NonNegativeF64,
     }
 
     // y field is negative, should fail
