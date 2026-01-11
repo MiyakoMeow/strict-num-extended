@@ -21,8 +21,8 @@ macro_rules! test_result_arith {
     ($test_name:ident, Ok($a:expr), Ok($b:expr), $op:tt, Result<$ResultType:ty, FloatError>, Ok($expected:expr)) => {
         #[test]
         fn $test_name() {
-            let a: Result<$crate::PositiveF64, FloatError> = Ok($crate::PositiveF64::new_const($a));
-            let b: Result<$crate::NegativeF64, FloatError> = Ok($crate::NegativeF64::new_const($b));
+            let a: Result<$crate::NonNegativeF64, FloatError> = Ok($crate::NonNegativeF64::new_const($a));
+            let b: Result<$crate::NonPositiveF64, FloatError> = Ok($crate::NonPositiveF64::new_const($b));
             let result: Result<$ResultType, FloatError> = a $op b;
             assert!(result.is_ok());
             assert_eq!(result.unwrap().get(), $expected);
@@ -32,8 +32,8 @@ macro_rules! test_result_arith {
     ($test_name:ident, Err, Ok($b:expr), $op:tt, Result<$ResultType:ty, FloatError>, Err) => {
         #[test]
         fn $test_name() {
-            let a: Result<$crate::PositiveF64, FloatError> = Err(FloatError::NaN);
-            let b: Result<$crate::NegativeF64, FloatError> = Ok($crate::NegativeF64::new_const($b));
+            let a: Result<$crate::NonNegativeF64, FloatError> = Err(FloatError::NaN);
+            let b: Result<$crate::NonPositiveF64, FloatError> = Ok($crate::NonPositiveF64::new_const($b));
             let result: Result<$ResultType, FloatError> = a $op b;
             assert!(result.is_err());
         }
@@ -43,7 +43,7 @@ macro_rules! test_result_arith {
         #[test]
         fn $test_name() {
             const A: $TypeA = <$TypeA>::new_const($a);
-            let b: Result<$crate::NegativeF64, FloatError> = Ok($crate::NegativeF64::new_const($b));
+            let b: Result<$crate::NonPositiveF64, FloatError> = Ok($crate::NonPositiveF64::new_const($b));
             let result: Result<$ResultType, FloatError> = A $op b;
             assert!(result.is_ok());
             assert_eq!(result.unwrap().get(), $expected);
@@ -53,7 +53,7 @@ macro_rules! test_result_arith {
     ($test_name:ident, Ok($a:expr), $TypeB:ty, $b:expr, $op:tt, Result<$ResultType:ty, FloatError>, Ok($expected:expr)) => {
         #[test]
         fn $test_name() {
-            let a: Result<$crate::PositiveF64, FloatError> = Ok($crate::PositiveF64::new_const($a));
+            let a: Result<$crate::NonNegativeF64, FloatError> = Ok($crate::NonNegativeF64::new_const($a));
             const B: $TypeB = <$TypeB>::new_const($b);
             let result: Result<$ResultType, FloatError> = a $op B;
             assert!(result.is_ok());
@@ -66,28 +66,28 @@ mod test_result_lhs_concrete_rhs {
     use super::*;
 
     #[test]
-    fn test_ok_positive_plus_negative() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(5.0));
-        const B: NegativeF64 = NegativeF64::new_const(-3.0);
+    fn test_ok_nonnegative_plus_nonpositive() {
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(5.0));
+        const B: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
         let result: Result<FinF64, FloatError> = a + B;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), 2.0);
     }
 
     #[test]
-    fn test_err_positive_plus_negative() {
-        let a: Result<PositiveF64, FloatError> = Err(FloatError::NaN);
-        const B: NegativeF64 = NegativeF64::new_const(-3.0);
+    fn test_err_nonnegative_plus_nonpositive() {
+        let a: Result<NonNegativeF64, FloatError> = Err(FloatError::NaN);
+        const B: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
         let result: Result<FinF64, FloatError> = a + B;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
-    fn test_ok_positive_mul_negative() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(5.0));
-        const B: NegativeF64 = NegativeF64::new_const(-3.0);
-        let result: Result<NegativeF64, FloatError> = a * B;
+    fn test_ok_nonnegative_mul_nonpositive() {
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(5.0));
+        const B: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
+        let result: Result<NonPositiveF64, FloatError> = a * B;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), -15.0);
     }
@@ -97,28 +97,28 @@ mod test_concrete_lhs_result_rhs {
     use super::*;
 
     #[test]
-    fn test_positive_plus_ok_negative() {
-        const A: PositiveF64 = PositiveF64::new_const(5.0);
-        let b: Result<NegativeF64, FloatError> = Ok(NegativeF64::new_const(-3.0));
+    fn test_nonnegative_plus_ok_nonpositive() {
+        const A: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+        let b: Result<NonPositiveF64, FloatError> = Ok(NonPositiveF64::new_const(-3.0));
         let result: Result<FinF64, FloatError> = A + b;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), 2.0);
     }
 
     #[test]
-    fn test_positive_plus_err_negative() {
-        const A: PositiveF64 = PositiveF64::new_const(5.0);
-        let b: Result<NegativeF64, FloatError> = Err(FloatError::NaN);
+    fn test_nonnegative_plus_err_nonpositive() {
+        const A: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+        let b: Result<NonPositiveF64, FloatError> = Err(FloatError::NaN);
         let result: Result<FinF64, FloatError> = A + b;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
-    fn test_positive_mul_ok_negative() {
-        const A: PositiveF64 = PositiveF64::new_const(5.0);
-        let b: Result<NegativeF64, FloatError> = Ok(NegativeF64::new_const(-3.0));
-        let result: Result<NegativeF64, FloatError> = A * b;
+    fn test_nonnegative_mul_ok_nonpositive() {
+        const A: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+        let b: Result<NonPositiveF64, FloatError> = Ok(NonPositiveF64::new_const(-3.0));
+        let result: Result<NonPositiveF64, FloatError> = A * b;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), -15.0);
     }
@@ -143,8 +143,8 @@ mod test_result_error_propagation {
 
     #[test]
     fn test_nan_propagation() {
-        let a: Result<PositiveF64, FloatError> = Err(FloatError::NaN);
-        const B: NegativeF64 = NegativeF64::new_const(-3.0);
+        let a: Result<NonNegativeF64, FloatError> = Err(FloatError::NaN);
+        const B: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
         let result: Result<FinF64, FloatError> = a + B;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::NaN);
@@ -152,8 +152,8 @@ mod test_result_error_propagation {
 
     #[test]
     fn test_pos_inf_propagation() {
-        const A: PositiveF64 = PositiveF64::new_const(5.0);
-        let b: Result<NegativeF64, FloatError> = Err(FloatError::PosInf);
+        const A: NonNegativeF64 = NonNegativeF64::new_const(5.0);
+        let b: Result<NonPositiveF64, FloatError> = Err(FloatError::PosInf);
         let result: Result<FinF64, FloatError> = A + b;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::PosInf);
@@ -161,8 +161,8 @@ mod test_result_error_propagation {
 
     #[test]
     fn test_out_of_range_propagation() {
-        let a: Result<PositiveF64, FloatError> = Err(FloatError::OutOfRange);
-        let b: NegativeF64 = NegativeF64::new_const(-3.0);
+        let a: Result<NonNegativeF64, FloatError> = Err(FloatError::OutOfRange);
+        let b: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
         let result: Result<FinF64, FloatError> = a + b;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::OutOfRange);
@@ -174,36 +174,36 @@ mod test_result_division_edge_cases {
 
     #[test]
     fn test_division_by_zero_ok_ok() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(10.0));
-        let b: PositiveF64 = PositiveF64::new_const(0.0);
-        let result: Result<PositiveF64, FloatError> = a / b;
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(10.0));
+        let b: NonNegativeF64 = NonNegativeF64::new_const(0.0);
+        let result: Result<NonNegativeF64, FloatError> = a / b;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
     fn test_division_by_zero_ok_concrete() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(10.0));
-        const B: PositiveF64 = PositiveF64::new_const(0.0);
-        let result: Result<PositiveF64, FloatError> = a / B;
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(10.0));
+        const B: NonNegativeF64 = NonNegativeF64::new_const(0.0);
+        let result: Result<NonNegativeF64, FloatError> = a / B;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
     fn test_division_by_zero_concrete_ok() {
-        const A: PositiveF64 = PositiveF64::new_const(10.0);
-        let b: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(0.0));
-        let result: Result<PositiveF64, FloatError> = A / b;
+        const A: NonNegativeF64 = NonNegativeF64::new_const(10.0);
+        let b: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(0.0));
+        let result: Result<NonNegativeF64, FloatError> = A / b;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), FloatError::NaN);
     }
 
     #[test]
     fn test_safe_division() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(10.0));
-        let b: PositiveF64 = PositiveF64::new_const(2.0);
-        let result: Result<PositiveF64, FloatError> = a / b;
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(10.0));
+        let b: NonNegativeF64 = NonNegativeF64::new_const(2.0);
+        let result: Result<NonNegativeF64, FloatError> = a / b;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), 5.0);
     }
@@ -214,9 +214,9 @@ mod test_result_chaining {
 
     #[test]
     fn test_chain_operations() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(10.0));
-        let b: NegativeF64 = NegativeF64::new_const(-3.0);
-        let c: PositiveF64 = PositiveF64::new_const(2.0);
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(10.0));
+        let b: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
+        let c: NonNegativeF64 = NonNegativeF64::new_const(2.0);
 
         // (a + b) * c = (10 - 3) * 2 = 14
         let step1 = a + b;
@@ -228,8 +228,8 @@ mod test_result_chaining {
 
     #[test]
     fn test_chain_with_error() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(10.0));
-        let b: NegativeF64 = NegativeF64::new_const(-3.0);
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(10.0));
+        let b: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
 
         // (a + b) should succeed
         let step1: Result<FinF64, FloatError> = a + b;
@@ -237,8 +237,8 @@ mod test_result_chaining {
         assert_eq!(step1.unwrap().get(), 7.0);
 
         // Now test with actual error - cannot use Result op Result, use concrete type
-        let a2: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(10.0));
-        let b2: NegativeF64 = NegativeF64::new_const(-3.0);
+        let a2: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(10.0));
+        let b2: NonPositiveF64 = NonPositiveF64::new_const(-3.0);
         let step2: Result<FinF64, FloatError> = a2 + b2;
         assert!(step2.is_ok());
         assert_eq!(step2.unwrap().get(), 7.0);
@@ -246,9 +246,9 @@ mod test_result_chaining {
 
     #[test]
     fn test_complex_chain() {
-        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(5.0));
-        let b: PositiveF64 = PositiveF64::new_const(3.0);
-        let c: NegativeF64 = NegativeF64::new_const(-2.0);
+        let a: Result<NonNegativeF64, FloatError> = Ok(NonNegativeF64::new_const(5.0));
+        let b: NonNegativeF64 = NonNegativeF64::new_const(3.0);
+        let c: NonPositiveF64 = NonPositiveF64::new_const(-2.0);
 
         // ((a * b) + c) = ((5 * 3) + (-2)) = 13
         let step1 = a * b;
@@ -281,9 +281,9 @@ mod test_result_cross_type_operations {
     }
 
     #[test]
-    fn test_nonzero_positive_add_nonzero_negative() {
-        let a: Result<NonZeroPositiveF64, FloatError> = Ok(NonZeroPositiveF64::new_const(5.0));
-        let b: NonZeroNegativeF64 = NonZeroNegativeF64::new_const(-3.0);
+    fn test_positive_add_negative() {
+        let a: Result<PositiveF64, FloatError> = Ok(PositiveF64::new_const(5.0));
+        let b: NegativeF64 = NegativeF64::new_const(-3.0);
         let result: Result<FinF64, FloatError> = a + b;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().get(), 2.0);

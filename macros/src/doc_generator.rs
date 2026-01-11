@@ -315,14 +315,14 @@ fn generate_type_description(
             struct_name
         ),
 
-        "NonZeroNegative" => format!(
-            "Non-zero negative numbers are useful for:\n\
+        "Negative" => format!(
+            "Negative numbers are useful for:\n\
              - Strictly negative values\n\
              - Non-zero denominators\n\
              \n\
              # Examples\n\
              \n\
-             Creating a non-zero negative value:\n\
+             Creating a negative value:\n\
              \n\
              ```rust\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
@@ -343,8 +343,8 @@ fn generate_type_description(
             struct_name
         ),
 
-        "NonZeroPositive" => format!(
-            "Non-zero positive numbers are useful for:\n\
+        "Positive" => format!(
+            "Positive numbers are useful for:\n\
              - Strictly positive values\n\
              - Non-zero multipliers\n\
              \n\
@@ -371,15 +371,15 @@ fn generate_type_description(
             struct_name
         ),
 
-        "Positive" => format!(
-            "Positive numbers are commonly used for:\n\
+        "NonNegative" => format!(
+            "Non-negative numbers are commonly used for:\n\
              - Counting and magnitudes\n\
              - Physical measurements\n\
              - Financial values\n\
              \n\
              # Examples\n\
              \n\
-             Creating a positive number:\n\
+             Creating a non-negative number:\n\
              \n\
              ```rust\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
@@ -400,15 +400,15 @@ fn generate_type_description(
             struct_name
         ),
 
-        "Negative" => format!(
-            "Negative numbers are commonly used for:\n\
+        "NonPositive" => format!(
+            "Non-positive numbers are commonly used for:\n\
              - Losses and debts\n\
              - Temperature below zero\n\
              - Directions and offsets\n\
              \n\
              # Examples\n\
              \n\
-             Creating a negative number:\n\
+             Creating a non-positive number:\n\
              \n\
              ```rust\n\
              use strict_num_extended::{{{0}, FloatError}};\n\

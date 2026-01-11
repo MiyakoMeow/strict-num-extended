@@ -8,7 +8,7 @@ use strict_num_extended::{FloatError, *};
 
 #[test]
 fn test_as_f32_primitive() {
-    let val = PositiveF32::new_const(5.0);
+    let val = NonNegativeF32::new_const(5.0);
     assert_eq!(val.as_f32(), 5.0);
 
     let val = NormalizedF32::new_const(0.75);
@@ -17,7 +17,7 @@ fn test_as_f32_primitive() {
 
 #[test]
 fn test_as_f64_primitive() {
-    let val = PositiveF64::new_const(5.0);
+    let val = NonNegativeF64::new_const(5.0);
     assert_eq!(val.as_f64(), 5.0);
 
     let val = NormalizedF64::new_const(0.75);
@@ -28,7 +28,7 @@ fn test_as_f64_primitive() {
 
 #[test]
 fn test_as_f32_type_clone() {
-    let val = PositiveF32::new_const(5.0);
+    let val = NonNegativeF32::new_const(5.0);
     let cloned = val.as_f32_type();
     assert_eq!(val.as_f32(), cloned.as_f32());
 
@@ -61,9 +61,9 @@ fn test_try_into_f32_type_range_overflow() {
 
 #[test]
 fn test_try_into_f32_type_constraint_violation() {
-    // Test constraint violation (PositiveF64 -> PositiveF32)
-    let positive_f64 = PositiveF64::new_const(2.0);
-    let positive_result: Result<PositiveF32, FloatError> = positive_f64.try_into_f32_type();
+    // Test constraint violation (NonNegativeF64 -> NonNegativeF32)
+    let positive_f64 = NonNegativeF64::new_const(2.0);
+    let positive_result: Result<NonNegativeF32, FloatError> = positive_f64.try_into_f32_type();
     assert!(
         positive_result.is_ok(),
         "Should succeed with valid positive value"
@@ -78,9 +78,9 @@ fn test_try_into_f32_type_constraint_violation() {
     );
 
     // Test value outside constraint range
-    let large_f64 = PositiveF64::new_const(1000.0);
-    let large_result: Result<PositiveF32, FloatError> = large_f64.try_into_f32_type();
-    // This may succeed or fail, depending on whether 1000.0 is within F32 range and satisfies PositiveF32 constraint
+    let large_f64 = NonNegativeF64::new_const(1000.0);
+    let large_result: Result<NonNegativeF32, FloatError> = large_f64.try_into_f32_type();
+    // This may succeed or fail, depending on whether 1000.0 is within F32 range and satisfies NonNegativeF32 constraint
     if let Ok(f32_val) = large_result {
         assert!(f32_val.get() > 0.0, "Should maintain positive constraint");
     }
@@ -100,13 +100,13 @@ fn test_try_into_f32_type_normal_conversion() {
 #[test]
 fn test_try_into_f32_type_different_constraints() {
     // Test conversion of different constraint types
-    let positive = PositiveF64::new_const(10.0);
-    let pos_result: Result<PositiveF32, FloatError> = positive.try_into_f32_type();
+    let positive = NonNegativeF64::new_const(10.0);
+    let pos_result: Result<NonNegativeF32, FloatError> = positive.try_into_f32_type();
     assert!(pos_result.is_ok());
     assert_eq!(pos_result.unwrap().get(), 10.0);
 
-    let negative = NegativeF64::new_const(-10.0);
-    let neg_result: Result<NegativeF32, FloatError> = negative.try_into_f32_type();
+    let negative = NonPositiveF64::new_const(-10.0);
+    let neg_result: Result<NonPositiveF32, FloatError> = negative.try_into_f32_type();
     assert!(neg_result.is_ok());
     assert_eq!(neg_result.unwrap().get(), -10.0);
 
@@ -131,13 +131,13 @@ fn test_try_into_f32_type_different_constraints() {
     assert!(neg_norm_result.is_ok());
     assert_eq!(neg_norm_result.unwrap().get(), -0.5);
 
-    let nonzero_pos = NonZeroPositiveF64::new_const(1.0);
-    let nz_pos_result: Result<NonZeroPositiveF32, FloatError> = nonzero_pos.try_into_f32_type();
+    let nonzero_pos = PositiveF64::new_const(1.0);
+    let nz_pos_result: Result<PositiveF32, FloatError> = nonzero_pos.try_into_f32_type();
     assert!(nz_pos_result.is_ok());
     assert_eq!(nz_pos_result.unwrap().get(), 1.0);
 
-    let nonzero_neg = NonZeroNegativeF64::new_const(-1.0);
-    let nz_neg_result: Result<NonZeroNegativeF32, FloatError> = nonzero_neg.try_into_f32_type();
+    let nonzero_neg = NegativeF64::new_const(-1.0);
+    let nz_neg_result: Result<NegativeF32, FloatError> = nonzero_neg.try_into_f32_type();
     assert!(nz_neg_result.is_ok());
     assert_eq!(nz_neg_result.unwrap().get(), -1.0);
 }
@@ -156,13 +156,13 @@ fn test_as_f64_type_const_context() {
 #[test]
 fn test_as_f64_type_different_constraints() {
     // Test conversion of different constraint types
-    let f32_val = PositiveF32::new_const(10.0);
-    let f64_val: PositiveF64 = f32_val.as_f64_type();
+    let f32_val = NonNegativeF32::new_const(10.0);
+    let f64_val: NonNegativeF64 = f32_val.as_f64_type();
     assert_eq!(f64_val.get(), 10.0);
     assert!(f64_val.get() > 0.0);
 
-    let f32_val = NegativeF32::new_const(-10.0);
-    let f64_val: NegativeF64 = f32_val.as_f64_type();
+    let f32_val = NonPositiveF32::new_const(-10.0);
+    let f64_val: NonPositiveF64 = f32_val.as_f64_type();
     assert_eq!(f64_val.get(), -10.0);
     assert!(f64_val.get() < 0.0);
 
@@ -183,12 +183,12 @@ fn test_as_f64_type_different_constraints() {
     let f64_val: NegativeNormalizedF64 = f32_val.as_f64_type();
     assert_eq!(f64_val.get(), -0.5);
 
-    let f32_val = NonZeroPositiveF32::new_const(1.0);
-    let f64_val: NonZeroPositiveF64 = f32_val.as_f64_type();
+    let f32_val = PositiveF32::new_const(1.0);
+    let f64_val: PositiveF64 = f32_val.as_f64_type();
     assert_eq!(f64_val.get(), 1.0);
 
-    let f32_val = NonZeroNegativeF32::new_const(-1.0);
-    let f64_val: NonZeroNegativeF64 = f32_val.as_f64_type();
+    let f32_val = NegativeF32::new_const(-1.0);
+    let f64_val: NegativeF64 = f32_val.as_f64_type();
     assert_eq!(f64_val.get(), -1.0);
 }
 
@@ -225,12 +225,12 @@ fn test_roundtrip_conversion() {
 #[test]
 fn test_combined_conversion_with_arithmetic() {
     // Test combination of conversion and arithmetic operations
-    let a_f64 = PositiveF64::new_const(10.0);
-    let b_f64 = PositiveF64::new_const(20.0);
+    let a_f64 = NonNegativeF64::new_const(10.0);
+    let b_f64 = NonNegativeF64::new_const(20.0);
 
     // Convert to F32 for computation
-    let a_f32: Result<PositiveF32, FloatError> = a_f64.try_into_f32_type();
-    let b_f32: Result<PositiveF32, FloatError> = b_f64.try_into_f32_type();
+    let a_f32: Result<NonNegativeF32, FloatError> = a_f64.try_into_f32_type();
+    let b_f32: Result<NonNegativeF32, FloatError> = b_f64.try_into_f32_type();
 
     assert!(a_f32.is_ok() && b_f32.is_ok());
 
@@ -238,7 +238,7 @@ fn test_combined_conversion_with_arithmetic() {
     let sum_f32 = sum_f32.unwrap();
 
     // Convert back to F64
-    let sum_f64: PositiveF64 = sum_f32.as_f64_type();
+    let sum_f64: NonNegativeF64 = sum_f32.as_f64_type();
     assert_eq!(sum_f64.get(), 30.0);
 }
 
@@ -249,8 +249,8 @@ mod test_construction {
     #[test]
     fn test_construction_with_conversion() {
         // Test using conversion in const context (as_f64_type)
-        const F32_VAL: PositiveF32 = PositiveF32::new_const(42.0);
-        const F64_VAL: PositiveF64 = F32_VAL.as_f64_type();
+        const F32_VAL: NonNegativeF32 = NonNegativeF32::new_const(42.0);
+        const F64_VAL: NonNegativeF64 = F32_VAL.as_f64_type();
 
         assert_eq!(F64_VAL.get(), 42.0);
     }
@@ -258,8 +258,8 @@ mod test_construction {
     #[test]
     fn test_runtime_conversion() {
         // Test runtime conversion (try_into_f32_type)
-        let f64_val = PositiveF64::new(42.0).unwrap();
-        let f32_val: Result<PositiveF32, FloatError> = f64_val.try_into_f32_type();
+        let f64_val = NonNegativeF64::new(42.0).unwrap();
+        let f32_val: Result<NonNegativeF32, FloatError> = f64_val.try_into_f32_type();
 
         assert!(f32_val.is_ok());
         assert_eq!(f32_val.unwrap().get(), 42.0);

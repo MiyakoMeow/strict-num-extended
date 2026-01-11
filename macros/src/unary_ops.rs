@@ -46,9 +46,9 @@ fn infer_abs_output_type(constraint_def: &ConstraintDef) -> Ident {
 
     // General case: determine output type based on zero exclusion
     let output_type = if excludes_zero {
-        "NonZeroPositive"
-    } else {
         "Positive"
+    } else {
+        "NonNegative"
     };
 
     Ident::new(output_type, Span::call_site())
@@ -120,11 +120,11 @@ pub fn generate_abs_impls(config: &TypeConfig) -> TokenStream2 {
                     /// Computes the absolute value.
                     ///
                     /// The return type is automatically inferred based on the source constraint:
-                    /// - `Positive`/`Negative` → `Positive`
-                    /// - `NonZero` → `NonZeroPositive`
+                    /// - `NonNegative`/`NonPositive` → `NonNegative`
+                    /// - `NonZero` → `Positive`
                     /// - `Normalized` → `Normalized` (reflexive)
                     /// - `Symmetric` → `Normalized`
-                    /// - `Fin` → `Positive`
+                    /// - `Fin` → `NonNegative`
                     ///
                     /// # Examples
                     /// ```
@@ -272,7 +272,7 @@ pub fn generate_sin_impls(config: &TypeConfig) -> TokenStream2 {
                     /// let sin_val: SymmetricF64 = angle.sin();
                     /// assert_eq!(sin_val.get(), 1.0);
                     ///
-                    /// let zero: PositiveF64 = PositiveF64::new_const(0.0);
+                    /// let zero: NonNegativeF64 = NonNegativeF64::new_const(0.0);
                     /// let sin_zero: SymmetricF64 = zero.sin();
                     /// assert_eq!(sin_zero.get(), 0.0);
                     /// ```

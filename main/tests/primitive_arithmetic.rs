@@ -152,42 +152,42 @@ mod tests {
     }
 
     // ========================================================================
-    // Positive Type Tests
+    // NonNegative Type Tests
     // ========================================================================
 
     #[test]
-    fn test_positivef64_add_f64() {
-        let a = PositiveF64::new(2.0).unwrap();
+    fn test_nonnegativef64_add_f64() {
+        let a = NonNegativeF64::new(2.0).unwrap();
         let result = a + 3.0f64;
         assert_eq!(result.unwrap().get(), 5.0);
     }
 
     #[test]
-    fn test_positivef64_mul_f64() {
-        let a = PositiveF64::new(2.0).unwrap();
+    fn test_nonnegativef64_mul_f64() {
+        let a = NonNegativeF64::new(2.0).unwrap();
         let result = a * 3.0f64;
         assert_eq!(result.unwrap().get(), 6.0);
     }
 
     #[test]
-    fn test_f64_add_positivef64() {
+    fn test_f64_add_nonnegativef64() {
         let a = 2.0f64;
-        let b = PositiveF64::new(3.0).unwrap();
+        let b = NonNegativeF64::new(3.0).unwrap();
         let result = a + b;
         assert_eq!(result.unwrap().get(), 5.0);
     }
 
     #[test]
-    fn test_positivef32_add_f32() {
-        let a = PositiveF32::new(2.0).unwrap();
+    fn test_nonnegativef32_add_f32() {
+        let a = NonNegativeF32::new(2.0).unwrap();
         let result = a + 3.0f32;
         assert_eq!(result.unwrap().get(), 5.0);
     }
 
     #[test]
-    fn test_f32_add_positivef32() {
+    fn test_f32_add_nonnegativef32() {
         let a = 2.0f32;
-        let b = PositiveF32::new(3.0).unwrap();
+        let b = NonNegativeF32::new(3.0).unwrap();
         let result = a + b;
         assert_eq!(result.unwrap().get(), 5.0);
     }
@@ -261,69 +261,69 @@ mod tests {
     }
 
     // ========================================================================
-    // Negative Type Tests
+    // NonPositive Type Tests
     // ========================================================================
 
     #[test]
-    fn test_negativef64_add_f64() {
-        let a = NegativeF64::new(-2.0).unwrap();
+    fn test_nonpositivef64_add_f64() {
+        let a = NonPositiveF64::new(-2.0).unwrap();
         let result = a + (-3.0f64);
         assert_eq!(result.unwrap().get(), -5.0);
     }
 
     #[test]
-    fn test_f64_add_negativef64() {
+    fn test_f64_add_nonpositivef64() {
         let a = -2.0f64;
-        let b = NegativeF64::new(-3.0).unwrap();
+        let b = NonPositiveF64::new(-3.0).unwrap();
         let result = a + b;
         assert_eq!(result.unwrap().get(), -5.0);
     }
 
     #[test]
-    fn test_negativef32_add_f32() {
-        let a = NegativeF32::new(-2.0).unwrap();
+    fn test_nonpositivef32_add_f32() {
+        let a = NonPositiveF32::new(-2.0).unwrap();
         let result = a + (-3.0f32);
         assert_eq!(result.unwrap().get(), -5.0);
     }
 
     #[test]
-    fn test_f32_add_negativef32() {
+    fn test_f32_add_nonpositivef32() {
         let a = -2.0f32;
-        let b = NegativeF32::new(-3.0).unwrap();
+        let b = NonPositiveF32::new(-3.0).unwrap();
         let result = a + b;
         assert_eq!(result.unwrap().get(), -5.0);
     }
 
     // ========================================================================
-    // NonZeroPositive Type Tests
+    // Positive Type Tests
     // ========================================================================
 
     #[test]
-    fn test_nonzero_positivef64_add_f64() {
-        let a = NonZeroPositiveF64::new(2.0).unwrap();
+    fn test_positivef64_add_f64() {
+        let a = PositiveF64::new(2.0).unwrap();
         let result = a + 3.0f64;
         assert_eq!(result.unwrap().get(), 5.0);
     }
 
     #[test]
-    fn test_f64_add_nonzero_positivef64() {
+    fn test_f64_add_positivef64() {
         let a = 2.0f64;
-        let b = NonZeroPositiveF64::new(3.0).unwrap();
+        let b = PositiveF64::new(3.0).unwrap();
         let result = a + b;
         assert_eq!(result.unwrap().get(), 5.0);
     }
 
     #[test]
-    fn test_nonzero_positivef32_add_f32() {
-        let a = NonZeroPositiveF32::new(2.0).unwrap();
+    fn test_positivef32_add_f32() {
+        let a = PositiveF32::new(2.0).unwrap();
         let result = a + 3.0f32;
         assert_eq!(result.unwrap().get(), 5.0);
     }
 
     #[test]
-    fn test_f32_add_nonzero_positivef32() {
+    fn test_f32_add_positivef32() {
         let a = 2.0f32;
-        let b = NonZeroPositiveF32::new(3.0).unwrap();
+        let b = PositiveF32::new(3.0).unwrap();
         let result = a + b;
         assert_eq!(result.unwrap().get(), 5.0);
     }
@@ -457,14 +457,14 @@ mod tests {
     }
 
     #[test]
-    fn test_positivef64_add_nan() {
-        let a = PositiveF64::new(2.0).unwrap();
+    fn test_nonnegativef64_add_nan() {
+        let a = NonNegativeF64::new(2.0).unwrap();
         assert!(matches!(a + NAN, Err(FloatError::NaN)));
     }
 
     #[test]
-    fn test_positivef32_add_nan() {
-        let a = PositiveF32::new(2.0).unwrap();
+    fn test_nonnegativef32_add_nan() {
+        let a = NonNegativeF32::new(2.0).unwrap();
         assert!(matches!(a + F32_NAN, Err(FloatError::NaN)));
     }
 
@@ -481,14 +481,14 @@ mod tests {
     }
 
     #[test]
-    fn test_negativef64_add_nan() {
-        let a = NegativeF64::new(-2.0).unwrap();
+    fn test_nonpositivef64_add_nan() {
+        let a = NonPositiveF64::new(-2.0).unwrap();
         assert!(matches!(a + NAN, Err(FloatError::NaN)));
     }
 
     #[test]
-    fn test_nonzero_positivef64_add_nan() {
-        let a = NonZeroPositiveF64::new(2.0).unwrap();
+    fn test_positivef64_add_nan() {
+        let a = PositiveF64::new(2.0).unwrap();
         assert!(matches!(a + NAN, Err(FloatError::NaN)));
     }
 
@@ -505,8 +505,8 @@ mod tests {
     }
 
     #[test]
-    fn test_nonzero_negativef64_add_nan() {
-        let a = NonZeroNegativeF64::new(-2.0).unwrap();
+    fn test_negativef64_add_nan() {
+        let a = NegativeF64::new(-2.0).unwrap();
         assert!(matches!(a + NAN, Err(FloatError::NaN)));
     }
 }

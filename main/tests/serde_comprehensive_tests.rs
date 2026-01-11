@@ -27,34 +27,34 @@ fn test_serialize_deserialize_fin_f64() {
 }
 
 #[test]
-fn test_serialize_deserialize_positive_f32() {
-    let original = PositiveF32::new(1.5).unwrap();
+fn test_serialize_deserialize_nonnegative_f32() {
+    let original = NonNegativeF32::new(1.5).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: PositiveF32 = serde_json::from_str(&json).unwrap();
+    let deserialized: NonNegativeF32 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
 #[test]
-fn test_serialize_deserialize_positive_f64() {
-    let original = PositiveF64::new(42.0).unwrap();
+fn test_serialize_deserialize_nonnegative_f64() {
+    let original = NonNegativeF64::new(42.0).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: PositiveF64 = serde_json::from_str(&json).unwrap();
+    let deserialized: NonNegativeF64 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
 #[test]
-fn test_serialize_deserialize_negative_f32() {
-    let original = NegativeF32::new(-1.5).unwrap();
+fn test_serialize_deserialize_nonpositive_f32() {
+    let original = NonPositiveF32::new(-1.5).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: NegativeF32 = serde_json::from_str(&json).unwrap();
+    let deserialized: NonPositiveF32 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
 #[test]
-fn test_serialize_deserialize_negative_f64() {
-    let original = NegativeF64::new(-42.0).unwrap();
+fn test_serialize_deserialize_nonpositive_f64() {
+    let original = NonPositiveF64::new(-42.0).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: NegativeF64 = serde_json::from_str(&json).unwrap();
+    let deserialized: NonPositiveF64 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
@@ -75,34 +75,34 @@ fn test_serialize_deserialize_nonzero_f64() {
 }
 
 #[test]
-fn test_serialize_deserialize_nonzero_positive_f32() {
-    let original = NonZeroPositiveF32::new(1.5).unwrap();
+fn test_serialize_deserialize_positive_f32() {
+    let original = PositiveF32::new(1.5).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: NonZeroPositiveF32 = serde_json::from_str(&json).unwrap();
+    let deserialized: PositiveF32 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
 #[test]
-fn test_serialize_deserialize_nonzero_positive_f64() {
-    let original = NonZeroPositiveF64::new(42.5).unwrap();
+fn test_serialize_deserialize_positive_f64() {
+    let original = PositiveF64::new(42.5).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: NonZeroPositiveF64 = serde_json::from_str(&json).unwrap();
+    let deserialized: PositiveF64 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
 #[test]
-fn test_serialize_deserialize_nonzero_negative_f32() {
-    let original = NonZeroNegativeF32::new(-1.5).unwrap();
+fn test_serialize_deserialize_negative_f32() {
+    let original = NegativeF32::new(-1.5).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: NonZeroNegativeF32 = serde_json::from_str(&json).unwrap();
+    let deserialized: NegativeF32 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
 #[test]
-fn test_serialize_deserialize_nonzero_negative_f64() {
-    let original = NonZeroNegativeF64::new(-42.5).unwrap();
+fn test_serialize_deserialize_negative_f64() {
+    let original = NegativeF64::new(-42.5).unwrap();
     let json = serde_json::to_string(&original).unwrap();
-    let deserialized: NonZeroNegativeF64 = serde_json::from_str(&json).unwrap();
+    let deserialized: NegativeF64 = serde_json::from_str(&json).unwrap();
     assert_eq!(original.get(), deserialized.get());
 }
 
@@ -173,9 +173,9 @@ fn test_serialize_deserialize_error() {
 // ==================== Type-specific validation failure tests ====================
 
 #[test]
-fn test_positive_f32_rejects_negative() {
+fn test_nonnegative_f32_rejects_negative() {
     let json = "-1.0";
-    let result: Result<PositiveF32, _> = serde_json::from_str(json);
+    let result: Result<NonNegativeF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -187,9 +187,9 @@ fn test_positive_f32_rejects_negative() {
 }
 
 #[test]
-fn test_positive_f64_rejects_negative() {
+fn test_nonnegative_f64_rejects_negative() {
     let json = "-1.0";
-    let result: Result<PositiveF64, _> = serde_json::from_str(json);
+    let result: Result<NonNegativeF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -201,9 +201,9 @@ fn test_positive_f64_rejects_negative() {
 }
 
 #[test]
-fn test_negative_f32_rejects_positive() {
+fn test_nonpositive_f32_rejects_positive() {
     let json = "1.0";
-    let result: Result<NegativeF32, _> = serde_json::from_str(json);
+    let result: Result<NonPositiveF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -215,9 +215,9 @@ fn test_negative_f32_rejects_positive() {
 }
 
 #[test]
-fn test_negative_f64_rejects_positive() {
+fn test_nonpositive_f64_rejects_positive() {
     let json = "1.0";
-    let result: Result<NegativeF64, _> = serde_json::from_str(json);
+    let result: Result<NonPositiveF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -257,9 +257,9 @@ fn test_nonzero_f64_rejects_zero() {
 }
 
 #[test]
-fn test_nonzero_positive_f32_rejects_zero() {
+fn test_positive_f32_rejects_zero() {
     let json = "0.0";
-    let result: Result<NonZeroPositiveF32, _> = serde_json::from_str(json);
+    let result: Result<PositiveF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -271,9 +271,9 @@ fn test_nonzero_positive_f32_rejects_zero() {
 }
 
 #[test]
-fn test_nonzero_positive_f64_rejects_negative() {
+fn test_positive_f64_rejects_negative() {
     let json = "-1.0";
-    let result: Result<NonZeroPositiveF64, _> = serde_json::from_str(json);
+    let result: Result<PositiveF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -285,9 +285,9 @@ fn test_nonzero_positive_f64_rejects_negative() {
 }
 
 #[test]
-fn test_nonzero_negative_f32_rejects_zero() {
+fn test_negative_f32_rejects_zero() {
     let json = "0.0";
-    let result: Result<NonZeroNegativeF32, _> = serde_json::from_str(json);
+    let result: Result<NegativeF32, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -299,9 +299,9 @@ fn test_nonzero_negative_f32_rejects_zero() {
 }
 
 #[test]
-fn test_nonzero_negative_f64_rejects_positive() {
+fn test_negative_f64_rejects_positive() {
     let json = "1.0";
-    let result: Result<NonZeroNegativeF64, _> = serde_json::from_str(json);
+    let result: Result<NegativeF64, _> = serde_json::from_str(json);
     assert!(result.is_err());
     let err = result.unwrap_err();
     let err_str = err.to_string();
@@ -425,16 +425,16 @@ fn test_symmetric_f64_rejects_out_of_range() {
 // ==================== Boundary value tests ====================
 
 #[test]
-fn test_deserialize_positive_boundary_zero() {
+fn test_deserialize_nonnegative_boundary_zero() {
     let json = "0.0";
-    let value: PositiveF32 = serde_json::from_str(json).unwrap();
+    let value: NonNegativeF32 = serde_json::from_str(json).unwrap();
     assert_eq!(value.get(), 0.0);
 }
 
 #[test]
-fn test_deserialize_negative_boundary_zero() {
+fn test_deserialize_nonpositive_boundary_zero() {
     let json = "0.0";
-    let value: NegativeF32 = serde_json::from_str(json).unwrap();
+    let value: NonPositiveF32 = serde_json::from_str(json).unwrap();
     assert_eq!(value.get(), 0.0);
 }
 

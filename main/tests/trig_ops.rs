@@ -48,7 +48,7 @@ fn test_sin_pi() {
 #[test]
 fn test_sin_various_types() {
     let fin = FinF64::new(std::f64::consts::PI / 6.0).unwrap();
-    let pos = PositiveF64::new_const(0.0);
+    let nonnegative = NonNegativeF64::new_const(0.0);
     let sym = SymmetricF64::new_const(0.5);
 
     // Test with FinF64
@@ -56,10 +56,10 @@ fn test_sin_various_types() {
     let _typed1: SymmetricF64 = sin_fin;
     assert!((sin_fin.get() - 0.5).abs() < f64::EPSILON);
 
-    // Test with PositiveF64
-    let sin_pos: SymmetricF64 = pos.sin();
-    let _typed2: SymmetricF64 = sin_pos;
-    assert_eq!(sin_pos.get(), 0.0);
+    // Test with NonNegativeF64
+    let sin_nonnegative: SymmetricF64 = nonnegative.sin();
+    let _typed2: SymmetricF64 = sin_nonnegative;
+    assert_eq!(sin_nonnegative.get(), 0.0);
 
     // Test with SymmetricF64
     let sin_sym: SymmetricF64 = sym.sin();
@@ -104,17 +104,17 @@ fn test_cos_pi() {
 #[test]
 fn test_cos_various_types() {
     let fin = FinF64::new(std::f64::consts::PI / 3.0).unwrap();
-    let pos = PositiveF64::new_const(0.0);
+    let nonnegative = NonNegativeF64::new_const(0.0);
 
     // Test with FinF64
     let cos_fin: SymmetricF64 = fin.cos();
     let _typed1: SymmetricF64 = cos_fin;
     assert!((cos_fin.get() - 0.5).abs() < f64::EPSILON);
 
-    // Test with PositiveF64
-    let cos_pos: SymmetricF64 = pos.cos();
-    let _typed2: SymmetricF64 = cos_pos;
-    assert_eq!(cos_pos.get(), 1.0);
+    // Test with NonNegativeF64
+    let cos_nonnegative: SymmetricF64 = nonnegative.cos();
+    let _typed2: SymmetricF64 = cos_nonnegative;
+    assert_eq!(cos_nonnegative.get(), 1.0);
 }
 
 // ============================================================================
@@ -148,7 +148,7 @@ fn test_tan_pi_four() {
 #[test]
 fn test_tan_various_types() {
     let fin = FinF64::new(std::f64::consts::PI / 6.0).unwrap();
-    let pos = PositiveF64::new_const(0.0);
+    let nonnegative = NonNegativeF64::new_const(0.0);
 
     // Test with FinF64
     let tan_fin: Result<FinF64, FloatError> = fin.tan();
@@ -159,12 +159,12 @@ fn test_tan_various_types() {
     let expected = 0.577_350_269_189_625_7f64;
     assert!((fin_value.get() - expected).abs() < f64::EPSILON);
 
-    // Test with PositiveF64
-    let tan_pos: Result<FinF64, FloatError> = pos.tan();
-    assert!(tan_pos.is_ok());
-    let pos_value = tan_pos.unwrap();
-    let _typed2: FinF64 = pos_value;
-    assert_eq!(pos_value.get(), 0.0);
+    // Test with NonNegativeF64
+    let tan_nonnegative: Result<FinF64, FloatError> = nonnegative.tan();
+    assert!(tan_nonnegative.is_ok());
+    let nonnegative_value = tan_nonnegative.unwrap();
+    let _typed2: FinF64 = nonnegative_value;
+    assert_eq!(nonnegative_value.get(), 0.0);
 }
 
 #[test]
