@@ -1,0 +1,147 @@
+//! 常量测试
+
+use strict_num_extended::*;
+
+#[test]
+fn test_fin_f64_constants() {
+    assert_eq!(FinF64::ZERO.get(), 0.0);
+    assert_eq!(FinF64::ONE.get(), 1.0);
+    assert_eq!(FinF64::NEG_ONE.get(), -1.0);
+    assert_eq!(FinF64::PI.get(), core::f64::consts::PI);
+    assert_eq!(FinF64::NEG_PI.get(), -core::f64::consts::PI);
+    assert_eq!(FinF64::E.get(), core::f64::consts::E);
+    assert_eq!(FinF64::NEG_E.get(), -core::f64::consts::E);
+}
+
+#[test]
+fn test_fin_f32_constants() {
+    assert_eq!(FinF32::ZERO.get(), 0.0);
+    assert_eq!(FinF32::ONE.get(), 1.0);
+    assert_eq!(FinF32::NEG_ONE.get(), -1.0);
+    assert_eq!(FinF32::PI.get(), core::f32::consts::PI);
+    assert_eq!(FinF32::E.get(), core::f32::consts::E);
+}
+
+#[test]
+fn test_positive_f64_constants() {
+    // Positive 类型应该有正数常量
+    assert_eq!(PositiveF64::ONE.get(), 1.0);
+    assert_eq!(PositiveF64::PI.get(), core::f64::consts::PI);
+    assert_eq!(PositiveF64::E.get(), core::f64::consts::E);
+    assert_eq!(PositiveF64::TWO.get(), 2.0);
+    assert_eq!(PositiveF64::HALF.get(), 0.5);
+
+    // 检查 π 分数常量
+    assert_eq!(PositiveF64::FRAC_1_PI.get(), core::f64::consts::FRAC_1_PI);
+    assert_eq!(PositiveF64::FRAC_2_PI.get(), core::f64::consts::FRAC_2_PI);
+    assert_eq!(PositiveF64::FRAC_PI_2.get(), core::f64::consts::FRAC_PI_2);
+    assert_eq!(PositiveF64::FRAC_PI_3.get(), core::f64::consts::FRAC_PI_3);
+    assert_eq!(PositiveF64::FRAC_PI_4.get(), core::f64::consts::FRAC_PI_4);
+    assert_eq!(PositiveF64::FRAC_PI_6.get(), core::f64::consts::FRAC_PI_6);
+    assert_eq!(PositiveF64::FRAC_PI_8.get(), core::f64::consts::FRAC_PI_8);
+}
+
+#[test]
+fn test_negative_f64_constants() {
+    // Negative 类型应该有负数常量
+    assert_eq!(NegativeF64::NEG_ONE.get(), -1.0);
+    assert_eq!(NegativeF64::NEG_PI.get(), -core::f64::consts::PI);
+    assert_eq!(NegativeF64::NEG_E.get(), -core::f64::consts::E);
+    assert_eq!(NegativeF64::NEG_TWO.get(), -2.0);
+    assert_eq!(NegativeF64::NEG_HALF.get(), -0.5);
+}
+
+#[test]
+fn test_non_negative_f64_constants() {
+    // NonNegative 类型应该有非负数常量
+    assert_eq!(NonNegativeF64::ZERO.get(), 0.0);
+    assert_eq!(NonNegativeF64::ONE.get(), 1.0);
+    assert_eq!(NonNegativeF64::PI.get(), core::f64::consts::PI);
+    assert_eq!(NonNegativeF64::E.get(), core::f64::consts::E);
+    assert_eq!(NonNegativeF64::HALF.get(), 0.5);
+}
+
+#[test]
+fn test_non_positive_f64_constants() {
+    // NonPositive 类型应该有非正数常量
+    assert_eq!(NonPositiveF64::ZERO.get(), 0.0);
+    assert_eq!(NonPositiveF64::NEG_ONE.get(), -1.0);
+    assert_eq!(NonPositiveF64::NEG_PI.get(), -core::f64::consts::PI);
+    assert_eq!(NonPositiveF64::NEG_E.get(), -core::f64::consts::E);
+    assert_eq!(NonPositiveF64::NEG_HALF.get(), -0.5);
+}
+
+#[test]
+fn test_normalized_f32_constants() {
+    // Normalized [0, 1] 应该有范围内的常量
+    assert_eq!(NormalizedF32::ZERO.get(), 0.0);
+    assert_eq!(NormalizedF32::ONE.get(), 1.0);
+    assert_eq!(NormalizedF32::HALF.get(), 0.5);
+
+    // π 分数常量在 [0, 1] 范围内
+    assert_eq!(NormalizedF32::FRAC_1_PI.get(), core::f32::consts::FRAC_1_PI);
+    assert_eq!(NormalizedF32::FRAC_2_PI.get(), core::f32::consts::FRAC_2_PI);
+    assert_eq!(NormalizedF32::FRAC_PI_4.get(), core::f32::consts::FRAC_PI_4);
+    assert_eq!(NormalizedF32::FRAC_PI_6.get(), core::f32::consts::FRAC_PI_6);
+    assert_eq!(NormalizedF32::FRAC_PI_8.get(), core::f32::consts::FRAC_PI_8);
+}
+
+#[test]
+fn test_normalized_f64_constants() {
+    // Normalized [0, 1] 应该有范围内的常量
+    assert_eq!(NormalizedF64::ZERO.get(), 0.0);
+    assert_eq!(NormalizedF64::ONE.get(), 1.0);
+    assert_eq!(NormalizedF64::HALF.get(), 0.5);
+
+    // π 分数常量在 [0, 1] 范围内
+    assert_eq!(NormalizedF64::FRAC_1_PI.get(), core::f64::consts::FRAC_1_PI);
+    assert_eq!(NormalizedF64::FRAC_2_PI.get(), core::f64::consts::FRAC_2_PI);
+    assert_eq!(NormalizedF64::FRAC_PI_4.get(), core::f64::consts::FRAC_PI_4);
+    assert_eq!(NormalizedF64::FRAC_PI_6.get(), core::f64::consts::FRAC_PI_6);
+    assert_eq!(NormalizedF64::FRAC_PI_8.get(), core::f64::consts::FRAC_PI_8);
+}
+
+#[test]
+fn test_negative_normalized_f64_constants() {
+    // NegativeNormalized [-1, 0] 应该有范围内的常量
+    assert_eq!(NegativeNormalizedF64::ZERO.get(), 0.0);
+    assert_eq!(NegativeNormalizedF64::NEG_ONE.get(), -1.0);
+    assert_eq!(NegativeNormalizedF64::NEG_HALF.get(), -0.5);
+}
+
+#[test]
+fn test_symmetric_f64_constants() {
+    // Symmetric [-1, 1] 应该有范围内的常量
+    assert_eq!(SymmetricF64::ZERO.get(), 0.0);
+    assert_eq!(SymmetricF64::ONE.get(), 1.0);
+    assert_eq!(SymmetricF64::NEG_ONE.get(), -1.0);
+    assert_eq!(SymmetricF64::HALF.get(), 0.5);
+    assert_eq!(SymmetricF64::NEG_HALF.get(), -0.5);
+
+    // π 分数常量在 [-1, 1] 范围内
+    assert_eq!(SymmetricF64::FRAC_1_PI.get(), core::f64::consts::FRAC_1_PI);
+    assert_eq!(SymmetricF64::FRAC_2_PI.get(), core::f64::consts::FRAC_2_PI);
+    assert_eq!(SymmetricF64::FRAC_PI_4.get(), core::f64::consts::FRAC_PI_4);
+    assert_eq!(SymmetricF64::FRAC_PI_6.get(), core::f64::consts::FRAC_PI_6);
+    assert_eq!(SymmetricF64::FRAC_PI_8.get(), core::f64::consts::FRAC_PI_8);
+}
+
+#[test]
+fn test_const_context() {
+    // 常量应该可以在 const 上下文使用
+    const ONE: PositiveF64 = PositiveF64::ONE;
+    const HALF: NormalizedF32 = NormalizedF32::HALF;
+    const ZERO: FinF64 = FinF64::ZERO;
+
+    assert_eq!(ONE.get(), 1.0);
+    assert_eq!(HALF.get(), 0.5);
+    assert_eq!(ZERO.get(), 0.0);
+}
+
+#[test]
+fn test_non_zero_f64_constants() {
+    // NonZero 类型应该没有 ZERO 常量
+    assert_eq!(NonZeroF64::ONE.get(), 1.0);
+    assert_eq!(NonZeroF64::NEG_ONE.get(), -1.0);
+    assert_eq!(NonZeroF64::PI.get(), core::f64::consts::PI);
+}

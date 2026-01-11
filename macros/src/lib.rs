@@ -10,6 +10,7 @@ use syn::parse_macro_input;
 mod arithmetic;
 mod comparison;
 mod config;
+mod constants;
 mod conversion;
 mod doc_generator;
 mod finite_float;
@@ -24,6 +25,7 @@ mod unary_ops;
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls};
 use comparison::{generate_comparison_traits, generate_concrete_comparison_traits};
 use config::TypeConfig;
+use constants::generate_constants;
 use conversion::generate_conversion_traits;
 use finite_float::{
     generate_concrete_impls, generate_concrete_serde_impls, generate_concrete_structs,
@@ -184,6 +186,9 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
     // Generate FiniteFloat trait and implementations
     all_code.push(generate_finite_float_trait(&config));
     all_code.push(generate_finite_float_impls(&config));
+
+    // Generate constants
+    all_code.push(generate_constants(&config));
 
     // Combine all code
     let expanded = quote! {
