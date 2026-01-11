@@ -64,7 +64,15 @@ fn generate_pattern_lhs_op_result_rhs(
     generate_arithmetic_for_all_types(
         config,
         ops,
-        |lhs_alias, rhs_alias, output_alias, trait_ident, method_ident, _op_symbol, result, _op| {
+        |lhs_alias,
+         rhs_alias,
+         output_alias,
+         trait_ident,
+         method_ident,
+         _op_symbol,
+         result,
+         _op,
+         _| {
             if result.is_safe {
                 // Safe operation: base returns concrete type, wrap in Ok
                 quote! {
@@ -106,7 +114,15 @@ fn generate_pattern_result_lhs_op_rhs(
     generate_arithmetic_for_all_types(
         config,
         ops,
-        |lhs_alias, rhs_alias, output_alias, trait_ident, method_ident, _op_symbol, result, _op| {
+        |lhs_alias,
+         rhs_alias,
+         output_alias,
+         trait_ident,
+         method_ident,
+         _op_symbol,
+         result,
+         _op,
+         _| {
             if result.is_safe {
                 // Safe operation: base returns concrete type, wrap in Ok
                 quote! {
