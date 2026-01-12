@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.5.0](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.3...strict-num-extended-macros-v0.5.0) - 2026-01-12
+
+### Bug Fixes
+- no hardcode macro functions ([#85](https://github.com/MiyakoMeow/strict-num-extended/pull/85))
+
+
+### Features
+- PiRounded ([#84](https://github.com/MiyakoMeow/strict-num-extended/pull/84))
+- [**breaking**] rename types ([#80](https://github.com/MiyakoMeow/strict-num-extended/pull/80))
+
+
+### Other
+- type alias ([#83](https://github.com/MiyakoMeow/strict-num-extended/pull/83))
+- constants ([#82](https://github.com/MiyakoMeow/strict-num-extended/pull/82))
+
 ## [0.4.3](https://github.com/MiyakoMeow/strict-num-extended/compare/strict-num-extended-macros-v0.4.2...strict-num-extended-macros-v0.4.3) - 2026-01-11
 
 ### Chore
