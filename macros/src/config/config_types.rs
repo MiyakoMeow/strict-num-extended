@@ -30,9 +30,37 @@ pub struct Bounds {
 }
 
 impl Bounds {
+    /// Epsilon for floating-point comparison
+    const EPSILON: f64 = 1e-10;
+
     /// Check if this type is bounded (has both upper and lower bounds)
     pub const fn is_bounded(&self) -> bool {
         self.lower.is_some() && self.upper.is_some()
+    }
+
+    /// Check if this is the standard normalized range [0, 1]
+    pub fn is_normalized(&self) -> bool {
+        matches!(self, Bounds { lower: Some(l), upper: Some(u) }
+            if (*l - 0.0).abs() < Self::EPSILON && (*u - 1.0).abs() < Self::EPSILON)
+    }
+
+    /// Check if this is the symmetric range [-1, 1]
+    pub fn is_symmetric(&self) -> bool {
+        matches!(self, Bounds { lower: Some(l), upper: Some(u) }
+            if (*l - (-1.0)).abs() < Self::EPSILON && (*u - 1.0).abs() < Self::EPSILON)
+    }
+
+    /// Check if this is the negative normalized range [-1, 0]
+    pub fn is_negative_normalized(&self) -> bool {
+        matches!(self, Bounds { lower: Some(l), upper: Some(u) }
+            if (*l - (-1.0)).abs() < Self::EPSILON && (*u - 0.0).abs() < Self::EPSILON)
+    }
+
+    /// Check if this is the PI-bounded range [-PI, PI]
+    pub fn is_pi_bounded(&self) -> bool {
+        use core::f64::consts::PI;
+        matches!(self, Bounds { lower: Some(l), upper: Some(u) }
+            if (*l - (-PI)).abs() < Self::EPSILON && (*u - PI).abs() < Self::EPSILON)
     }
 }
 

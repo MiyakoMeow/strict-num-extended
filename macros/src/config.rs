@@ -359,3 +359,25 @@ fn parse_float_value(s: &str) -> f64 {
         _ => s.parse().unwrap_or(0.0),
     }
 }
+
+// ============================================================================
+// TypeConfig methods
+// ============================================================================
+
+impl TypeConfig {
+    /// Find a constraint type by its properties (sign, bounds, `excludes_zero`).
+    ///
+    /// This allows looking up types by their mathematical constraints rather than
+    /// by hardcoded type names, making the system more extensible.
+    pub fn find_type_by_constraints(
+        &self,
+        sign: Sign,
+        bounds: &Bounds,
+        excludes_zero: bool,
+    ) -> Option<Ident> {
+        self.constraints
+            .iter()
+            .find(|c| c.sign == sign && c.bounds == *bounds && c.excludes_zero == excludes_zero)
+            .map(|c| c.name.clone())
+    }
+}

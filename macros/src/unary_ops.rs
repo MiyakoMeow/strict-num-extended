@@ -7,51 +7,42 @@
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
 
-use crate::config::ConstraintDef;
-use crate::config::TypeConfig;
+use crate::config::{Bounds, ConstraintDef, Sign, TypeConfig};
 use crate::generator::{find_constraint_def, make_type_alias};
 
-/// Checks if bounds represent Symmetric type [-1, 1]
-fn is_symmetric_bounds(constraint_def: &ConstraintDef) -> bool {
-    constraint_def.bounds.lower == Some(-1.0) && constraint_def.bounds.upper == Some(1.0)
-}
-
-/// Checks if bounds represent Normalized type [0, 1]
-fn is_normalized_bounds(constraint_def: &ConstraintDef) -> bool {
-    constraint_def.bounds.lower == Some(0.0) && constraint_def.bounds.upper == Some(1.0)
-}
-
-/// Checks if bounds represent `NegativeNormalized` type [-1, 0]
-fn is_negative_normalized_bounds(constraint_def: &ConstraintDef) -> bool {
-    constraint_def.bounds.lower == Some(-1.0) && constraint_def.bounds.upper == Some(0.0)
-}
-
 /// Infers the output type for `abs()` operation based on constraint properties
-fn infer_abs_output_type(constraint_def: &ConstraintDef) -> Ident {
-    let is_bounded = constraint_def.bounds.is_bounded();
-    let excludes_zero = constraint_def.excludes_zero;
+fn infer_abs_output_type(constraint_def: &ConstraintDef, config: &TypeConfig) -> Ident {
+    let bounds = &constraint_def.bounds;
 
-    // Special bounded cases first
-    if is_bounded && !excludes_zero {
-        if is_symmetric_bounds(constraint_def) || is_normalized_bounds(constraint_def) {
-            // Symmetric [-1, 1] → Normalized [0, 1]
-            // Normalized [0, 1] → Normalized [0, 1] (reflexive)
-            return Ident::new("Normalized", Span::call_site());
-        }
-        if is_negative_normalized_bounds(constraint_def) {
-            // NegativeNormalized [-1, 0] → Normalized [0, 1]
-            return Ident::new("Normalized", Span::call_site());
+    // Special bounded cases → Normalized [0, 1]
+    if bounds.is_symmetric() || bounds.is_normalized() || bounds.is_negative_normalized() {
+        let normalized_bounds = Bounds {
+            lower: Some(0.0),
+            upper: Some(1.0),
+        };
+        if let Some(ty) = config.find_type_by_constraints(Sign::Positive, &normalized_bounds, false)
+        {
+            return ty;
         }
     }
 
-    // General case: determine output type based on zero exclusion
-    let output_type = if excludes_zero {
-        "Positive"
-    } else {
-        "NonNegative"
+    // General case: absolute value is always non-negative
+    let abs_bounds = Bounds {
+        lower: Some(0.0),
+        upper: None,
     };
+    let excludes_zero = constraint_def.excludes_zero;
 
-    Ident::new(output_type, Span::call_site())
+    if let Some(ty) = config.find_type_by_constraints(Sign::Positive, &abs_bounds, excludes_zero) {
+        return ty;
+    }
+
+    // Fallback: construct type name based on properties
+    if excludes_zero {
+        Ident::new("Positive", Span::call_site())
+    } else {
+        Ident::new("NonNegative", Span::call_site())
+    }
 }
 
 /// Infers the output type for `signum()` operation based on constraint properties
@@ -63,26 +54,39 @@ fn infer_abs_output_type(constraint_def: &ConstraintDef) -> Ident {
 /// - Negative + excludes zero → signum = -1 → `NegativeNormalized`
 /// - Any + excludes zero (`NonZero`) → signum in {-1, 1} → Symmetric
 /// - Any + includes zero (Fin, Symmetric) → signum in {-1, 0, 1} → Symmetric
-fn infer_signum_output_type(constraint_def: &ConstraintDef) -> Ident {
-    use crate::config::Sign;
-
+fn infer_signum_output_type(constraint_def: &ConstraintDef, config: &TypeConfig) -> Ident {
     match (constraint_def.sign, constraint_def.excludes_zero) {
-        // Positive types: signum ∈ {0, 1} or {1}
-        (Sign::Positive, _) => Ident::new("Normalized", Span::call_site()),
-
-        // Negative types: signum ∈ {-1, 0} or {-1}
-        (Sign::Negative, _) => Ident::new("NegativeNormalized", Span::call_site()),
-
-        // Any sign types
-        (Sign::Any, true) => {
-            // NonZero: signum ∈ {-1, 1} (no zero)
-            // This fits in Symmetric [-1, 1]
-            Ident::new("Symmetric", Span::call_site())
+        // Positive types: signum ∈ {0, 1} or {1} → Normalized
+        (Sign::Positive, _) => {
+            let norm_bounds = Bounds {
+                lower: Some(0.0),
+                upper: Some(1.0),
+            };
+            config
+                .find_type_by_constraints(Sign::Positive, &norm_bounds, false)
+                .unwrap_or_else(|| Ident::new("Normalized", Span::call_site()))
         }
-        (Sign::Any, false) => {
-            // Fin or Symmetric: signum ∈ {-1, 0, 1}
-            // This requires Symmetric [-1, 1]
-            Ident::new("Symmetric", Span::call_site())
+
+        // Negative types: signum ∈ {-1, 0} or {-1} → NegativeNormalized
+        (Sign::Negative, _) => {
+            let neg_norm_bounds = Bounds {
+                lower: Some(-1.0),
+                upper: Some(0.0),
+            };
+            config
+                .find_type_by_constraints(Sign::Negative, &neg_norm_bounds, false)
+                .unwrap_or_else(|| Ident::new("NegativeNormalized", Span::call_site()))
+        }
+
+        // Any sign types → Symmetric [-1, 1]
+        (Sign::Any, _) => {
+            let sym_bounds = Bounds {
+                lower: Some(-1.0),
+                upper: Some(1.0),
+            };
+            config
+                .find_type_by_constraints(Sign::Any, &sym_bounds, false)
+                .unwrap_or_else(|| Ident::new("Symmetric", Span::call_site()))
         }
     }
 }
@@ -109,7 +113,7 @@ pub fn generate_abs_impls(config: &TypeConfig) -> TokenStream2 {
         let constraint_def = find_constraint_def(config, type_name);
 
         // Infer abs() output type
-        let output_type = infer_abs_output_type(constraint_def);
+        let output_type = infer_abs_output_type(constraint_def, config);
 
         for float_type in &type_def.float_types {
             let type_alias = make_type_alias(type_name, float_type);
@@ -176,7 +180,7 @@ pub fn generate_signum_impls(config: &TypeConfig) -> TokenStream2 {
         let constraint_def = find_constraint_def(config, type_name);
 
         // Infer signum() output type based on constraint properties
-        let output_type = infer_signum_output_type(constraint_def);
+        let output_type = infer_signum_output_type(constraint_def, config);
 
         for float_type in &type_def.float_types {
             let type_alias = make_type_alias(type_name, float_type);
@@ -241,11 +245,17 @@ pub fn generate_signum_impls(config: &TypeConfig) -> TokenStream2 {
 pub fn generate_sin_impls(config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
+    // sin() always returns Symmetric [-1, 1]
+    let sym_bounds = Bounds {
+        lower: Some(-1.0),
+        upper: Some(1.0),
+    };
+    let output_type = config
+        .find_type_by_constraints(Sign::Any, &sym_bounds, false)
+        .unwrap_or_else(|| Ident::new("Symmetric", Span::call_site()));
+
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
-
-        // sin() always returns Symmetric
-        let output_type = Ident::new("Symmetric", Span::call_site());
 
         for float_type in &type_def.float_types {
             let type_alias = make_type_alias(type_name, float_type);
@@ -307,11 +317,17 @@ pub fn generate_sin_impls(config: &TypeConfig) -> TokenStream2 {
 pub fn generate_cos_impls(config: &TypeConfig) -> TokenStream2 {
     let mut impls = Vec::new();
 
+    // cos() always returns Symmetric [-1, 1]
+    let sym_bounds = Bounds {
+        lower: Some(-1.0),
+        upper: Some(1.0),
+    };
+    let output_type = config
+        .find_type_by_constraints(Sign::Any, &sym_bounds, false)
+        .unwrap_or_else(|| Ident::new("Symmetric", Span::call_site()));
+
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
-
-        // cos() always returns Symmetric
-        let output_type = Ident::new("Symmetric", Span::call_site());
 
         for float_type in &type_def.float_types {
             let type_alias = make_type_alias(type_name, float_type);
