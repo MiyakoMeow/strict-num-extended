@@ -328,10 +328,16 @@ fn generate_type_description(
     _float_type: &Ident,
     constraint_def: &ConstraintDef,
 ) -> String {
-    let type_str = type_name.to_string();
+    use crate::config::Sign;
 
-    match type_str.as_str() {
-        "NegativeNormalized" => format!(
+    let bounds = &constraint_def.bounds;
+    let sign = constraint_def.sign;
+    let excludes_zero = constraint_def.excludes_zero;
+
+    // Match based on constraint properties, not type names
+    match (sign, excludes_zero, bounds) {
+        // Negative normalized [-1, 0]
+        (Sign::Negative, _, b) if b.is_negative_normalized() => format!(
             "Negative normalized numbers in [-1, 0] are commonly used for:\n\
              - Negative probabilities and offsets\n\
              - Descending normalized values\n\
@@ -360,36 +366,69 @@ fn generate_type_description(
             struct_name
         ),
 
-        "Negative" => format!(
-            "Negative numbers are useful for:\n\
-             - Strictly negative values\n\
-             - Non-zero denominators\n\
+        // Normalized [0, 1]
+        (Sign::Positive, false, b) if b.is_normalized() => format!(
+            "Normalized numbers in [0, 1] are commonly used for:\n\
+             - Probabilities and percentages\n\
+             - Color channel values (RGB/RGBA)\n\
+             - Neural network activations\n\
+             - Normalized coordinates\n\
              \n\
              # Examples\n\
              \n\
-             Creating a negative value:\n\
+             Creating a normalized value:\n\
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
-             let neg = {0}::new(-42.0)?;\n\
-             assert_eq!(neg.get(), -42.0);\n\
+             let norm = {0}::new(0.75)?;\n\
+             assert_eq!(norm.get(), 0.75);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
              \n\
-             Invalid value (zero):\n\
+             Invalid value (out of range):\n\
              \n\
              ```rust\n\
              use strict_num_extended::{0};\n\
              \n\
-             let invalid = {0}::new(0.0);\n\
+             let invalid = {0}::new(1.5);\n\
              assert!(invalid.is_err());\n\
              ```\n",
             struct_name
         ),
 
-        "Positive" => format!(
+        // Symmetric [-1, 1]
+        (Sign::Any, _, b) if b.is_symmetric() => format!(
+            "Symmetric numbers in [-1, 1] are commonly used for:\n\
+             - Coordinates and offsets\n\
+             - Differences and deltas\n\
+             - Normalized symmetric ranges\n\
+             \n\
+             # Examples\n\
+             \n\
+             Creating a symmetric value:\n\
+             \n\
+             ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
+             use strict_num_extended::{{{0}, FloatError}};\n\
+             \n\
+             let sym = {0}::new(0.5)?;\n\
+             assert_eq!(sym.get(), 0.5);\n\
+             # Ok::<(), FloatError>(())\n\
+             ```\n",
+            struct_name
+        ),
+
+        // Unbounded positive (excludes_zero: true => Positive)
+        (
+            Sign::Positive,
+            true,
+            Bounds {
+                lower: Some(0.0),
+                upper: None,
+            },
+        ) => format!(
             "Positive numbers are useful for:\n\
              - Strictly positive values\n\
              - Non-zero multipliers\n\
@@ -418,7 +457,15 @@ fn generate_type_description(
             struct_name
         ),
 
-        "NonNegative" => format!(
+        // Unbounded positive (excludes_zero: false => NonNegative)
+        (
+            Sign::Positive,
+            false,
+            Bounds {
+                lower: Some(0.0),
+                upper: None,
+            },
+        ) => format!(
             "Non-negative numbers are commonly used for:\n\
              - Counting and magnitudes\n\
              - Physical measurements\n\
@@ -448,7 +495,52 @@ fn generate_type_description(
             struct_name
         ),
 
-        "NonPositive" => format!(
+        // Unbounded negative (excludes_zero: true => Negative)
+        (
+            Sign::Negative,
+            true,
+            Bounds {
+                lower: None,
+                upper: Some(0.0),
+            },
+        ) => format!(
+            "Negative numbers are useful for:\n\
+             - Strictly negative values\n\
+             - Non-zero denominators\n\
+             \n\
+             # Examples\n\
+             \n\
+             Creating a negative value:\n\
+             \n\
+             ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
+             use strict_num_extended::{{{0}, FloatError}};\n\
+             \n\
+             let neg = {0}::new(-42.0)?;\n\
+             assert_eq!(neg.get(), -42.0);\n\
+             # Ok::<(), FloatError>(())\n\
+             ```\n\
+             \n\
+             Invalid value (zero):\n\
+             \n\
+             ```rust\n\
+             use strict_num_extended::{0};\n\
+             \n\
+             let invalid = {0}::new(0.0);\n\
+             assert!(invalid.is_err());\n\
+             ```\n",
+            struct_name
+        ),
+
+        // Unbounded negative (excludes_zero: false => NonPositive)
+        (
+            Sign::Negative,
+            false,
+            Bounds {
+                lower: None,
+                upper: Some(0.0),
+            },
+        ) => format!(
             "Non-positive numbers are commonly used for:\n\
              - Losses and debts\n\
              - Temperature below zero\n\
@@ -478,7 +570,15 @@ fn generate_type_description(
             struct_name
         ),
 
-        "NonZero" => format!(
+        // NonZero (unbounded, excludes_zero: true)
+        (
+            Sign::Any,
+            true,
+            Bounds {
+                lower: None,
+                upper: None,
+            },
+        ) => format!(
             "Non-zero numbers are useful for:\n\
              - Division operations (avoiding divide-by-zero)\n\
              - Multiplicative factors\n\
@@ -508,64 +608,8 @@ fn generate_type_description(
             struct_name
         ),
 
-        "Normalized" | "Symmetric" => {
-            if type_str == "Normalized" {
-                format!(
-                    "Normalized numbers in [0, 1] are commonly used for:\n\
-                     - Probabilities and percentages\n\
-                     - Color channel values (RGB/RGBA)\n\
-                     - Neural network activations\n\
-                     - Normalized coordinates\n\
-                     \n\
-                     # Examples\n\
-                     \n\
-                     Creating a normalized value:\n\
-                     \n\
-                     ```rust\n\
-                     #![expect(clippy::approx_constant)]\n\
-                     use strict_num_extended::{{{0}, FloatError}};\n\
-                     \n\
-                     let norm = {0}::new(0.75)?;\n\
-                     assert_eq!(norm.get(), 0.75);\n\
-                     # Ok::<(), FloatError>(())\n\
-                     ```\n\
-                     \n\
-                     Invalid value (out of range):\n\
-                     \n\
-                     ```rust\n\
-                     use strict_num_extended::{0};\n\
-                     \n\
-                     let invalid = {0}::new(1.5);\n\
-                     assert!(invalid.is_err());\n\
-                     ```\n",
-                    struct_name
-                )
-            } else {
-                format!(
-                    "Symmetric numbers in [-1, 1] are commonly used for:\n\
-                     - Coordinates and offsets\n\
-                     - Differences and deltas\n\
-                     - Normalized symmetric ranges\n\
-                     \n\
-                     # Examples\n\
-                     \n\
-                     Creating a symmetric value:\n\
-                     \n\
-                     ```rust\n\
-                     #![expect(clippy::approx_constant)]\n\
-                     use strict_num_extended::{{{0}, FloatError}};\n\
-                     \n\
-                     let sym = {0}::new(0.5)?;\n\
-                     assert_eq!(sym.get(), 0.5);\n\
-                     # Ok::<(), FloatError>(())\n\
-                     ```\n",
-                    struct_name
-                )
-            }
-        }
-
         _ => {
-            // Default example for other types
+            // Default description for other types
             let valid_example = generate_valid_example_for_type(type_name, constraint_def);
             format!(
                 "# Examples\n\n\
@@ -584,21 +628,59 @@ fn generate_type_description(
 }
 
 /// Generates a valid example value for a specific type
-fn generate_valid_example_for_type(type_name: &Ident, constraint_def: &ConstraintDef) -> String {
-    let type_str = type_name.to_string();
+fn generate_valid_example_for_type(_type_name: &Ident, constraint_def: &ConstraintDef) -> String {
+    use crate::config::Sign;
 
-    match type_str.as_str() {
-        "Positive" | "NonNegative" => "42.0".to_string(),
-        "Negative" | "NonPositive" => "-42.0".to_string(),
-        "Normalized" => "0.5".to_string(),
-        "Symmetric" => "0.0".to_string(),
-        "Bounded" => {
-            if let (Some(l), Some(u)) = (constraint_def.bounds.lower, constraint_def.bounds.upper) {
-                format!("{}", (l + u) / 2.0)
+    match (&constraint_def.bounds, constraint_def.sign) {
+        // Unbounded positive
+        (
+            Bounds {
+                lower: Some(0.0),
+                upper: None,
+            },
+            Sign::Positive,
+        ) => "42.0".to_string(),
+
+        // Unbounded negative
+        (
+            Bounds {
+                lower: None,
+                upper: Some(0.0),
+            },
+            Sign::Negative,
+        ) => "-42.0".to_string(),
+
+        // Normalized [0, 1]
+        (b, _) if b.is_normalized() => "0.5".to_string(),
+
+        // Symmetric [-1, 1]
+        (b, _) if b.is_symmetric() => "0.0".to_string(),
+
+        // Negative normalized [-1, 0]
+        (b, _) if b.is_negative_normalized() => "-0.5".to_string(),
+
+        // Bounded types - return midpoint
+        (
+            Bounds {
+                lower: Some(l),
+                upper: Some(u),
+            },
+            _,
+        ) => {
+            let mid = (l + u) / 2.0;
+            if mid.abs() < 1e-10 {
+                // Midpoint is zero, but if zero is excluded, use offset value
+                if constraint_def.excludes_zero {
+                    format!("{}", l + (u - l) * 0.25)
+                } else {
+                    "0.0".to_string()
+                }
             } else {
-                "1.0".to_string()
+                format!("{}", mid)
             }
         }
+
+        // Default
         _ => "1.0".to_string(),
     }
 }
