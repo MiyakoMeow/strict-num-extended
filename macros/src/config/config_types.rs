@@ -55,13 +55,6 @@ impl Bounds {
         matches!(self, Bounds { lower: Some(l), upper: Some(u) }
             if (*l - (-1.0)).abs() < Self::EPSILON && (*u - 0.0).abs() < Self::EPSILON)
     }
-
-    /// Check if this is the PI-bounded range [-PI, PI]
-    pub fn is_pi_bounded(&self) -> bool {
-        use core::f64::consts::PI;
-        matches!(self, Bounds { lower: Some(l), upper: Some(u) }
-            if (*l - (-PI)).abs() < Self::EPSILON && (*u - PI).abs() < Self::EPSILON)
-    }
 }
 
 /// Arithmetic operation type.
