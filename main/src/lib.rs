@@ -894,14 +894,25 @@
 extern crate std;
 
 // Generate all code using proc_macro
-strict_num_extended_macros::generate_finite_float_types!([
-    (Fin, []),
-    (NonNegative, [">= 0.0"]),
-    (NonPositive, ["<= 0.0"]),
-    (NonZero, ["!= 0.0"]),
-    (Normalized, [">= 0.0", "<= 1.0"]),
-    (NegativeNormalized, [">= -1.0", "<= 0.0"]),
-    (Positive, ["> 0.0"]),
-    (Negative, ["< 0.0"]),
-    (Symmetric, [">= -1.0", "<= 1.0"]),
-]);
+strict_num_extended_macros::generate_finite_float_types!(
+    [
+        (Fin, []),
+        (NonNegative, [">= 0.0"]),
+        (NonPositive, ["<= 0.0"]),
+        (NonZero, ["!= 0.0"]),
+        (Normalized, [">= 0.0", "<= 1.0"]),
+        (NegativeNormalized, [">= -1.0", "<= 0.0"]),
+        (Positive, ["> 0.0"]),
+        (Negative, ["< 0.0"]),
+        (Symmetric, [">= -1.0", "<= 1.0"]),
+    ],
+    [
+        (Positive, Pos),
+        (Negative, Neg),
+        (NonNegative, NonNeg),
+        (NonPositive, NonPos),
+        (Normalized, Norm),
+        (NegativeNormalized, NegNorm),
+        (Symmetric, Sym),
+    ]
+);

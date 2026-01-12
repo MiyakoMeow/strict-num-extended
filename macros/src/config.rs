@@ -110,10 +110,69 @@ impl Parse for TypeConfig {
         // Calculate arithmetic operation results
         let arithmetic_results = compute_all_arithmetic_results(&constraints);
 
+        // Parse second parameter: alias definitions (optional)
+        let mut type_aliases = Vec::new();
+
+        if input.parse::<syn::Token![,]>().is_ok() {
+            // Has second parameter, parse alias list
+            let alias_content;
+            syn::bracketed!(alias_content in input);
+
+            while !alias_content.is_empty() {
+                let paren_content;
+                syn::parenthesized!(paren_content in alias_content);
+
+                let original_name: Ident = paren_content.parse()?;
+                paren_content.parse::<syn::Token![,]>()?;
+                let alias_name: Ident = paren_content.parse()?;
+
+                type_aliases.push(TypeAliasDef {
+                    original_name,
+                    alias_name,
+                });
+
+                if !alias_content.is_empty() {
+                    alias_content.parse::<syn::Token![,]>()?;
+                }
+            }
+
+            // Validate aliases
+            for alias_def in &type_aliases {
+                // Check if original type exists
+                let original_exists = constraints
+                    .iter()
+                    .any(|c| c.name == alias_def.original_name);
+
+                if !original_exists {
+                    return Err(syn::Error::new_spanned(
+                        &alias_def.original_name,
+                        format!(
+                            "Alias references non-existent type '{}'",
+                            alias_def.original_name
+                        ),
+                    ));
+                }
+
+                // Check if alias name conflicts with existing types
+                let alias_conflicts = constraints.iter().any(|c| c.name == alias_def.alias_name);
+
+                if alias_conflicts {
+                    return Err(syn::Error::new_spanned(
+                        &alias_def.alias_name,
+                        format!(
+                            "Alias name '{}' conflicts with existing type",
+                            alias_def.alias_name
+                        ),
+                    ));
+                }
+            }
+        }
+
         Ok(TypeConfig {
             constraints,
             constraint_types,
             arithmetic_results,
+            type_aliases,
         })
     }
 }
