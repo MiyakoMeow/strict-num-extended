@@ -44,9 +44,10 @@ fn generate_single_alias(
     let float_type_upper = float_type.to_uppercase();
     let original_struct_name = format_ident!("{}{}", original_name, float_type_upper);
     let alias_struct_name = format_ident!("{}{}", alias_name, float_type_upper);
+    let doc_string = format!("Type alias for [`{}`]", original_struct_name);
 
     quote! {
-        /// Type alias for [`#original_struct_name`]
+        #[doc = #doc_string]
         pub type #alias_struct_name = #original_struct_name;
     }
 }
