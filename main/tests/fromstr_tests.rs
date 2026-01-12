@@ -298,7 +298,7 @@ mod test_error_preserves_input {
     fn test_validation_failed_wraps_float_error() {
         let result: Result<NonNegativeF32, _> = "-1.0".parse();
         if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
-            // 正确包装了 OutOfRange 错误
+            // Correctly wrapped OutOfRange error
         } else {
             panic!("Expected ValidationFailed(OutOfRange) error");
         }
@@ -308,7 +308,7 @@ mod test_error_preserves_input {
     fn test_positive_zero_validation_failed() {
         let result: Result<PositiveF32, _> = "0.0".parse();
         if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
-            // Positive 应该拒绝 0.0
+            // Positive should reject 0.0
         } else {
             panic!("Expected ValidationFailed(OutOfRange) error");
         }
@@ -318,7 +318,7 @@ mod test_error_preserves_input {
     fn test_negative_zero_validation_failed() {
         let result: Result<NegativeF32, _> = "0.0".parse();
         if let Err(ParseFloatError::ValidationFailed(FloatError::OutOfRange)) = result {
-            // Negative 应该拒绝 0.0
+            // Negative should reject 0.0
         } else {
             panic!("Expected ValidationFailed(OutOfRange) error");
         }
@@ -328,7 +328,7 @@ mod test_error_preserves_input {
     fn test_nan_validation_failed() {
         let result: Result<FinF32, _> = "NaN".parse();
         if let Err(ParseFloatError::ValidationFailed(FloatError::NaN)) = result {
-            // 正确包装了 NaN 错误
+            // Correctly wrapped NaN error
         } else {
             panic!("Expected ValidationFailed(NaN) error");
         }
@@ -338,7 +338,7 @@ mod test_error_preserves_input {
     fn test_infinity_validation_failed() {
         let result: Result<FinF64, _> = "inf".parse();
         if let Err(ParseFloatError::ValidationFailed(FloatError::PosInf)) = result {
-            // 正确包装了 PosInf 错误
+            // Correctly wrapped PosInf error
         } else {
             panic!("Expected ValidationFailed(PosInf) error");
         }

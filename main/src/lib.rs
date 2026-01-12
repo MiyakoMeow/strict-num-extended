@@ -11,6 +11,7 @@
 //! - `NormalizedF32` and `NormalizedF64`: Normalized floating-point numbers (0.0 <= value <= 1.0, finite)
 //! - `NegativeNormalizedF32` and `NegativeNormalizedF64`: Negative normalized floating-point numbers (-1.0 <= value <= 0.0, finite)
 //! - `SymmetricF32` and `SymmetricF64`: Symmetric floating-point numbers (-1.0 <= value <= 1.0, finite)
+//! - `PiBoundedF32` and `PiBoundedF64`: PI-bounded floating-point numbers (-PI <= value <= PI, finite)
 //!
 //! ## Feature Flags
 //!
@@ -844,6 +845,21 @@
 //! assert_eq!(neg_val.get(), -0.75);
 //! ```
 //!
+//! ## `PiBounded` Constraint
+//!
+//! The `PiBounded` types require finite values in [-PI, PI]:
+//!
+//! ```
+//! use strict_num_extended::PiBoundedF64;
+//!
+//! let valid = PiBoundedF64::new(core::f64::consts::FRAC_PI_3);   // Ok(value)
+//! let valid = PiBoundedF64::new(-core::f64::consts::FRAC_PI_3);  // Ok(value)
+//! let valid = PiBoundedF64::new(core::f64::consts::PI);          // Ok(value)
+//! let valid = PiBoundedF64::new(-core::f64::consts::PI);         // Ok(value)
+//! let invalid = PiBoundedF64::new(4.0);                          // Err(FloatError::OutOfRange) (> PI)
+//! let invalid = PiBoundedF64::new(-4.0);                         // Err(FloatError::OutOfRange) (< -PI)
+//! ```
+//!
 //! ## Combined Constraints
 //!
 //! Combined types enforce multiple constraints simultaneously:
@@ -889,6 +905,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::manual_range_contains)]
+#![expect(clippy::approx_constant)]
 
 #[cfg(feature = "std")]
 extern crate std;
@@ -905,6 +922,7 @@ strict_num_extended_macros::generate_finite_float_types!(
         (Positive, ["> 0.0"]),
         (Negative, ["< 0.0"]),
         (Symmetric, [">= -1.0", "<= 1.0"]),
+        (PiBounded, [">= -PI", "<= PI"]),
     ],
     [
         (Positive, Pos),

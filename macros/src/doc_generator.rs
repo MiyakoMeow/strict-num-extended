@@ -6,6 +6,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
 use crate::config::{Bounds, ConstraintDef, Sign};
+use core::f64::consts::PI;
 
 /// Generates documentation comments for struct definitions
 ///
@@ -70,9 +71,17 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
             },
         ) => {
             if constraint_def.excludes_zero {
-                format!("{} < x ≤ {}", (*l).max(0.0), u)
+                format!(
+                    "{} < x ≤ {}",
+                    format_bound_value((*l).max(0.0)),
+                    format_bound_value(*u)
+                )
             } else {
-                format!("{} ≤ x ≤ {}", (*l).max(0.0), u)
+                format!(
+                    "{} ≤ x ≤ {}",
+                    format_bound_value((*l).max(0.0)),
+                    format_bound_value(*u)
+                )
             }
         }
 
@@ -102,9 +111,17 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
             },
         ) => {
             if constraint_def.excludes_zero {
-                format!("{} ≤ x < {}", l, (*u).min(0.0))
+                format!(
+                    "{} ≤ x < {}",
+                    format_bound_value(*l),
+                    format_bound_value((*u).min(0.0))
+                )
             } else {
-                format!("{} ≤ x ≤ {}", l, (*u).min(0.0))
+                format!(
+                    "{} ≤ x ≤ {}",
+                    format_bound_value(*l),
+                    format_bound_value((*u).min(0.0))
+                )
             }
         }
 
@@ -127,7 +144,10 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
                 upper: Some(u),
             },
         ) => {
-            format!("{} ≤ x ≤ {}", l, u)
+            // Special formatting for PI bounds
+            let lower_str = format_bound_value(*l);
+            let upper_str = format_bound_value(*u);
+            format!("{} ≤ x ≤ {}", lower_str, upper_str)
         }
         (
             Sign::Any,
@@ -183,7 +203,11 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("range [{}, {}]", (*l).max(0.0), u)
+            format!(
+                "range [{}, {}]",
+                format_bound_value((*l).max(0.0)),
+                format_bound_value(*u)
+            )
         }
         (
             Sign::Positive,
@@ -193,7 +217,11 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("range ({}, {}]", (*l).max(0.0), u)
+            format!(
+                "range ({}, {}]",
+                format_bound_value((*l).max(0.0)),
+                format_bound_value(*u)
+            )
         }
 
         // Negative types
@@ -221,7 +249,11 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("range [{}, {}]", l, (*u).min(0.0))
+            format!(
+                "range [{}, {}]",
+                format_bound_value(*l),
+                format_bound_value((*u).min(0.0))
+            )
         }
         (
             Sign::Negative,
@@ -231,7 +263,11 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("range [{}, {})", l, (*u).min(0.0))
+            format!(
+                "range [{}, {})",
+                format_bound_value(*l),
+                format_bound_value((*u).min(0.0))
+            )
         }
 
         // NonZero types
@@ -253,7 +289,11 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
                 upper: Some(u),
             },
         ) => {
-            format!("range [{}, {}]", l, u)
+            format!(
+                "range [{}, {}]",
+                format_bound_value(*l),
+                format_bound_value(*u)
+            )
         }
         (
             Sign::Any,
@@ -264,11 +304,15 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
             },
         ) => {
             if *l == 0.0 {
-                format!("range (0, {}]", u)
+                format!("range (0, {}]", format_bound_value(*u))
             } else if *u == 0.0 {
-                format!("range [{}, 0)", l)
+                format!("range [{}, 0)", format_bound_value(*l))
             } else {
-                format!("range [{}, {}], excluding zero", l, u)
+                format!(
+                    "range [{}, {}], excluding zero",
+                    format_bound_value(*l),
+                    format_bound_value(*u)
+                )
             }
         }
 
@@ -297,6 +341,7 @@ fn generate_type_description(
              Creating a negative normalized value:\n\
              \n\
              ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
              let neg_norm = {0}::new(-0.5)?;\n\
@@ -325,10 +370,11 @@ fn generate_type_description(
              Creating a negative value:\n\
              \n\
              ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
-             let neg = {0}::new(-3.14)?;\n\
-             assert_eq!(neg.get(), -3.14);\n\
+             let neg = {0}::new(-42.0)?;\n\
+             assert_eq!(neg.get(), -42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
              \n\
@@ -353,10 +399,11 @@ fn generate_type_description(
              Creating a non-zero positive value:\n\
              \n\
              ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
-             let pos = {0}::new(3.14)?;\n\
-             assert_eq!(pos.get(), 3.14);\n\
+             let pos = {0}::new(42.0)?;\n\
+             assert_eq!(pos.get(), 42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
              \n\
@@ -382,6 +429,7 @@ fn generate_type_description(
              Creating a non-negative number:\n\
              \n\
              ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
              let pos = {0}::new(42.0)?;\n\
@@ -411,6 +459,7 @@ fn generate_type_description(
              Creating a non-positive number:\n\
              \n\
              ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
              let neg = {0}::new(-42.0)?;\n\
@@ -440,10 +489,11 @@ fn generate_type_description(
              Creating a non-zero value:\n\
              \n\
              ```rust\n\
+             #![expect(clippy::approx_constant)]\n\
              use strict_num_extended::{{{0}, FloatError}};\n\
              \n\
-             let nonzero = {0}::new(3.14)?;\n\
-             assert_eq!(nonzero.get(), 3.14);\n\
+             let nonzero = {0}::new(42.0)?;\n\
+             assert_eq!(nonzero.get(), 42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
              \n\
@@ -472,6 +522,7 @@ fn generate_type_description(
                      Creating a normalized value:\n\
                      \n\
                      ```rust\n\
+                     #![expect(clippy::approx_constant)]\n\
                      use strict_num_extended::{{{0}, FloatError}};\n\
                      \n\
                      let norm = {0}::new(0.75)?;\n\
@@ -501,6 +552,7 @@ fn generate_type_description(
                      Creating a symmetric value:\n\
                      \n\
                      ```rust\n\
+                     #![expect(clippy::approx_constant)]\n\
                      use strict_num_extended::{{{0}, FloatError}};\n\
                      \n\
                      let sym = {0}::new(0.5)?;\n\
@@ -519,6 +571,7 @@ fn generate_type_description(
                 "# Examples\n\n\
                  Creating a value:\n\n\
                  ```rust\n\
+                 #![expect(clippy::approx_constant)]\n\
                  use strict_num_extended::{{{0}, FloatError}};\n\n\
                  let value = {0}::new({1})?;\n\
                  assert_eq!(value.get(), {1});\n\
@@ -546,7 +599,7 @@ fn generate_valid_example_for_type(type_name: &Ident, constraint_def: &Constrain
                 "1.0".to_string()
             }
         }
-        _ => "3.14".to_string(),
+        _ => "1.0".to_string(),
     }
 }
 
@@ -568,6 +621,7 @@ pub fn generate_new_method_doc(
                "# Examples\n\n",
                "Valid value:\n\n",
                "```rust\n",
+               "#![expect(clippy::approx_constant)]\n",
                "use strict_num_extended::{", #type_name_str, ", FloatError};\n\n",
                "let value = ", #type_name_str, "::new(", #valid_example, ")?;\n",
                "assert_eq!(value.get(), ", #valid_example, ");\n",
@@ -638,7 +692,7 @@ pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDe
                 format!("{}", *l + 0.1)
             }
         }
-        _ => "3.14".to_string(),
+        _ => "1.0".to_string(),
     }
 }
 
@@ -684,5 +738,47 @@ pub fn generate_invalid_example(
             format!("{}::NAN", float_type.to_string().to_lowercase()),
             "NaN",
         ),
+    }
+}
+
+/// Formats a bound value for display in documentation
+/// Special handling for PI to avoid `clippy::approx_constant` warnings
+fn format_bound_value(value: f64) -> String {
+    const PI_TOLERANCE: f64 = 0.00001;
+
+    if (value - PI).abs() < PI_TOLERANCE {
+        "PI".to_string()
+    } else if (value + PI).abs() < PI_TOLERANCE {
+        "-PI".to_string()
+    } else if (value - PI / 2.0).abs() < PI_TOLERANCE {
+        "PI/2".to_string()
+    } else if (value + PI / 2.0).abs() < PI_TOLERANCE {
+        "-PI/2".to_string()
+    } else if (value - PI / 3.0).abs() < PI_TOLERANCE {
+        "PI/3".to_string()
+    } else if (value + PI / 3.0).abs() < PI_TOLERANCE {
+        "-PI/3".to_string()
+    } else if (value - PI / 4.0).abs() < PI_TOLERANCE {
+        "PI/4".to_string()
+    } else if (value + PI / 4.0).abs() < PI_TOLERANCE {
+        "-PI/4".to_string()
+    } else if (value - PI / 6.0).abs() < PI_TOLERANCE {
+        "PI/6".to_string()
+    } else if (value + PI / 6.0).abs() < PI_TOLERANCE {
+        "-PI/6".to_string()
+    } else if (value - PI / 8.0).abs() < PI_TOLERANCE {
+        "PI/8".to_string()
+    } else if (value + PI / 8.0).abs() < PI_TOLERANCE {
+        "-PI/8".to_string()
+    } else if (value - 1.0 / PI).abs() < PI_TOLERANCE {
+        "1/PI".to_string()
+    } else if (value + 1.0 / PI).abs() < PI_TOLERANCE {
+        "-1/PI".to_string()
+    } else if (value - 2.0 / PI).abs() < PI_TOLERANCE {
+        "2/PI".to_string()
+    } else if (value + 2.0 / PI).abs() < PI_TOLERANCE {
+        "-2/PI".to_string()
+    } else {
+        format!("{}", value)
     }
 }

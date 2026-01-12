@@ -19,6 +19,7 @@ pub fn generate_concrete_structs(config: &TypeConfig) -> proc_macro2::TokenStrea
                 #[doc = #struct_doc]
                 #[repr(transparent)]
                 #[derive(Clone, Copy)]
+                #[expect(clippy::approx_constant)]
                 pub struct #struct_name {
                     value: #float_type,
                     _constraint: core::marker::PhantomData<#constraint_name>,
