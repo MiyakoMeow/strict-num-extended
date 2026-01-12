@@ -66,6 +66,8 @@ pub struct TypeConfig {
     pub constraint_types: Vec<TypeDef>,
     /// Arithmetic operation results: (op, `lhs_name`, `rhs_name`) -> `ArithmeticResult`
     pub arithmetic_results: HashMap<(ArithmeticOp, String, String), ArithmeticResult>,
+    /// Type aliases: [(`OriginalName`, `AliasName`), ...]
+    pub type_aliases: Vec<TypeAliasDef>,
 }
 
 /// Single constraint definition.
@@ -120,4 +122,17 @@ pub fn get_standard_arithmetic_ops() -> [(
         (ArithmeticOp::Mul, "Mul", "mul", quote! { * }),
         (ArithmeticOp::Div, "Div", "div", quote! { / }),
     ]
+}
+
+// ============================================================================
+// Type alias definitions
+// ============================================================================
+
+/// Type alias definition
+#[derive(Debug, Clone)]
+pub struct TypeAliasDef {
+    /// Original type name (e.g., Positive)
+    pub original_name: Ident,
+    /// Alias name (e.g., Pos)
+    pub alias_name: Ident,
 }

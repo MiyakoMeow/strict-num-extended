@@ -20,6 +20,7 @@ mod fromstr_impl;
 mod generator;
 mod option_arithmetic;
 mod result_arithmetic;
+mod type_aliases;
 mod unary_ops;
 
 use arithmetic::{generate_arithmetic_impls, generate_neg_impls};
@@ -41,6 +42,7 @@ use fromstr_impl::{
 };
 use option_arithmetic::generate_option_arithmetic_impls;
 use result_arithmetic::generate_result_arithmetic_impls;
+use type_aliases::generate_type_aliases;
 use unary_ops::{
     generate_abs_impls, generate_cos_impls, generate_signum_impls, generate_sin_impls,
     generate_tan_impls,
@@ -189,6 +191,9 @@ pub fn generate_finite_float_types(input: TokenStream) -> TokenStream {
 
     // Generate constants
     all_code.push(generate_constants(&config));
+
+    // Generate type aliases
+    all_code.push(generate_type_aliases(&config));
 
     // Combine all code
     let expanded = quote! {
