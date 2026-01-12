@@ -353,5 +353,9 @@ fn parse_type_properties(conditions: &[String]) -> (Sign, Bounds, bool) {
 
 /// Parse a float value from a string.
 fn parse_float_value(s: &str) -> f64 {
-    s.parse().unwrap_or(0.0)
+    match s {
+        "PI" => core::f64::consts::PI,
+        "-PI" => -core::f64::consts::PI,
+        _ => s.parse().unwrap_or(0.0),
+    }
 }
