@@ -10,7 +10,7 @@ updates:
       - "dependencies"
       - "automated"
     open-pull-requests-limit: 20
-    versioning-strategy: "increase"
+    versioning-strategy: "auto"
     commit-message:
       prefix: "chore"
       include: "scope"
