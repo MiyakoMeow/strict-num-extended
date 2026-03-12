@@ -10,10 +10,6 @@ updates:
       - "dependencies"
       - "automated"
     open-pull-requests-limit: 20
-    versioning-strategy: "auto"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
 
   - package-ecosystem: "github-actions"
     directory: "/"
