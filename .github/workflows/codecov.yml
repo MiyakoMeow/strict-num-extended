@@ -37,7 +37,7 @@ jobs:
           cargo clean
           cargo llvm-cov --workspace --all-features --doctests --lcov --output-path generated.lcov
       - name: Upload generator coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./generator.lcov
           flags: generator
@@ -47,7 +47,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload main coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./generated.lcov
           flags: main
