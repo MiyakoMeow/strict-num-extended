@@ -18,37 +18,22 @@ jobs:
         uses: taiki-e/cache-cargo-install-action@v3
         with:
           tool: cargo-llvm-cov
-      - name: Run cargo-llvm-cov for macro source coverage
+      - name: Run cargo-llvm-cov for macro crate coverage
         run: |
           cargo clean
-          cargo llvm-cov --workspace --all-features --doctests \
-            --experimental-proc-macro-coverage \
-            --lcov --output-path macro-source.lcov \
-            --proc-macro-coverage source
-      - name: Run cargo-llvm-cov for macro expanded coverage
-        run: |
-          cargo llvm-cov --workspace --all-features --doctests \
-            --experimental-proc-macro-coverage \
-            --lcov --output-path macro-expanded.lcov \
-            --proc-macro-coverage expanded
+          cargo llvm-cov -p strict-num-extended-macros \
+            --all-features --doctests \
+            --lcov --output-path macro-source.lcov
       - name: Run cargo-llvm-cov for library coverage
         run: |
-          cargo llvm-cov --workspace --all-features --doctests \
+          cargo llvm-cov -p strict-num-extended \
+            --all-features --doctests \
             --lcov --output-path lib.lcov
       - name: Upload macro source coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
           files: ./macro-source.lcov
           flags: macro-source
-          verbose: true
-          fail_ci_if_error: true
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload macro expanded coverage to Codecov
-        uses: codecov/codecov-action@v6
-        with:
-          files: ./macro-expanded.lcov
-          flags: macro-expanded
           verbose: true
           fail_ci_if_error: true
           disable_search: true
