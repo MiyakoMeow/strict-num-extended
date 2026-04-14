@@ -4,7 +4,11 @@
 //! Tests cover all generated types and verify actual error types.
 
 #![cfg(feature = "serde")]
-#![allow(clippy::shadow_unrelated)] // Test functions commonly use the same local variable names
+#![expect(
+    clippy::shadow_unrelated,
+    clippy::float_cmp,
+    clippy::uninlined_format_args
+)] // Test functions commonly use the same local variable names
 
 use strict_num_extended::*;
 

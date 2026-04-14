@@ -76,6 +76,7 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
 }
 
 /// Generates a single arithmetic operation implementation
+#[expect(clippy::too_many_lines)]
 #[allow(clippy::too_many_arguments)]
 fn generate_arithmetic_impl(
     lhs_alias: &Ident,

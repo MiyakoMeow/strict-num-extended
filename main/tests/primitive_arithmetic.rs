@@ -1,7 +1,7 @@
 //! Tests for arithmetic operations between constrained types and primitive types
 
 // Strict floating-point comparisons, unwrap usage, and legacy numeric constants in test code are justified
-#![allow(clippy::unwrap_used, clippy::legacy_numeric_constants)]
+#![expect(clippy::legacy_numeric_constants, clippy::float_cmp)]
 
 use strict_num_extended::*;
 

@@ -16,6 +16,7 @@ use syn::{Expr, Lit, parse::Parse, parse::ParseStream};
 // Parse trait implementations
 // ============================================================================
 
+#[expect(clippy::too_many_lines)]
 impl Parse for TypeConfig {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         // Parse bracketed content: [ ... ]
@@ -41,16 +42,16 @@ impl Parse for TypeConfig {
             let mut conditions = Vec::new();
             while !bracket_content.is_empty() {
                 let expr: Expr = bracket_content.parse()?;
-                let condition = match &expr {
-                    Expr::Lit(syn::ExprLit {
-                        lit: Lit::Str(s), ..
-                    }) => normalize_condition(&s.value()),
-                    _ => {
-                        return Err(syn::Error::new_spanned(
-                            expr,
-                            "Expected string literal for validation condition",
-                        ));
-                    }
+                let condition = if let Expr::Lit(syn::ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = &expr
+                {
+                    normalize_condition(&s.value())
+                } else {
+                    return Err(syn::Error::new_spanned(
+                        expr,
+                        "Expected string literal for validation condition",
+                    ));
                 };
                 conditions.push(condition);
 

@@ -3,7 +3,7 @@
 //! Comprehensive test of negation operation type inference and constraint validation
 
 // Strict floating-point comparisons and unwrap usage in test code are justified
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::float_cmp, clippy::items_after_statements)]
 
 use strict_num_extended::*;
 

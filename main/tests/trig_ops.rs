@@ -7,7 +7,7 @@
 
 #![cfg(feature = "std")]
 // Strict floating-point comparisons and unwrap usage in test code are justified
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::float_cmp, clippy::no_effect_underscore_binding)]
 
 use strict_num_extended::*;
 

@@ -44,6 +44,7 @@ pub fn find_constraint_def<'a>(
     config: &'a TypeConfig,
     constraint_name: &Ident,
 ) -> &'a ConstraintDef {
+    #[expect(clippy::expect_used)]
     config
         .constraints
         .iter()
@@ -103,6 +104,7 @@ where
 
     for type_def in &config.constraint_types {
         let type_name = &type_def.type_name;
+        #[expect(clippy::expect_used)]
         let constraint_def = config
             .constraints
             .iter()

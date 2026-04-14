@@ -39,6 +39,7 @@ pub fn generate_struct_doc(
 }
 
 /// Generates a mathematical formula expression for constraints
+#[expect(clippy::too_many_lines)]
 pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
     match (
         constraint_def.sign,
@@ -172,6 +173,7 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
 }
 
 /// Generates a text description of constraints
+#[expect(clippy::too_many_lines)]
 pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String {
     match (
         constraint_def.sign,
@@ -322,6 +324,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
 }
 
 /// Generates additional description information for types
+#[expect(clippy::too_many_lines)]
 fn generate_type_description(
     struct_name: &str,
     type_name: &Ident,

@@ -6,7 +6,7 @@
 //! 3. Verify error message accuracy
 //! 4. Ensure compile-time and runtime consistency
 
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::float_cmp, clippy::uninlined_format_args, clippy::panic)]
 
 use strict_num_extended::*;
 
@@ -327,11 +327,11 @@ mod test_precision_loss {
     #[test]
     fn test_f32_boundary_conversion() {
         // f32::MAX can convert exactly
-        let max = FinF64::new(f32::MAX as f64).unwrap();
+        let max = FinF64::new(f64::from(f32::MAX)).unwrap();
         assert!(max.try_into_f32_type().is_ok());
 
         // f32::MIN can convert exactly
-        let min = FinF64::new(f32::MIN as f64).unwrap();
+        let min = FinF64::new(f64::from(f32::MIN)).unwrap();
         assert!(min.try_into_f32_type().is_ok());
     }
 }

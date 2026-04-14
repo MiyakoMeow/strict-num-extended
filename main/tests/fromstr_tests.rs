@@ -6,7 +6,7 @@
 //! 3. Test error handling and meaningful error messages
 //! 4. Verify that the original string is preserved in errors
 
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::float_cmp, clippy::panic)]
 
 use strict_num_extended::*;
 
@@ -199,7 +199,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("floating-point"));
         assert!(msg.contains("failed to parse"));
     }
@@ -210,7 +210,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("empty"));
     }
 
@@ -220,7 +220,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("outside the valid range"));
     }
 
@@ -230,7 +230,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("outside the valid range"));
     }
 
@@ -240,7 +240,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("outside the valid range"));
     }
 
@@ -250,7 +250,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("NaN"));
         assert!(msg.contains("Not a Number"));
     }
@@ -261,7 +261,7 @@ mod test_error_messages {
         assert!(result.is_err());
 
         let err = result.unwrap_err();
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("positive infinity"));
     }
 }
