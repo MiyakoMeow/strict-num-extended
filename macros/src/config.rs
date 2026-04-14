@@ -216,33 +216,33 @@ fn negate_conditions(conditions: &[String]) -> Vec<String> {
                 let rest = rest.trim();
                 // Handle double negation: >= -x becomes <= x
                 if let Some(num) = rest.strip_prefix('-') {
-                    format!("<= {}", num)
+                    format!("<= {num}")
                 } else {
-                    format!("<= -{}", rest)
+                    format!("<= -{rest}")
                 }
             } else if let Some(rest) = cond.strip_prefix("<=") {
                 let rest = rest.trim();
                 // Handle double negation: <= -x becomes >= x
                 if let Some(num) = rest.strip_prefix('-') {
-                    format!(">= {}", num)
+                    format!(">= {num}")
                 } else {
-                    format!(">= -{}", rest)
+                    format!(">= -{rest}")
                 }
             } else if let Some(rest) = cond.strip_prefix(">") {
                 let rest = rest.trim();
                 // Handle double negation: > -x becomes < x
                 if let Some(num) = rest.strip_prefix('-') {
-                    format!("< {}", num)
+                    format!("< {num}")
                 } else {
-                    format!("< -{}", rest)
+                    format!("< -{rest}")
                 }
             } else if let Some(rest) = cond.strip_prefix("<") {
                 let rest = rest.trim();
                 // Handle double negation: < -x becomes > x
                 if let Some(num) = rest.strip_prefix('-') {
-                    format!("> {}", num)
+                    format!("> {num}")
                 } else {
-                    format!("> -{}", rest)
+                    format!("> -{rest}")
                 }
             } else if cond.starts_with("!=") {
                 // Inequality stays the same
@@ -257,7 +257,7 @@ fn negate_conditions(conditions: &[String]) -> Vec<String> {
 }
 
 /// Normalize floating-point representation (handle -0.0 == 0.0).
-fn normalize_float_repr(s: String) -> String {
+fn normalize_float_repr(s: &str) -> String {
     // Replace -0.0 with 0.0 in various contexts
     let s = s.replace("-0.0", "0.0");
     // Also handle cases with extra spaces like ">= - 0.0"
@@ -270,9 +270,9 @@ fn normalize_float_repr(s: String) -> String {
 /// Check if two constraint condition lists match (order-insensitive).
 fn conditions_match(a: &[String], b: &[String]) -> bool {
     // Normalize and compare
-    let a_normalized: Vec<String> = a.iter().map(|s| normalize_float_repr(s.clone())).collect();
+    let a_normalized: Vec<String> = a.iter().map(|s| normalize_float_repr(s)).collect();
 
-    let b_normalized: Vec<String> = b.iter().map(|s| normalize_float_repr(s.clone())).collect();
+    let b_normalized: Vec<String> = b.iter().map(|s| normalize_float_repr(s)).collect();
 
     // Sort and compare (ignore order)
     let mut a_sorted = a_normalized;
