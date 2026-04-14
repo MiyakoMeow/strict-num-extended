@@ -39,6 +39,7 @@ pub fn generate_struct_doc(
 }
 
 /// Generates a mathematical formula expression for constraints
+#[expect(clippy::too_many_lines)]
 pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
     match (
         constraint_def.sign,
@@ -147,7 +148,7 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
             // Special formatting for PI bounds
             let lower_str = format_bound_value(*l);
             let upper_str = format_bound_value(*u);
-            format!("{} ≤ x ≤ {}", lower_str, upper_str)
+            format!("{lower_str} ≤ x ≤ {upper_str}")
         }
         (
             Sign::Any,
@@ -158,11 +159,11 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
             },
         ) => {
             if *l == 0.0 {
-                format!("0 < x ≤ {}", u)
+                format!("0 < x ≤ {u}")
             } else if *u == 0.0 {
-                format!("{} ≤ x < 0", l)
+                format!("{l} ≤ x < 0")
             } else {
-                format!("{} ≤ x ≤ {}, x ≠ 0", l, u)
+                format!("{l} ≤ x ≤ {u}, x ≠ 0")
             }
         }
 
@@ -172,6 +173,7 @@ pub fn generate_constraint_formula(constraint_def: &ConstraintDef) -> String {
 }
 
 /// Generates a text description of constraints
+#[expect(clippy::too_many_lines)]
 pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String {
     match (
         constraint_def.sign,
@@ -322,6 +324,7 @@ pub fn generate_constraint_description(constraint_def: &ConstraintDef) -> String
 }
 
 /// Generates additional description information for types
+#[expect(clippy::too_many_lines)]
 fn generate_type_description(
     struct_name: &str,
     type_name: &Ident,
@@ -348,9 +351,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let neg_norm = {0}::new(-0.5)?;\n\
+             let neg_norm = {struct_name}::new(-0.5)?;\n\
              assert_eq!(neg_norm.get(), -0.5);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -358,12 +361,11 @@ fn generate_type_description(
              Invalid value (out of range):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(0.5);\n\
+             let invalid = {struct_name}::new(0.5);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // Normalized [0, 1]
@@ -380,9 +382,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let norm = {0}::new(0.75)?;\n\
+             let norm = {struct_name}::new(0.75)?;\n\
              assert_eq!(norm.get(), 0.75);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -390,12 +392,11 @@ fn generate_type_description(
              Invalid value (out of range):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(1.5);\n\
+             let invalid = {struct_name}::new(1.5);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // Symmetric [-1, 1]
@@ -411,13 +412,12 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let sym = {0}::new(0.5)?;\n\
+             let sym = {struct_name}::new(0.5)?;\n\
              assert_eq!(sym.get(), 0.5);\n\
              # Ok::<(), FloatError>(())\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // Unbounded positive (excludes_zero: true => Positive)
@@ -439,9 +439,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let pos = {0}::new(42.0)?;\n\
+             let pos = {struct_name}::new(42.0)?;\n\
              assert_eq!(pos.get(), 42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -449,12 +449,11 @@ fn generate_type_description(
              Invalid value (zero):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(0.0);\n\
+             let invalid = {struct_name}::new(0.0);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // Unbounded positive (excludes_zero: false => NonNegative)
@@ -477,9 +476,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let pos = {0}::new(42.0)?;\n\
+             let pos = {struct_name}::new(42.0)?;\n\
              assert_eq!(pos.get(), 42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -487,12 +486,11 @@ fn generate_type_description(
              Invalid value (negative):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(-1.0);\n\
+             let invalid = {struct_name}::new(-1.0);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // Unbounded negative (excludes_zero: true => Negative)
@@ -514,9 +512,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let neg = {0}::new(-42.0)?;\n\
+             let neg = {struct_name}::new(-42.0)?;\n\
              assert_eq!(neg.get(), -42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -524,12 +522,11 @@ fn generate_type_description(
              Invalid value (zero):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(0.0);\n\
+             let invalid = {struct_name}::new(0.0);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // Unbounded negative (excludes_zero: false => NonPositive)
@@ -552,9 +549,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let neg = {0}::new(-42.0)?;\n\
+             let neg = {struct_name}::new(-42.0)?;\n\
              assert_eq!(neg.get(), -42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -562,12 +559,11 @@ fn generate_type_description(
              Invalid value (positive):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(1.0);\n\
+             let invalid = {struct_name}::new(1.0);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         // NonZero (unbounded, excludes_zero: true)
@@ -590,9 +586,9 @@ fn generate_type_description(
              \n\
              ```rust\n\
              #![expect(clippy::approx_constant)]\n\
-             use strict_num_extended::{{{0}, FloatError}};\n\
+             use strict_num_extended::{{{struct_name}, FloatError}};\n\
              \n\
-             let nonzero = {0}::new(42.0)?;\n\
+             let nonzero = {struct_name}::new(42.0)?;\n\
              assert_eq!(nonzero.get(), 42.0);\n\
              # Ok::<(), FloatError>(())\n\
              ```\n\
@@ -600,12 +596,11 @@ fn generate_type_description(
              Invalid value (zero):\n\
              \n\
              ```rust\n\
-             use strict_num_extended::{0};\n\
+             use strict_num_extended::{struct_name};\n\
              \n\
-             let invalid = {0}::new(0.0);\n\
+             let invalid = {struct_name}::new(0.0);\n\
              assert!(invalid.is_err());\n\
-             ```\n",
-            struct_name
+             ```\n"
         ),
 
         _ => {
@@ -616,12 +611,11 @@ fn generate_type_description(
                  Creating a value:\n\n\
                  ```rust\n\
                  #![expect(clippy::approx_constant)]\n\
-                 use strict_num_extended::{{{0}, FloatError}};\n\n\
-                 let value = {0}::new({1})?;\n\
-                 assert_eq!(value.get(), {1});\n\
+                 use strict_num_extended::{{{struct_name}, FloatError}};\n\n\
+                 let value = {struct_name}::new({valid_example})?;\n\
+                 assert_eq!(value.get(), {valid_example});\n\
                  # Ok::<(), FloatError>(())\n\
-                 ```\n",
-                struct_name, valid_example
+                 ```\n"
             )
         }
     }
@@ -676,7 +670,7 @@ fn generate_valid_example_for_type(_type_name: &Ident, constraint_def: &Constrai
                     "0.0".to_string()
                 }
             } else {
-                format!("{}", mid)
+                format!("{mid}")
             }
         }
 
@@ -731,20 +725,13 @@ pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDe
             },
         ) => "42.0".to_string(),
         (
-            Sign::Positive,
-            Bounds {
-                lower: Some(l),
-                upper: Some(u),
-            },
-        )
-        | (
-            Sign::Negative,
+            Sign::Positive | Sign::Negative,
             Bounds {
                 lower: Some(l),
                 upper: Some(u),
             },
         ) => {
-            format!("{}", (*l + *u) / 2.0)
+            format!("{}", f64::midpoint(*l, *u))
         }
         (
             Sign::Negative,
@@ -767,11 +754,11 @@ pub fn generate_valid_example(_float_type: &Ident, constraint_def: &ConstraintDe
                 upper: Some(u),
             },
         ) => {
-            let mid = (*l + *u) / 2.0;
-            if mid != 0.0 {
-                format!("{}", mid)
-            } else {
+            let mid = f64::midpoint(*l, *u);
+            if mid == 0.0 {
                 format!("{}", *l + 0.1)
+            } else {
+                format!("{mid}")
             }
         }
         _ => "1.0".to_string(),
@@ -861,6 +848,6 @@ fn format_bound_value(value: f64) -> String {
     } else if (value + 2.0 / PI).abs() < PI_TOLERANCE {
         "-2/PI".to_string()
     } else {
-        format!("{}", value)
+        format!("{value}")
     }
 }

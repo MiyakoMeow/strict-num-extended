@@ -1,6 +1,6 @@
 //! Tests for `PiBounded` constraint types
 
-#![expect(clippy::approx_constant)]
+#![expect(clippy::approx_constant, clippy::float_cmp)]
 
 use strict_num_extended::*;
 

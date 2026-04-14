@@ -29,12 +29,12 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
          op,
          _| {
             generate_arithmetic_impl(
-                lhs_alias,
-                rhs_alias,
-                output_alias,
-                trait_ident,
-                method_ident,
-                op_symbol,
+                &lhs_alias,
+                &rhs_alias,
+                &output_alias,
+                &trait_ident,
+                &method_ident,
+                &op_symbol,
                 result,
                 op,
                 false,
@@ -56,12 +56,12 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
          op,
          is_reversed| {
             generate_arithmetic_impl(
-                lhs_alias,
-                rhs_alias,
-                output_alias,
-                trait_ident,
-                method_ident,
-                op_symbol,
+                &lhs_alias,
+                &rhs_alias,
+                &output_alias,
+                &trait_ident,
+                &method_ident,
+                &op_symbol,
                 result,
                 op,
                 is_reversed,
@@ -76,14 +76,15 @@ pub fn generate_arithmetic_impls(config: &TypeConfig) -> TokenStream2 {
 }
 
 /// Generates a single arithmetic operation implementation
+#[expect(clippy::too_many_lines)]
 #[allow(clippy::too_many_arguments)]
 fn generate_arithmetic_impl(
-    lhs_alias: Ident,
-    rhs_alias: Ident,
-    output_alias: Ident,
-    trait_ident: Ident,
-    method_ident: Ident,
-    op_symbol: TokenStream2,
+    lhs_alias: &Ident,
+    rhs_alias: &Ident,
+    output_alias: &Ident,
+    trait_ident: &Ident,
+    method_ident: &Ident,
+    op_symbol: &TokenStream2,
     result: &ArithmeticResult,
     op: ArithmeticOp,
     is_reversed: bool,

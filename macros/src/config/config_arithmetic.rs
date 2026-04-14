@@ -332,6 +332,7 @@ fn find_matching_constraint(
         }
 
         // No unbounded types found, return the first bounded match
+        #[expect(clippy::expect_used)]
         return matches
             .first()
             .expect("matches should not be empty at this point")
@@ -367,6 +368,7 @@ fn find_matching_constraint(
         }
 
         // All are bounded, return the first one
+        #[expect(clippy::expect_used)]
         return sign_matches
             .first()
             .expect("sign_matches should not be empty at this point")

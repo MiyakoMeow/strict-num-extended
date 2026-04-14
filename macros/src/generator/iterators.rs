@@ -72,6 +72,7 @@ where
                     lhs_type.type_name.to_string(),
                     rhs_type.type_name.to_string(),
                 );
+                #[expect(clippy::expect_used)]
                 let result = config
                     .arithmetic_results
                     .get(&key)

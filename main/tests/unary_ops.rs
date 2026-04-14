@@ -6,7 +6,7 @@
 //! `tests/trig_ops.rs` and are only compiled when the `std` feature is enabled.
 
 // Strict floating-point comparisons and unwrap usage in test code are justified
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::float_cmp, clippy::items_after_statements)]
 
 use strict_num_extended::*;
 

@@ -203,6 +203,7 @@ pub fn generate_constants(config: &TypeConfig) -> proc_macro2::TokenStream {
             let doc = const_def.doc;
 
             // Get value expression
+            #[expect(clippy::cast_possible_truncation)]
             let value_expr = if *float_type == "f32" {
                 const_def.f32_expr.map_or_else(
                     || {
@@ -210,7 +211,8 @@ pub fn generate_constants(config: &TypeConfig) -> proc_macro2::TokenStream {
                         quote! { #v }
                     },
                     |expr| {
-                        // Parse expression path
+                        #[expect(clippy::expect_used)]
+                        // Parse expression path - known valid at compile time
                         expr.parse().expect("Invalid f32 expression")
                     },
                 )
@@ -221,7 +223,8 @@ pub fn generate_constants(config: &TypeConfig) -> proc_macro2::TokenStream {
                         quote! { #v }
                     },
                     |expr| {
-                        // Parse expression path
+                        #[expect(clippy::expect_used)]
+                        // Parse expression path - known valid at compile time
                         expr.parse().expect("Invalid f64 expression")
                     },
                 )
