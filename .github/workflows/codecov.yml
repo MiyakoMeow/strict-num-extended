@@ -44,8 +44,7 @@ jobs:
           verbose: true
           fail_ci_if_error: true
           disable_search: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload main coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
@@ -54,5 +53,4 @@ jobs:
           verbose: true
           fail_ci_if_error: true
           disable_search: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
