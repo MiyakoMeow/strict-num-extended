@@ -18,17 +18,21 @@ jobs:
         uses: taiki-e/cache-cargo-install-action@v3
         with:
           tool: cargo-llvm-cov
-      - name: Run cargo-llvm-cov for proc-macro coverage
+      - name: Run cargo-llvm-cov for macro source coverage
         run: |
           cargo clean
           cargo llvm-cov --workspace --all-features --doctests \
             --experimental-proc-macro-coverage \
             --lcov --output-path macro-source.lcov \
             --proc-macro-coverage source
+      - name: Run cargo-llvm-cov for macro expanded coverage
+        run: |
           cargo llvm-cov --workspace --all-features --doctests \
             --experimental-proc-macro-coverage \
             --lcov --output-path macro-expanded.lcov \
             --proc-macro-coverage expanded
+      - name: Run cargo-llvm-cov for library coverage
+        run: |
           cargo llvm-cov --workspace --all-features --doctests \
             --lcov --output-path lib.lcov
       - name: Upload macro source coverage to Codecov
