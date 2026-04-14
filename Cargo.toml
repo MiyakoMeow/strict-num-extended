@@ -42,28 +42,6 @@ bare_urls = "warn"
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 
-# Pedantic (Applicability: MachineApplicable)
-cast_lossless = "allow"
-enum_glob_use = "allow"
-wildcard_imports = "allow"
-
-# Pedantic (Applicability: MaybeIncorrect)
-cast_possible_truncation = "allow"
-cast_possible_wrap = "allow"
-cast_precision_loss = "allow"
-cast_sign_loss = "allow"
-unreadable_literal = "allow"
-
-# Pedantic (Applicability: HasPlaceholders)
-manual_let_else = "allow"
-
-# Pedantic (Applicability: Unspecified)
-module_name_repetitions = "allow"
-similar_names = "allow"
-too_many_lines = "allow"
-unused_self = "allow"
-used_underscore_binding = "allow"
-
 # Restriction (Applicability: MachineApplicable)
 if_then_some_else_none = "warn"
 lossy_float_literal = "warn"
@@ -75,7 +53,7 @@ unseparated_literal_suffix = "allow"
 decimal_literal_representation = "warn"
 empty_drop = "warn"
 mutex_atomic = "warn"
-wildcard_enum_match_arm = "allow"
+wildcard_enum_match_arm = "warn"
 
 # Restriction (Applicability: HasPlaceholders)
 float_cmp_const = "warn"
@@ -85,19 +63,19 @@ as_conversions = "allow"
 cognitive_complexity = "allow"
 empty_structs_with_brackets = "warn"
 exit = "warn"
-expect_used = "allow"
+expect_used = "warn"
 indexing_slicing = "warn"
 missing_docs_in_private_items = "allow"
 mod_module_files = "warn"
-panic = "allow"
+panic = "warn"
 panic_in_result_fn = "warn"
-print_stderr = "allow"
-print_stdout = "allow"
+print_stderr = "warn"
+print_stdout = "warn"
 rc_buffer = "warn"
 self_named_module_files = "allow"
 shadow_unrelated = "warn"
 string_add = "warn"
-string_slice = "allow"
+string_slice = "warn"
 todo = "warn"
 unimplemented = "warn"
 unneeded_field_pattern = "allow"
