@@ -18,30 +18,23 @@ jobs:
         uses: taiki-e/cache-cargo-install-action@v3
         with:
           tool: cargo-llvm-cov
-      - name: Run cargo-llvm-cov for macro crate coverage
-        run: |
-          cargo llvm-cov -p strict-num-extended-macros \
-            --all-features --doctests \
-            --lcov --output-path macro-source.lcov
-      - name: Run cargo-llvm-cov for library coverage
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: |
+            . -> target
+      - name: Run cargo-llvm-cov
         run: |
           cargo llvm-cov -p strict-num-extended \
             --all-features --doctests \
-            --lcov --output-path lib.lcov
-      - name: Upload macro source coverage to Codecov
+            --lcov --output-path lcov.info \
+            --ignore-filename-regex="target/"
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
-          files: ./macro-source.lcov
-          flags: macro-source
-          verbose: true
-          fail_ci_if_error: true
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload library coverage to Codecov
-        uses: codecov/codecov-action@v6
-        with:
-          files: ./lib.lcov
-          flags: lib
+          files: ./lcov.info
+          flags: generated-code
           verbose: true
           fail_ci_if_error: true
           disable_search: true
