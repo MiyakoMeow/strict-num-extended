@@ -1,6 +1,5 @@
 //! `FiniteFloat` struct and basic methods module
 
-
 use crate::config::TypeConfig;
 use crate::doc_generator;
 use crate::generator::{build_validation_expr, for_all_constraint_float_types, make_type_alias};

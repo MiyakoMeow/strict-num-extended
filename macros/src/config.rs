@@ -10,7 +10,7 @@ pub use config_arithmetic::*;
 pub use config_types::*;
 
 use proc_macro2::{Ident, Span};
-use syn::{parse::Parse, parse::ParseStream, Expr, Lit};
+use syn::{Expr, Lit, parse::Parse, parse::ParseStream};
 
 // ============================================================================
 // Parse trait implementations

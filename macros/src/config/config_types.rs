@@ -135,8 +135,6 @@ pub fn get_standard_arithmetic_ops() -> [(
     &'static str,
     proc_macro2::TokenStream,
 ); 4] {
-    
-
     [
         (ArithmeticOp::Add, "Add", "add", code! { + }),
         (ArithmeticOp::Sub, "Sub", "sub", code! { - }),

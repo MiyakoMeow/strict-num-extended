@@ -1,6 +1,5 @@
 //! Comparison and formatting trait implementations module
 
-
 use crate::config::TypeConfig;
 use crate::generator::{for_all_constraint_float_types, make_type_alias};
 

@@ -2,7 +2,7 @@
 
 use proc_macro2::{Ident, TokenStream as TokenStream2};
 
-use crate::config::{get_standard_arithmetic_ops, ArithmeticOp, ArithmeticResult, TypeConfig};
+use crate::config::{ArithmeticOp, ArithmeticResult, TypeConfig, get_standard_arithmetic_ops};
 use crate::generator::{
     generate_arithmetic_for_all_types, generate_arithmetic_for_primitive_types,
 };
