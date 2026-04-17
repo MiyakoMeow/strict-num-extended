@@ -36,6 +36,22 @@ jobs:
             --all-features --doctests \
             --lcov --output-path lib.lcov \
             --ignore-filename-regex="target/"
+      - name: Debug lcov contents
+        run: |
+          echo "=== macro-source.lcov SF lines ==="
+          grep '^SF:' macro-source.lcov || echo "(none)"
+          echo ""
+          echo "=== macro-source.lcov line counts ==="
+          grep -c '^DA:' macro-source.lcov || echo "0"
+          echo ""
+          echo "=== lib.lcov SF lines ==="
+          grep '^SF:' lib.lcov || echo "(none)"
+          echo ""
+          echo "=== lib.lcov line counts ==="
+          grep -c '^DA:' lib.lcov || echo "0"
+          echo ""
+          echo "=== lib.lcov full content (first 200 lines) ==="
+          head -200 lib.lcov
       - name: Upload macro-source coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
