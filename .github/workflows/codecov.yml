@@ -24,17 +24,23 @@ jobs:
           cache-on-failure: true
           workspaces: |
             . -> target
-      - name: Run cargo-llvm-cov
+      - name: Run cargo-llvm-cov for macros crate
         run: |
-          cargo llvm-cov --workspace \
+          cargo llvm-cov -p strict-num-extended-macros \
             --all-features --doctests \
-            --lcov --output-path lcov.info \
+            --lcov --output-path macro-source.lcov \
             --ignore-filename-regex="target/"
-      - name: Upload generated-code coverage to Codecov
+      - name: Run cargo-llvm-cov for library crate
+        run: |
+          cargo llvm-cov -p strict-num-extended \
+            --all-features --doctests \
+            --lcov --output-path lib.lcov \
+            --ignore-filename-regex="target/"
+      - name: Upload macro-source coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
-          files: ./lcov.info
-          flags: generated-code
+          files: ./macro-source.lcov
+          flags: macro-source
           verbose: true
           fail_ci_if_error: true
           disable_search: true
@@ -42,7 +48,7 @@ jobs:
       - name: Upload lib coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
-          files: ./lcov.info
+          files: ./lib.lcov
           flags: lib
           verbose: true
           fail_ci_if_error: true
