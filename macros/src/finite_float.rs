@@ -1,6 +1,5 @@
 //! `FiniteFloat` struct and basic methods module
 
-use quote::quote;
 
 use crate::config::TypeConfig;
 use crate::doc_generator;
@@ -15,7 +14,7 @@ pub fn generate_concrete_structs(config: &TypeConfig) -> proc_macro2::TokenStrea
             let struct_doc =
                 doc_generator::generate_struct_doc(type_name, float_type, constraint_def);
 
-            quote! {
+            code! {
                 #[doc = #struct_doc]
                 #[repr(transparent)]
                 #[derive(Clone, Copy)]
@@ -27,7 +26,7 @@ pub fn generate_concrete_structs(config: &TypeConfig) -> proc_macro2::TokenStrea
             }
         });
 
-    quote! {
+    code! {
         // Concrete struct definitions
         #(#structs)*
     }
@@ -41,7 +40,7 @@ pub fn generate_concrete_impls(config: &TypeConfig) -> proc_macro2::TokenStream 
         let new_method_doc =
             doc_generator::generate_new_method_doc(&struct_name, float_type, constraint_def);
 
-        quote! {
+        code! {
             impl #struct_name {
                 #[doc = #new_method_doc]
                 #[must_use]
@@ -136,7 +135,7 @@ pub fn generate_concrete_impls(config: &TypeConfig) -> proc_macro2::TokenStream 
         }
     });
 
-    quote! {
+    code! {
         #(#impls)*
     }
 }
@@ -146,7 +145,7 @@ pub fn generate_concrete_serde_impls(config: &TypeConfig) -> proc_macro2::TokenS
     let serialize_impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
         let struct_name = make_type_alias(type_name, float_type);
 
-        quote! {
+        code! {
             #[cfg(feature = "serde")]
             impl serde::Serialize for #struct_name
             where
@@ -165,7 +164,7 @@ pub fn generate_concrete_serde_impls(config: &TypeConfig) -> proc_macro2::TokenS
     let deserialize_impls = for_all_constraint_float_types(config, |type_name, float_type, _| {
         let struct_name = make_type_alias(type_name, float_type);
 
-        quote! {
+        code! {
             #[cfg(feature = "serde")]
             impl<'de> serde::Deserialize<'de> for #struct_name
             where
@@ -194,7 +193,7 @@ pub fn generate_concrete_serde_impls(config: &TypeConfig) -> proc_macro2::TokenS
         }
     });
 
-    quote! {
+    code! {
         #(#serialize_impls)*
         #(#deserialize_impls)*
     }
