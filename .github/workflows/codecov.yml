@@ -30,11 +30,20 @@ jobs:
             --all-features --doctests \
             --lcov --output-path lcov.info \
             --ignore-filename-regex="target/"
-      - name: Upload coverage to Codecov
+      - name: Upload generated-code coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
           files: ./lcov.info
-          flags: generated-code,lib
+          flags: generated-code
+          verbose: true
+          fail_ci_if_error: true
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload lib coverage to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          files: ./lcov.info
+          flags: lib
           verbose: true
           fail_ci_if_error: true
           disable_search: true
