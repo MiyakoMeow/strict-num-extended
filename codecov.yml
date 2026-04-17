@@ -17,6 +17,10 @@ flags:
     paths:
       - "macros/src/**/*.rs"
     carryforward: true
+  lib:
+    paths:
+      - "main/src/**/*.rs"
+    carryforward: true
 
 ignore:
   - "target/"
